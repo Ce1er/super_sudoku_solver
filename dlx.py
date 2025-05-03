@@ -1,18 +1,26 @@
 from __future__ import annotations
-from typing import Generator, NoReturn, Optional
+from typing import Generator
 
 
 class Node:
+    """
+    Attributes:
+        left: Node to the left
+        right: Node to the right
+        up: Node above
+        down: Node below
+    """
+
     left: Node
     right: Node
     up: Node
     down: Node
 
     # Reference to the column header node
-    # Is not defined in __init__ as it cannot be known at this stage
+    # Is not assigned in __init__ as it cannot be known at this stage
     column: HeaderNode
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Set node to be its own neighbour in all 4 directions
         self.left = self
         self.right = self
@@ -22,7 +30,10 @@ class Node:
     def left_sweep(self) -> Generator[Node, None, None]:
         """
         self.left, self.left.left, self.left.left.left ...
-        until it comes back to starting point
+        up until but not including reaching the starting point
+
+        Yields:
+            Nodes to the left of this Node
         """
         x = self.left
         while x is not self:
@@ -34,7 +45,10 @@ class Node:
     def right_sweep(self) -> Generator[Node, None, None]:
         """
         self.right, self.right.right, self.right.right.right ...
-        until it comes back to starting point
+        up until but not including reaching the starting point
+
+        Yields:
+            Nodes to the right of this Node
         """
         x = self.right
         while x is not self:
@@ -46,7 +60,10 @@ class Node:
     def up_sweep(self) -> Generator[Node, None, None]:
         """
         self.up, self.up.up, self.up.up.up ...
-        until it comes back to starting point
+        up until but not including reaching the starting point
+
+        Yields:
+            Nodes above this Node
         """
         x = self.up
         while x is not self:
@@ -58,7 +75,10 @@ class Node:
     def down_sweep(self) -> Generator[Node, None, None]:
         """
         self.down, self.down.down, self.down.down.down ...
-        until it comes back to starting point
+        up until but not including reaching the starting point
+
+        Yields:
+            Nodes below this Node
         """
         x = self.down
         while x is not self:
@@ -69,16 +89,22 @@ class Node:
 
 
 class HeaderNode(Node):
+    """
+    Attributes:
+        label: The name of the node.
+        size: The number of nodes in the column
+    """
+
     # Technically left and right are now type HeaderNode not type Node
     # But subclasses can't have narrower types to their parents
 
     label: int
     size: int
 
-    def __init__(self, label):
+    def __init__(self, label) -> None:
         super().__init__()
         self.label = label
-        self.size = 0  # number of nodes in column
+        self.size = 0
 
 
 class Matrix:
@@ -91,7 +117,7 @@ class Matrix:
             for each level in the recursion.
     """
 
-    def __init__(self, labels: list[int], rows: list[list[int]]):
+    def __init__(self, labels: list[int], rows: list[list[int]]) -> None:
         """
         Args:
             labels: List with labels to identify each column
@@ -181,6 +207,10 @@ class Matrix:
                 last = node
 
     def cover(self, column: HeaderNode) -> None:
+        """
+        Args:
+            column: The HeaderNode of the column to cover
+        """
         # Set column to the right to point to column to the left of current one.
         column.right.left = column.left
 
@@ -201,6 +231,10 @@ class Matrix:
                 node.column.size -= 1
 
     def uncover(self, column: HeaderNode) -> None:
+        """
+        Args:
+            column: The HeaderNode of the column to uncover
+        """
         # Goes in opposite direction to cover() for both column and row traversals.
         for column_node in column.up_sweep():
             for node in column_node.left_sweep():
@@ -295,23 +329,15 @@ class Matrix:
 
         return labels
 
-    def generate_solutions(self):
+    def generate_solutions(self) -> Generator[list[list[int]], None, None]:
         """Wrapper for the search method
 
         Yields:
+            All possible exact cover matrices.
+            Gives each row as an array of their Node's column label.
         """
         self.search_calls = [0]
 
         for solution in self.search():
             # Yielding here allows processing solutions as soon as they are found instead of waiting for them all
             yield [self.get_row_labels(s) for s in solution]
-
-
-if __name__ == "__main__":
-    # Test problem
-    columns: list[int] = [1, 2, 3, 4, 5, 6, 7]
-    rows = [[1, 4, 7], [1, 4], [4, 5, 7], [3, 5, 6], [2, 3, 6, 7], [2, 7]]
-    cover = Matrix(columns, rows)
-
-    for solution in cover.generate_solutions():
-        print(solution)
