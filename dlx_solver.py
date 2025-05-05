@@ -40,7 +40,6 @@ class Node:
             # PERF: use generator object instead of list
             yield x  # Appends x to the generator object that is returned
             x = x.left  # Traverse left through matrix
-        # Return statement not needed due to use of yield
 
     def right_sweep(self) -> Generator[Node, None, None]:
         """
@@ -54,8 +53,7 @@ class Node:
         while x is not self:
             # PERF: use generator object instead of list
             yield x  # Appends x to the generator object that is returned
-            x = x.right  # Traverse left through matrix
-        # Return statement not needed due to use of yield
+            x = x.right  # Traverse right through matrix
 
     def up_sweep(self) -> Generator[Node, None, None]:
         """
@@ -69,8 +67,7 @@ class Node:
         while x is not self:
             # PERF: use generator object instead of list
             yield x  # Appends x to the generator object that is returned
-            x = x.up  # Traverse left through matrix
-        # Return statement not needed due to use of yield
+            x = x.up  # Traverse up through matrix
 
     def down_sweep(self) -> Generator[Node, None, None]:
         """
@@ -84,8 +81,7 @@ class Node:
         while x is not self:
             # PERF: use generator object instead of list
             yield x  # Appends x to the generator object that is returned
-            x = x.down  # Traverse left through matrix
-        # Return statement not needed due to use of yield
+            x = x.down  # Traverse down through matrix
 
 
 class HeaderNode(Node):
@@ -97,11 +93,10 @@ class HeaderNode(Node):
 
     # Technically left and right are now type HeaderNode not type Node
     # But subclasses can't have narrower types to their parents
-
     label: int
     size: int
 
-    def __init__(self, label) -> None:
+    def __init__(self, label: int) -> None:
         super().__init__()
         self.label = label
         self.size = 0
@@ -110,8 +105,9 @@ class HeaderNode(Node):
 class Matrix:
     """
     Attributes:
-        root: Root node. Not a real node in the matrix
-            but allows all others to come off from it.
+        root: Root node. Not a real node in the matrix but allows header nodes to be linked from it
+            and regular nodes linked to those header nodes.
+
         column_header: Maps labels to their root nodes for faster access.
         search_calls: List with number of calls to search method
             for each level in the recursion.
@@ -124,8 +120,7 @@ class Matrix:
             rows: Each list in rows represents a row.
                 Each int in that list refers to a column.
         """
-        # Root node is not a real "header node" but it has to be one for the structure to work
-        self.root: HeaderNode = HeaderNode(-1)
+        self.root: Node = Node()
         self.column_header: dict[int, HeaderNode] = {}
 
         # At the start 0 calls to search method have been made
@@ -206,7 +201,7 @@ class Matrix:
 
                 last = node
 
-    def cover(self, column: HeaderNode) -> None:
+    def _cover(self, column: HeaderNode) -> None:
         """
         Args:
             column: The HeaderNode of the column to cover
@@ -230,7 +225,7 @@ class Matrix:
                 # This node is being removed from the column. So decrement the size of the column.
                 node.column.size -= 1
 
-    def uncover(self, column: HeaderNode) -> None:
+    def _uncover(self, column: HeaderNode) -> None:
         """
         Args:
             column: The HeaderNode of the column to uncover
@@ -253,7 +248,7 @@ class Matrix:
         # Set column to left of current column to point to current column
         column.left.right = column
 
-    def search(self, recursion_level: int = 0, solution=None):
+    def _search(self, recursion_level: int = 0, solution=None):
         """Recursive search algorithm to find exact cover solutions.
         Args:
             recursion_level: Level of the recursive call.
@@ -282,13 +277,13 @@ class Matrix:
         # Iterate over HeaderNodes
         for column in self.root.right_sweep():
             # Ignore typechecker warnings
-            # root is a header node so everything to its right is also a header node
+            # Everything linked from left/right to the root node is a HeaderNode except the root node itself
             # So they do have the size attribute
             if column.size < size:  # type: ignore[attr-defined]
                 size = column.size  # type: ignore[attr-defined]
                 smallest = column  # type: ignore[attr-defined]
 
-        self.cover(smallest)  # type: ignore
+        self._cover(smallest)  # type: ignore
 
         # Iterate over nodes in column
         for column_node in smallest.down_sweep():  # type: ignore[unbound]
@@ -297,22 +292,22 @@ class Matrix:
 
             # Iterate over nodes in row to cover all columns this row has nodes in
             for node in column_node.right_sweep():
-                self.cover(node.column)
+                self._cover(node.column)
 
             # Recursive call to search(), extending the partial solution with x.
             # yield from passes up all valid solutions found before.
             # When search() ends a generator function with all solutions will be given.
-            yield from self.search(
+            yield from self._search(
                 recursion_level=recursion_level + 1, solution=solution + [x]
             )
 
             # If a solution wasn't found then uncover all nodes that we just covered.
             # Direction is arbritrary but must be the opposite of the one used when covering columns
             for j in column_node.left_sweep():
-                self.uncover(j.column)
-        self.uncover(smallest)  # type: ignore
+                self._uncover(j.column)
+        self._uncover(smallest)  # type: ignore
 
-    def get_row_labels(self, node: Node) -> list[int]:
+    def _get_row_labels(self, node: Node) -> list[int]:
         """
         Args:
             row: Node in the row to get labels from
@@ -338,6 +333,9 @@ class Matrix:
         """
         self.search_calls = [0]
 
-        for solution in self.search():
+        for solution in self._search():
             # Yielding here allows processing solutions as soon as they are found instead of waiting for them all
-            yield [self.get_row_labels(s) for s in solution]
+            yield [self._get_row_labels(s) for s in solution]
+
+
+# TODO: remove some unneeded comments
