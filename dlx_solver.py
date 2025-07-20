@@ -32,8 +32,7 @@ class Node:
         """
         x = self.left
         while x is not self:
-            # PERF: use generator object instead of list
-            yield x  # Appends x to the generator object that is returned
+            yield x
             x = x.left  # Traverse left through matrix
 
     def right_sweep(self) -> Generator[Node, None, None]:
@@ -46,8 +45,7 @@ class Node:
         """
         x = self.right
         while x is not self:
-            # PERF: use generator object instead of list
-            yield x  # Appends x to the generator object that is returned
+            yield x
             x = x.right  # Traverse right through matrix
 
     def up_sweep(self) -> Generator[Node, None, None]:
@@ -60,8 +58,7 @@ class Node:
         """
         x = self.up
         while x is not self:
-            # PERF: use generator object instead of list
-            yield x  # Appends x to the generator object that is returned
+            yield x
             x = x.up  # Traverse up through matrix
 
     def down_sweep(self) -> Generator[Node, None, None]:
@@ -74,8 +71,7 @@ class Node:
         """
         x = self.down
         while x is not self:
-            # PERF: use generator object instead of list
-            yield x  # Appends x to the generator object that is returned
+            yield x
             x = x.down  # Traverse down through matrix
 
 
@@ -253,8 +249,6 @@ class Matrix:
         Yields:
             List of rows consisting a solution
         """
-
-        # If rows not passed in as argument set it to an empty list
         if solution is None:
             solution = []
 
@@ -272,18 +266,24 @@ class Matrix:
 
         size = float("inf")
         # Iterate over HeaderNodes
+        smallest = None
         for column in self.root.right_sweep():
-            # Ignore typechecker warnings
             # Everything linked from left/right to the root node is a HeaderNode except the root node itself
-            # So they do have the size attribute
+            # So they do have the size attribute, thus typechecker warnings can be ignored
             if column.size < size:  # type: ignore[attr-defined]
                 size = column.size  # type: ignore[attr-defined]
                 smallest = column  # type: ignore[attr-defined]
 
-        self._cover(smallest)  # type: ignore
+        if not smallest:
+            raise Exception("_search() failed. No columns to cover.")
+            # This Exception should never be raised as a solution should be yielded if there are no more columns
+            # It is just here to avoid typechecker warnings from smallest being unbound
+            # Despite that being impossible due to the afformentioned check
+
+        self._cover(smallest.column)
 
         # Iterate over nodes in column
-        for column_node in smallest.down_sweep():  # type: ignore[unbound]
+        for column_node in smallest.down_sweep():
             # This will be added to solution later
             x = column_node
 
@@ -302,8 +302,7 @@ class Matrix:
             # Direction is arbritrary but must be the opposite of the one used when covering columns
             for j in column_node.left_sweep():
                 self._uncover(j.column)
-        self._uncover(smallest)  # type: ignore[unbound]
-        # TODO: there are a lot of type: ignores in this function, try to remove them
+        self._uncover(smallest.column)
 
     def _get_row_labels(self, node: Node) -> list[int]:
         """

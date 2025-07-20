@@ -1,5 +1,6 @@
 import pytest
 import dlx_solver
+import sudoku
 
 
 @pytest.fixture
@@ -30,7 +31,15 @@ def test_solve_unique_solution(matrix_unique_solution):
         [[1, 4], [5, 6, 3], [2, 7]]
     ]
 
+
 # TODO:
 # * Multiple solution tests
-# * Test Matrix() methods seperately 
+# * Test Matrix() methods seperately
 # * Test datatypes
+
+
+@pytest.fixture
+def board():
+    return sudoku.Board(
+        "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
+    )

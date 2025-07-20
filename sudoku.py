@@ -24,28 +24,24 @@ class Cells:
     def add_cell(self, coordinate: tuple[int, int], value: int) -> None:
         self.cells[*coordinate] = value
 
-    def get_cells(self) -> list[tuple[int, int, int]]:
+    def get_cells(self, include_empty=True) -> list[tuple[int, int, int]]:
         """
         Returns:
             list of (column, row, digit)
         """
         cells = []
-        for coord in np.argwhere(self.cells < 10):
+        for coord in np.argwhere(self.cells > (-2 if include_empty else 0)):
             coord = list(map(int, coord))
             cells.append((*coord, int(self.cells[coord[0]][coord[1]])))
         return cells
 
 
 class Hints:
-    """"""
-
-    @staticmethod
-    def hint_array(hints: list[dict[str, tuple[int, int]]]) -> npt.NDArray[np.bool]:
-        np_hints = np.full((9, 9, 9), False, dtype=bool)
-        for cell in hints:
-            for value in cell["values"]:
-                np_hints[*cell["coordinate"], value] = True
-        return np_hints
+    """
+    Attributes:
+        hints: 9x9x9 boolean array. First dimension is row, second is column, third is whether there is a hint there or not
+            This means (x, y) 5 would be hints[y][x][4]
+    """
 
     def __init__(
         self,
@@ -61,7 +57,7 @@ class Hints:
             rgba: tuple with numbers from 0-255 representing red, green, blue and alpha
             candidate: True if hint array represents possible candidates
         """
-        self.hints: npt.NDArray[np.bool] = self.hint_array([])
+        self.hints: npt.NDArray[np.bool] = np.full((9, 9, 9), False, dtype=bool)
         self.rgba: tuple[int, int, int, int] = rgba
         self.candidate: bool = candidate
         self.strikethrough: Optional[tuple[int, int, int, int]] = strikethrough
@@ -69,15 +65,11 @@ class Hints:
     def is_candidate(self) -> bool:
         return self.candidate
 
-    def add_hints(self, hints: list[dict[str, tuple[int, int]]]) -> None:
-        for cell in hints:
-            for value in cell["values"]:
-                self.hints[*cell["coordinate"], value] = True
+    def add_hints(self, hints: npt.NDArray[np.bool]) -> None:
+        self.hints = np.logical_or(self.hints, hints)
 
-    def remove_hints(self, hints: list[dict[str, tuple[int, int]]]) -> None:
-        for cell in hints:
-            for value in cell["values"]:
-                self.hints[*cell["coordinate"], value] = False
+    def remove_hints(self, hints: npt.NDArray[np.bool]) -> None:
+        self.hints = np.logical_and(np.logical_not(hints), self.hints)
 
     def get_hints(self) -> npt.NDArray[np.bool]:
         return self.hints
@@ -96,6 +88,10 @@ class Board:
             "strikethrough": Hints((146, 153, 166, 255), (214, 41, 32, 255), False),
         }
 
+        AUTONORMAL = True  # TODO: move this to somewhere else. Idealing reading from a settings.* file.
+        if AUTONORMAL:
+            self.all_normal()
+
     def add_hint_type(
         self,
         name: str,
@@ -106,6 +102,63 @@ class Board:
 
     def remove_hint_type(self, name: str) -> None:
         self.hints.pop(name)
+
+    @staticmethod
+    def adjacent_row(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
+        board = np.full((9, 9), False, dtype=bool)
+        board[coords[0] - 1, :] = True  # Row
+        return board
+
+    @staticmethod
+    def adjacent_column(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
+        board = np.full((9, 9), False, dtype=bool)
+        board[:, coords[1] - 1] = True  # Column
+        return board
+
+    @staticmethod
+    def adjacent_box(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
+        # FIXME:
+        board = np.full((9, 9), False, dtype=bool)
+        board[
+            3 * ((coords[0] - 1) // 3) : 3 * ((coords[0] - 1) // 3) + 3,
+            3 * ((coords[1] - 1) // 3) : 3 * ((coords[1] - 1) // 3) + 3,
+        ] = True  # Box
+        return board
+
+    @staticmethod
+    def adjacent(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
+        """
+        Args:
+            coords:
+                row, column 1-based coordinates
+        Returns:
+            Boolean array where True represents cells adjacent to cell given
+        """
+
+        return np.logical_or(
+            Board.adjacent_row(coords),
+            Board.adjacent_column(coords),
+            Board.adjacent_box(coords),
+        )
+
+    def all_normal(self) -> None:
+        self.hints["normal"].add_hints(np.full((9, 9, 9), True, dtype=bool))
+
+    def auto_normal(self) -> None:
+        """
+        Remove candidates from cells if they have a number adjacent to them
+        """
+        mask = np.full((9, 9, 9), False, dtype=bool)
+        for cell in self.cells.get_cells():
+            if cell[2] > 0:
+                mask[cell[2] - 1] = np.logical_or(
+                    self.adjacent((cell[0] + 1, cell[1] + 1)), mask[cell[2] - 1]
+                )
+
+                # Remove all hints if a cell is there
+                mask[:, cell[0], cell[1]] = True
+
+        self.hints["normal"].remove_hints(mask)
 
     def get_candidates(self) -> npt.NDArray[np.bool]:
         candidates = np.full((9, 9, 9), False, dtype=bool)
@@ -203,8 +256,17 @@ class Board:
 # for solution in board.solve():
 #     print(solution)
 #
-board = Board(
-    "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",
-)
-for solution in board.solve():
-    print(solution)
+if __name__ == "__main__":
+    board = Board(
+        "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",
+    )
+    for solution in board.solve():
+        print(solution)
+
+    print(board.adjacent((1, 2)))
+
+# TODO: check I have x and y coordinates the right way round for all my methods
+# and check all the +1s and -1s are correct
+# It should always be row then column i.e. (y,x)
+# Also worth thinking about 1/0 based indexing. Both are easier in different ways but 0-based is probably easiest.
+# Think more about whether varients should be supported
