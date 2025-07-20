@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Generator
 import numpy as np
 import numpy.typing as npt
 import dlx_solver as dlx
@@ -14,14 +14,14 @@ class Cells:
     clues: npt.NDArray[np.int8]
     cells: npt.NDArray[np.int8]
 
-    def __init__(self, clues: str):
+    def __init__(self, clues: str) -> None:
         values = [-1 if clue == "." else int(clue) for clue in clues]
         self._clues = np.array(values, dtype=np.int8).reshape((9, 9))
         self._clues.flags.writeable = False
 
         self.cells = np.copy(self._clues)
 
-    def add_cell(self, coordinate: tuple[int, int], value: int):
+    def add_cell(self, coordinate: tuple[int, int], value: int) -> None:
         self.cells[*coordinate] = value
 
     def get_cells(self) -> list[tuple[int, int, int]]:
@@ -40,33 +40,46 @@ class Hints:
     """"""
 
     @staticmethod
-    def hint_array(hints: list[dict[str, tuple[int, int]]]):
+    def hint_array(hints: list[dict[str, tuple[int, int]]]) -> npt.NDArray[np.bool]:
         np_hints = np.full((9, 9, 9), False, dtype=bool)
         for cell in hints:
             for value in cell["values"]:
                 np_hints[*cell["coordinate"], value] = True
         return np_hints
 
-    def __init__(self):
+    def __init__(
+        self,
+        rgba: tuple[int, int, int, int],
+        strikethrough: Optional[tuple[int, int, int, int]] = None,
+        candidate: bool = True,
+    ) -> None:
         """
         Args:
             hints: a list of dictionaries with the keys "coordinate" and "values"
                 where the value of "coordinate" is a tuple containing the cartesian coordinate
                 and "values" is a list of the values at that coordinate
+            rgba: tuple with numbers from 0-255 representing red, green, blue and alpha
+            candidate: True if hint array represents possible candidates
         """
-        self.hints = self.hint_array([])
+        self.hints: npt.NDArray[np.bool] = self.hint_array([])
+        self.rgba: tuple[int, int, int, int] = rgba
+        self.candidate: bool = candidate
+        self.strikethrough: Optional[tuple[int, int, int, int]] = strikethrough
 
-    def add_hints(self, hints: list[dict[str, tuple[int, int]]]):
+    def is_candidate(self) -> bool:
+        return self.candidate
+
+    def add_hints(self, hints: list[dict[str, tuple[int, int]]]) -> None:
         for cell in hints:
             for value in cell["values"]:
                 self.hints[*cell["coordinate"], value] = True
 
-    def remove_hints(self, hints: list[dict[str, tuple[int, int]]]):
+    def remove_hints(self, hints: list[dict[str, tuple[int, int]]]) -> None:
         for cell in hints:
             for value in cell["values"]:
                 self.hints[*cell["coordinate"], value] = False
 
-    def get_hints(self):
+    def get_hints(self) -> npt.NDArray[np.bool]:
         return self.hints
 
 
@@ -74,18 +87,36 @@ class Board:
     def __init__(
         self,
         cells: str,
-    ):  # TODO: work on args' types. Probably worth making them actually optional arguments instead of Optional[]
-        # and take Hints as type instead of converting to it later.
+    ) -> None:
         self.cells = Cells(cells)
-        # TODO: allow clues and cells to be seperate
-        self.hints = {
-            "normal": Hints(),
-            "highlighted": Hints(),
-            "strikethrough": Hints(),
+
+        self.hints: dict[str, Hints] = {
+            "normal": Hints((146, 153, 166, 255)),
+            "highlighted": Hints((66, 197, 212, 255)),
+            "strikethrough": Hints((146, 153, 166, 255), (214, 41, 32, 255), False),
         }
 
+    def add_hint_type(
+        self,
+        name: str,
+        rgba: tuple[int, int, int, int],
+        strikethrough: Optional[tuple[int, int, int, int]],
+    ) -> None:
+        self.hints.update({name: Hints(rgba, strikethrough)})
+
+    def remove_hint_type(self, name: str) -> None:
+        self.hints.pop(name)
+
+    def get_candidates(self) -> npt.NDArray[np.bool]:
+        candidates = np.full((9, 9, 9), False, dtype=bool)
+
+        for hint_type in self.hints.values():
+            if hint_type.is_candidate():
+                candidates = np.logical_or(candidates, hint_type.get_hints())
+        return candidates
+
     @staticmethod
-    def _row_add(column, row, value):
+    def _row_add(column: int, row: int, value: int) -> list[int]:
         return [  # One value per constraint
             9 * row + column,  # Cell constraint
             81 + 9 * row + (value - 1),  # Row constraint
@@ -93,7 +124,7 @@ class Board:
             243 + 9 * (3 * (row // 3) + (column // 3)) + (value - 1),  # Box constraint
         ]
 
-    def create_matrix(self):
+    def create_matrix(self) -> dlx.Matrix:
         """
         Labels are constraints
         Labels 0-80 one number per cell
@@ -116,8 +147,16 @@ class Board:
         return dlx.Matrix(labels, rows)
 
     @staticmethod
-    def extract_from_matrix(solution):
+    def extract_from_matrix(solution: list[list[int]]) -> npt.NDArray[np.int8]:
+        """
+        Args:
+            solution: a list of lists of labels from DLX matrix
+        Returns:
+            9x9 np.NDArray with full solution
+        """
         board: npt.NDArray = np.full((9, 9), -1, dtype=np.int8)
+
+        # Convert DLX matrix representation to 9x9 2D list[list[int]]
         for row in solution:
             row.sort()
             # Coordinates
@@ -128,7 +167,9 @@ class Board:
             board[x][y] = value
         return board
 
-    def solve(self, one_solution: bool = True):
+    def solve(
+        self, one_solution: bool = True
+    ) -> Generator[npt.NDArray[np.int8], None, None]:
         matrix = self.create_matrix()
         for solution in matrix.generate_solutions():
             yield self.extract_from_matrix(solution)

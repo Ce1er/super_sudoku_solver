@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Generator
+from typing import Generator, Optional
 
 
 class Node:
@@ -11,21 +11,16 @@ class Node:
         down: Node below
     """
 
-    left: Node
-    right: Node
-    up: Node
-    down: Node
-
     # Reference to the column header node
     # Is not assigned in __init__ as it cannot be known at this stage
     column: HeaderNode
 
     def __init__(self) -> None:
         # Set node to be its own neighbour in all 4 directions
-        self.left = self
-        self.right = self
-        self.up = self
-        self.down = self
+        self.left: Node = self
+        self.right: Node = self
+        self.up: Node = self
+        self.down: Node = self
 
     def left_sweep(self) -> Generator[Node, None, None]:
         """
@@ -248,7 +243,9 @@ class Matrix:
         # Set column to left of current column to point to current column
         column.left.right = column
 
-    def _search(self, recursion_level: int = 0, solution=None):
+    def _search(
+        self, recursion_level: int = 0, solution: Optional[list[Node]] = None
+    ) -> Generator[list[Node], None, None]:
         """Recursive search algorithm to find exact cover solutions.
         Args:
             recursion_level: Level of the recursive call.
@@ -305,7 +302,8 @@ class Matrix:
             # Direction is arbritrary but must be the opposite of the one used when covering columns
             for j in column_node.left_sweep():
                 self._uncover(j.column)
-        self._uncover(smallest)  # type: ignore
+        self._uncover(smallest)  # type: ignore[unbound]
+        # TODO: there are a lot of type: ignores in this function, try to remove them
 
     def _get_row_labels(self, node: Node) -> list[int]:
         """
