@@ -106,13 +106,13 @@ class Board:
     @staticmethod
     def adjacent_row(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
         board = np.full((9, 9), False, dtype=bool)
-        board[coords[0] - 1, :] = True  # Row
+        board[coords[0], :] = True  # Row
         return board
 
     @staticmethod
     def adjacent_column(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
         board = np.full((9, 9), False, dtype=bool)
-        board[:, coords[1] - 1] = True  # Column
+        board[:, coords[1]] = True  # Column
         return board
 
     @staticmethod
@@ -120,9 +120,10 @@ class Board:
         # FIXME:
         board = np.full((9, 9), False, dtype=bool)
         board[
-            3 * ((coords[0] - 1) // 3) : 3 * ((coords[0] - 1) // 3) + 3,
-            3 * ((coords[1] - 1) // 3) : 3 * ((coords[1] - 1) // 3) + 3,
+            3 * (coords[0] // 3) : 3 * (coords[0] // 3) + 3,
+            3 * (coords[1] // 3) : 3 * (coords[1] // 3) + 3,
         ] = True  # Box
+        print(board)
         return board
 
     @staticmethod
@@ -137,8 +138,10 @@ class Board:
 
         return np.logical_or(
             Board.adjacent_row(coords),
-            Board.adjacent_column(coords),
-            Board.adjacent_box(coords),
+            np.logical_or(
+                Board.adjacent_column(coords),
+                Board.adjacent_box(coords),
+            ),
         )
 
     def all_normal(self) -> None:
@@ -234,11 +237,6 @@ class Board:
 #
 # board = Board(
 #     ".83..241.2.4..5....1..74.283..49.15...7.1...69..753.8.84....6..5...4..31136.2.5..",
-#     {},
-#     {},
-#     {},
-#     {},
-#     {},
 # )
 # # Solution = "783962415294185763615374928328496157457218396961753284849531672572649831136827549"
 # for solution in board.solve():
@@ -247,11 +245,6 @@ class Board:
 #
 # board = Board(
 #     ".5..8.......3...9.21..9...862.7..1....5.2......3.....6.....47..89..3...1..6......",
-#     {},
-#     {},
-#     {},
-#     {},
-#     {},
 # )
 # for solution in board.solve():
 #     print(solution)
