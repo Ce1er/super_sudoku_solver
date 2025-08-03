@@ -11,7 +11,7 @@ class Cells:
         cells: the union of the given cells and guesses.
     """
 
-    clues: npt.NDArray[np.int8]
+    _clues: npt.NDArray[np.int8]
     cells: npt.NDArray[np.int8]
 
     def __init__(self, clues: str) -> None:
@@ -24,15 +24,16 @@ class Cells:
     def add_cell(self, coordinate: tuple[int, int], value: int) -> None:
         self.cells[*coordinate] = value
 
-    def get_cells(self, include_empty=True) -> list[tuple[int, int, int]]:
+    def get_cells(self, include_empty=False) -> list[tuple[int, int, int]]:
         """
         Returns:
             list of (column, row, digit)
+            column, row are 0 based but digit is 1 based
         """
         cells = []
         for coord in np.argwhere(self.cells > (-2 if include_empty else 0)):
             coord = list(map(int, coord))
-            cells.append((*coord, int(self.cells[coord[0]][coord[1]])))
+            cells.append((*coord, int(self.cells[coord[0], coord[1]])))
         return cells
 
 
@@ -66,10 +67,10 @@ class Hints:
         return self.candidate
 
     def add_hints(self, hints: npt.NDArray[np.bool]) -> None:
-        self.hints = np.logical_or(self.hints, hints)
+        self.hints = self.hints | hints
 
     def remove_hints(self, hints: npt.NDArray[np.bool]) -> None:
-        self.hints = np.logical_and(np.logical_not(hints), self.hints)
+        self.hints = (~hints) & self.hints
 
     def get_hints(self) -> npt.NDArray[np.bool]:
         return self.hints
@@ -105,43 +106,56 @@ class Board:
 
     @staticmethod
     def adjacent_row(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
+        """
+        Args:
+            coords: (row, column) with 0-based indexing
+        Returns:
+            Boolean array where True represents cells in same row to cell given
+        """
         board = np.full((9, 9), False, dtype=bool)
         board[coords[0], :] = True  # Row
         return board
 
     @staticmethod
     def adjacent_column(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
+        """
+        Args:
+            coords: (row, column) with 0-based indexing
+        Returns:
+            Boolean array where True represents cells in same column to cell given
+        """
         board = np.full((9, 9), False, dtype=bool)
         board[:, coords[1]] = True  # Column
         return board
 
     @staticmethod
     def adjacent_box(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
-        # FIXME:
+        """
+        Args:
+            coords: (row, column) with 0-based indexing
+        Returns:
+            Boolean array where True represents cells in same box to cell given
+        """
         board = np.full((9, 9), False, dtype=bool)
         board[
             3 * (coords[0] // 3) : 3 * (coords[0] // 3) + 3,
             3 * (coords[1] // 3) : 3 * (coords[1] // 3) + 3,
         ] = True  # Box
-        print(board)
         return board
 
     @staticmethod
     def adjacent(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
         """
         Args:
-            coords:
-                row, column 1-based coordinates
+            coords: (row, column) with 0-based indexing
         Returns:
             Boolean array where True represents cells adjacent to cell given
         """
 
-        return np.logical_or(
-            Board.adjacent_row(coords),
-            np.logical_or(
-                Board.adjacent_column(coords),
-                Board.adjacent_box(coords),
-            ),
+        return (
+            Board.adjacent_row(coords)
+            | Board.adjacent_column(coords)
+            | Board.adjacent_box(coords)
         )
 
     def all_normal(self) -> None:
@@ -153,13 +167,10 @@ class Board:
         """
         mask = np.full((9, 9, 9), False, dtype=bool)
         for cell in self.cells.get_cells():
-            if cell[2] > 0:
-                mask[cell[2] - 1] = np.logical_or(
-                    self.adjacent((cell[0] + 1, cell[1] + 1)), mask[cell[2] - 1]
-                )
+            mask[cell[2] - 1] = self.adjacent((cell[0], cell[1])) | mask[cell[2] - 1]
 
-                # Remove all hints if a cell is there
-                mask[:, cell[0], cell[1]] = True
+            # Remove all hints if a cell is there
+            mask[:, cell[0], cell[1]] = True
 
         self.hints["normal"].remove_hints(mask)
 
@@ -168,7 +179,7 @@ class Board:
 
         for hint_type in self.hints.values():
             if hint_type.is_candidate():
-                candidates = np.logical_or(candidates, hint_type.get_hints())
+                candidates = candidates | hint_type.get_hints()
         return candidates
 
     @staticmethod
@@ -256,10 +267,20 @@ if __name__ == "__main__":
     for solution in board.solve():
         print(solution)
 
+    print("1, 2")
     print(board.adjacent((1, 2)))
+    print("2, 2")
+    print(board.adjacent((2, 2)))
+    print("1, 1")
+    print(board.adjacent((1, 1)))
+    print("0, 0")
+    print(board.adjacent((0, 0)))
+    print("5, 8")
+    print(board.adjacent((5, 8)))
+
 
 # TODO: check I have x and y coordinates the right way round for all my methods
 # and check all the +1s and -1s are correct
-# It should always be row then column i.e. (y,x)
+# It should always be row then column i.e. (y,x) as more common with sudoku rxcy
 # Also worth thinking about 1/0 based indexing. Both are easier in different ways but 0-based is probably easiest.
 # Think more about whether varients should be supported

@@ -7,25 +7,45 @@ from itertools import product
 class Human_Solver:
     def __init__(self, board: Board) -> None:
         self.candidates: npt.NDArray[np.bool] = board.get_candidates()  # 9x9x9
+        # dimension 1 = number
 
     def _singles(self):
-        for x, y in product(range(0, 9), repeat=2):
+        print(self.candidates)
+        for coord in np.argwhere(np.full((9, 9), True, dtype=bool)):
+            row, column = coord[0], coord[1]
             for num in range(1, 10):
-                if not self.candidates[num - 1][y][x]:
-                    continue
-                if True not in (self.candidates[num - 1][x - 1, :]):
-                    print(
-                        f"Cell ({x},{y}) is {num} because there are no other {num}s in the row"
+                if (
+                    np.count_nonzero(
+                        Board.adjacent_row((row, column)) & self.candidates[num - 1]
                     )
-                if True not in (self.candidates[num - 1][:, y - 1]):
-                    print("Single for row")
-                if True not in (
-                    self.candidates[num - 1][
-                        3 * ((x - 1) // 3) : 3 * ((x - 1) // 3) + 3,
-                        3 * ((y - 1) // 3) : 3 * ((y - 1) // 3) + 3,
-                    ]
+                    == 1
+                    and self.candidates[num - 1, row, column]
                 ):
-                    print("Single for box")
+                    print(
+                        f"Cell ({row+1}, {column+1}) is {num} because there are no other {num}s in the row."
+                    )
+
+                if (
+                    np.count_nonzero(
+                        Board.adjacent_column((row, column)) & self.candidates[num - 1]
+                    )
+                    == 1
+                    and self.candidates[num - 1, row, column]
+                ):
+                    print(
+                        f"Cell ({row+1}, {column+1}) is {num} because there are no other {num}s in the column."
+                    )
+
+                if (
+                    np.count_nonzero(
+                        Board.adjacent_box((row, column)) & self.candidates[num - 1]
+                    )
+                    == 1
+                    and self.candidates[num - 1, row, column]
+                ):
+                    print(
+                        f"Cell ({row+1}, {column+1}) is {num} because there are no other {num}s in the box."
+                    )
 
 
 if __name__ == "__main__":
