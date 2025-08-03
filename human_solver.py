@@ -10,41 +10,17 @@ class Human_Solver:
         # dimension 1 = number
 
     def _singles(self):
-        print(self.candidates)
-        for coord in np.argwhere(np.full((9, 9), True, dtype=bool)):
-            row, column = coord[0], coord[1]
-            for num in range(1, 10):
-                if (
-                    np.count_nonzero(
-                        Board.adjacent_row((row, column)) & self.candidates[num - 1]
-                    )
-                    == 1
-                    and self.candidates[num - 1, row, column]
-                ):
+        types = {
+            Board.adjacent_row: "row",
+            Board.adjacent_column: "column",
+            Board.adjacent_box: "box",
+        }
+        for coord in np.argwhere(self.candidates):
+            num, row, column = coord
+            for func, adjacency in types.items():
+                if np.count_nonzero(func((row, column)) & self.candidates[num]) == 1:
                     print(
-                        f"Cell ({row+1}, {column+1}) is {num} because there are no other {num}s in the row."
-                    )
-
-                if (
-                    np.count_nonzero(
-                        Board.adjacent_column((row, column)) & self.candidates[num - 1]
-                    )
-                    == 1
-                    and self.candidates[num - 1, row, column]
-                ):
-                    print(
-                        f"Cell ({row+1}, {column+1}) is {num} because there are no other {num}s in the column."
-                    )
-
-                if (
-                    np.count_nonzero(
-                        Board.adjacent_box((row, column)) & self.candidates[num - 1]
-                    )
-                    == 1
-                    and self.candidates[num - 1, row, column]
-                ):
-                    print(
-                        f"Cell ({row+1}, {column+1}) is {num} because there are no other {num}s in the box."
+                        f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}"
                     )
 
 
