@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.typing as npt
 from sudoku import Board
-from itertools import product
 
 
 class Human_Solver:
@@ -32,11 +31,6 @@ if __name__ == "__main__":
     )
 
     board.auto_normal()
-    # TODO: make it work. Probably off by one error related with coordinates sometimes 0 based and sometimes 1 based
-
-    # print(board.hints["normal"].get_hints())
-
-    # print(board.get_candidates())
 
     human = Human_Solver(board)
 

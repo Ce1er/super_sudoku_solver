@@ -279,8 +279,3 @@ if __name__ == "__main__":
     print(board.adjacent((5, 8)))
 
 
-# TODO: check I have x and y coordinates the right way round for all my methods
-# and check all the +1s and -1s are correct
-# It should always be row then column i.e. (y,x) as more common with sudoku rxcy
-# Also worth thinking about 1/0 based indexing. Both are easier in different ways but 0-based is probably easiest.
-# Think more about whether varients should be supported
