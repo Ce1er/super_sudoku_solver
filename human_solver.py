@@ -37,7 +37,6 @@ class Technique:
     def __init__(self, technique, message):
         self.technique = technique
         self.message = self.set_message(message)
-        print(self.message)
 
     def add_cell(self, *coords: npt.NDArray[np.int8]): ...
 
@@ -51,6 +50,7 @@ class Human_Solver:
 
     @staticmethod
     def _pretty_coords(row, column):
+        print("asdf")
         return f"({row+1}, {column+1})"
 
     def _naked_singles(self):
@@ -74,14 +74,20 @@ class Human_Solver:
                 if (
                     np.count_nonzero(func((row, column)) & self.candidates[num]) == 1
                 ):  # TODO: also check for naked singles, honestly naked varieties seem like they tend to be different enough that it might make more sense to have in seperate functions. It would also make checking which technique is easiest easier as only the method used needs to be considered instead of the specifics of how the technique was applied.
-                    print(
-                        f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}"
-                    )
                     x = Technique(
                         "Hidden Single",  # It could be a naked single but _naked_singles() should be ran first
                         f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}",
                     )
                     x.add_cell(coord)
+                    print(
+                        f"""
+Technique(
+                        "Hidden Single",  # It could be a naked single but _naked_singles() should be ran first
+                        f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}",
+                    ).add_cell({coord})
+
+                          """
+                    )
                     yield x  # Maybe yield instead but this is prob best, only getting first one. Could make testing harder tho because if I reimplement it in a different way it could find a different single instead and which single to find really doesn't matter. Yielding could maybe give more flexibility with a hint system, allowing the user to see several examples.
 
     def _naked_pairs(self):
@@ -162,7 +168,8 @@ if __name__ == "__main__":
 
     human: Human_Solver = Human_Solver(board)
 
-    human._naked_singles()
+    for technique in human._hidden_singles():
+        pass
 
     # TODO: tests needed for all techniques. This is probably a higher priority than adding more techniques. Testing properly is tricky because there may be several valid ways to apply the technique and which one gets used really doesn't matter.
     # techniques are now yielded so tests should check all of them. Although there could maybe be some issues like if a hidden single was hidden single for box and column would that be 1 or 2 techniques.
