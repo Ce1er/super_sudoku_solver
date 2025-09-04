@@ -202,7 +202,7 @@ class Board:
         rows = []
 
         # Number of rows = clues + 9 * (81-clues)
-        for column, row, value in self.cells.get_cells():
+        for column, row, value in self.cells.get_cells(include_empty=True):
             if value != -1:
                 rows.append(self._row_add(column, row, value))
             else:
@@ -224,6 +224,7 @@ class Board:
         board: npt.NDArray = np.full((9, 9), -1, dtype=np.int8)
 
         # Convert DLX matrix representation to 9x9 2D list[list[int]]
+        count = 0
         for row in solution:
             row.sort()
             # Coordinates
@@ -232,6 +233,7 @@ class Board:
 
             value = (row[1] - 81) % 9 + 1
             board[x][y] = value
+            count += 1
         return board
 
     def solve(
@@ -244,8 +246,6 @@ class Board:
                 break
 
 
-#
-#
 # board = Board(
 #     ".83..241.2.4..5....1..74.283..49.15...7.1...69..753.8.84....6..5...4..31136.2.5..",
 # )
@@ -253,13 +253,14 @@ class Board:
 # for solution in board.solve():
 #     print(solution)
 #
-#
+# exit()
+
 # board = Board(
 #     ".5..8.......3...9.21..9...862.7..1....5.2......3.....6.....47..89..3...1..6......",
 # )
 # for solution in board.solve():
 #     print(solution)
-#
+
 if __name__ == "__main__":
     board = Board(
         "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",
@@ -267,15 +268,13 @@ if __name__ == "__main__":
     for solution in board.solve():
         print(solution)
 
-    print("1, 2")
-    print(board.adjacent((1, 2)))
-    print("2, 2")
-    print(board.adjacent((2, 2)))
-    print("1, 1")
-    print(board.adjacent((1, 1)))
-    print("0, 0")
-    print(board.adjacent((0, 0)))
-    print("5, 8")
-    print(board.adjacent((5, 8)))
-
-
+    # print("1, 2")
+    # print(board.adjacent((1, 2)))
+    # print("2, 2")
+    # print(board.adjacent((2, 2)))
+    # print("1, 1")
+    # print(board.adjacent((1, 1)))
+    # print("0, 0")
+    # print(board.adjacent((0, 0)))
+    # print("5, 8")
+    # print(board.adjacent((5, 8)))

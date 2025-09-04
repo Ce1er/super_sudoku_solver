@@ -18,20 +18,46 @@ class Technique:
         new_message: str = ""
         for part in message:
             if isinstance(part, str):
-                new_message += " " + part
+                new_message += part
             elif isinstance(part, np.ndarray):
-                if part.size == 2:
-                    # TODO: different coordinate formatting options
-                    new_message += f" Cell ({part[0]+1}, {part[1]+1})"
-                elif part.size == 1:
-                    new_message += f" {int(part.reshape(1)[0])+1}"
+                # TODO: This is very hacky and not very good anyway, make better.
+                if part.ndim == 1:
+                    if part.size == 1:
+                        new_message += f"Number {int(part)}"
+                    else:
+                        new_message += "Numbers "
+                        for number in map(int, part):
+                            new_message += f"{number} "
+                elif part.ndim == 2:
+                    if part.size == 2:
+                        new_message += f" Cell ({part[0]+1}, {part[1]+1})"
+                    else:
+                        new_message += " Cells "
+                        for coord in part:
+                            new_message += f"({coord[0]+1}, {coord[1]+1})"
+                    # TODO: make message a bit better, sometimes spaces are there when they shouldn't be
                 elif part.ndim == 3:
-                    ...  # Candidates, all other parts are for cells
+                    raise NotImplementedError
                 else:
-                    new_message += " Cells "
-                    for coord in part:
-                        new_message += f"({coord[0]+1}, {coord[1]+1})"
-                # TODO: make message a bit better, sometimes spaces are there when they shouldn't be
+                    raise NotImplementedError
+
+                # if part.size == 2 and part.ndim == 2:
+                #     # TODO: different coordinate formatting options
+                #     print(part)
+                #     new_message += f" Cell ({part[0]+1}, {part[1]+1})"
+                # elif part.size == 1:
+                #     new_message += f" {int(part.reshape(1)[0])+1}"
+                # elif part.ndim == 1:
+                #     new_message += f" Numbers {part}"
+                #
+                # elif part.ndim == 3:
+                #     ...  # Candidates, all other parts are for cells
+                # else:
+                #
+                #     new_message += " Cells "
+                #     for coord in part:
+                #         new_message += f"({coord[0]+1}, {coord[1]+1})"
+                # # TODO: make message a bit better, sometimes spaces are there when they shouldn't be
         return new_message
 
     def __init__(self, technique, message):
@@ -50,7 +76,6 @@ class Human_Solver:
 
     @staticmethod
     def _pretty_coords(row, column):
-        print("asdf")
         return f"({row+1}, {column+1})"
 
     def _naked_singles(self):
@@ -79,15 +104,15 @@ class Human_Solver:
                         f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}",
                     )
                     x.add_cell(coord)
-                    print(
-                        f"""
-Technique(
-                        "Hidden Single",  # It could be a naked single but _naked_singles() should be ran first
-                        f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}",
-                    ).add_cell({coord})
-
-                          """
-                    )
+                    #                     print(
+                    #                         f"""
+                    # Technique(
+                    #                         "Hidden Single",  # It could be a naked single but _naked_singles() should be ran first
+                    #                         f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}",
+                    #                     ).add_cell({coord})
+                    #
+                    #                           """
+                    #                     )
                     yield x  # Maybe yield instead but this is prob best, only getting first one. Could make testing harder tho because if I reimplement it in a different way it could find a different single instead and which single to find really doesn't matter. Yielding could maybe give more flexibility with a hint system, allowing the user to see several examples.
 
     def _naked_pairs(self):
@@ -108,12 +133,14 @@ Technique(
                         & (np.add.reduce(self.candidates, axis=0) == 2),
                     ).reshape(9, 9)
                 )
+                if len(coords) == 1:
+                    continue
 
                 nums = np.argwhere(self.candidates[:, coords[0][0], coords[0][1]])
-                x = Technique(
-                    "Naked Pair", "Cells {coords}, numbers {nums} along {adjacency}"
+                yield Technique(
+                    "Naked Pair",
+                    [coords, "numbers", nums, "along", adjacency],
                 )  # TODO: format coords
-                yield x
 
     def _hidden_pairs(self):
         types = {
@@ -147,14 +174,19 @@ Technique(
                             yield x
 
     def hint(self):
-        types = [self._singles, self._pairs]
+        types = [
+            self._naked_singles,
+            self._hidden_singles,
+            self._naked_pairs,
+            self._hidden_pairs,
+        ]
         # Maybe doing this async in some way could help. But because if only returns the easiest technique it might not be the easiest to do.
         # Could potentially start looking for all types at the same time and await them in order of easiest to hardest and return first non-null.
         # As long as I keep writing the techniques efficiently, using numpy as much as possible it shouldn't really matter if it is async or not but maybe it would with some of the more advanced techniques, like if I do 3d medusa chain analysis.
         for technique in types:
-            x = technique()
-            if x:
-                yield x
+            for y in technique():
+                if y:
+                    yield y
 
 
 if __name__ == "__main__":
@@ -169,7 +201,7 @@ if __name__ == "__main__":
     human: Human_Solver = Human_Solver(board)
 
     for technique in human._hidden_singles():
-        pass
+        print("found")
 
     # TODO: tests needed for all techniques. This is probably a higher priority than adding more techniques. Testing properly is tricky because there may be several valid ways to apply the technique and which one gets used really doesn't matter.
     # techniques are now yielded so tests should check all of them. Although there could maybe be some issues like if a hidden single was hidden single for box and column would that be 1 or 2 techniques.
