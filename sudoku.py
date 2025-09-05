@@ -237,13 +237,19 @@ class Board:
         return board
 
     def solve(
-        self, one_solution: bool = True
-    ) -> Generator[npt.NDArray[np.int8], None, None]:
+        self,
+        # , one_solution: bool = True
+    ) -> Generator[npt.NDArray[np.int8], None, int]:
+        """
+        Returns: -1 if no solutions otherwise the number of solutions.
+        """
         matrix = self.create_matrix()
         for solution in matrix.generate_solutions():
             yield self.extract_from_matrix(solution)
-            if one_solution:
-                break
+            # if (
+            #     one_solution
+            # ):  # This is for performance but the solver is so quick I might just remove it
+            #     break
 
 
 # board = Board(

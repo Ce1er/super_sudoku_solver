@@ -29,6 +29,48 @@ def text_board(board: npt.NDArray[np.int8]):
     return s + bottom
 
 
+def text_hints(hints: npt.NDArray[np.bool]):
+    """Args:
+    hints: dimensions are 9x9x9 for num X row X column
+    """
+    top = "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗"
+    middle_big = "╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣"
+    middle_small = "╟───┼───┼───╫───┼───┼───╫───┼───┼───╢"
+    number_row = "║{}{}{}│{}{}{}│{}{}{}║{}{}{}│{}{}{}│{}{}{}║{}{}{}│{}{}{}│{}{}{}║"
+    bottom = "╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝"
+
+    def num_row(
+        nums: range,
+    ):
+        return number_row.format(
+            *list(
+                map(
+                    str,
+                    np.array(
+                        [
+                            [str(x + 1) if hints[x, row, y] else " " for x in nums]
+                            for y in range(9)
+                        ]
+                    ).flatten(),
+                )
+            )
+        )
+
+    s = ""
+    for row in range(9):
+        s += (
+            (top if row == 0 else (middle_big if row in (3, 6) else middle_small))
+            + "\n"
+            + num_row(range(3))
+            + "\n"
+            + num_row(range(3, 6))
+            + "\n"
+            + num_row(range(6, 9))
+            + "\n"
+        )
+    return s + bottom
+
+
 if __name__ == "__main__":
     print(
         text_board(
