@@ -32,6 +32,7 @@ if __name__ == "__main__":
                     print(hint.technique)
                     print(hint.message)
                     print("\n")
+
             case "c":
                 os.system("clear")
                 print(

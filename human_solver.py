@@ -1,6 +1,9 @@
 import numpy as np
 import numpy.typing as npt
 from sudoku import Board
+import logging
+
+# TODO: this whole codebase has way too many outdated comments filled with outdated information and deprecated code and this file is no exception. Remove some of them and add comments/docstrings that are actually accurate.
 
 
 class Technique:
@@ -14,53 +17,102 @@ class Technique:
     # Might be better if it is just a string with stuff like %1 for 1st group and give a dictionary {1: some numpy array of coords}
 
     @staticmethod
-    def set_message(message: list[str | npt.NDArray[np.int8]]):
+    def set_message(message: list[dict[str, str | npt.NDArray[np.int8]]]):
         new_message: str = ""
         for part in message:
-            if isinstance(part, str):
-                new_message += part
-            elif isinstance(part, np.ndarray):
-                # TODO: This is very hacky and not very good anyway, make better.
-                if part.ndim == 1:
-                    if part.size == 1:
-                        new_message += f"Number {int(part)}"
-                    else:
-                        new_message += "Numbers "
-                        for number in map(int, part):
-                            new_message += f"{number} "
-                elif part.ndim == 2:
-                    if part.size == 2:
-                        new_message += f" Cell ({part[0]+1}, {part[1]+1})"
-                    else:
-                        new_message += " Cells "
-                        for coord in part:
-                            new_message += f"({coord[0]+1}, {coord[1]+1})"
-                    # TODO: make message a bit better, sometimes spaces are there when they shouldn't be
-                elif part.ndim == 3:
-                    raise NotImplementedError
-                else:
-                    raise NotImplementedError
+            try:
+                tmp_value = part["value"]
 
-                # if part.size == 2 and part.ndim == 2:
-                #     # TODO: different coordinate formatting options
-                #     print(part)
-                #     new_message += f" Cell ({part[0]+1}, {part[1]+1})"
-                # elif part.size == 1:
-                #     new_message += f" {int(part.reshape(1)[0])+1}"
-                # elif part.ndim == 1:
-                #     new_message += f" Numbers {part}"
-                #
-                # elif part.ndim == 3:
-                #     ...  # Candidates, all other parts are for cells
-                # else:
-                #
-                #     new_message += " Cells "
-                #     for coord in part:
-                #         new_message += f"({coord[0]+1}, {coord[1]+1})"
-                # # TODO: make message a bit better, sometimes spaces are there when they shouldn't be
+                if isinstance(tmp_value, np.ndarray):
+                    value: npt.NDArray[np.int8] = np.copy(tmp_value)
+                    value += 1
+                elif isinstance(tmp_value, str):
+                    value: str = tmp_value
+                elif isinstance(tmp_value, int):
+                    value = tmp_value + 1
+                elif isinstance(tmp_value, np.int8):
+                    value = tmp_value + 1
+                elif isinstance(tmp_value, np.int64):
+                    # 64 bit int not ideal. Shouldn't need to be more than 8 but it isn't much of an issue.
+                    value = tmp_value + 1
+                else:
+                    logging.warning(
+                        f"Part of message has unknown type {type(tmp_value)}"
+                    )
+                    value = tmp_value
+
+            except Exception as e:
+                logging.error(
+                    "Error with part of message\n" + repr(e)
+                )  # TODO: make more descriptive and handle actual error instead
+                break
+
+            match part.get("type"):
+                # TODO: I hate every part of this. Input is clunky and so is the way it's handled.
+                # also needs different options for showing coords and stuff. (x, y) is not how sudoku coords are usually shown
+                # rxcy would be better and may as well have chess coord notation as well
+                case "text":
+                    try:
+                        new_message += value
+                    except TypeError:
+                        logging.error(
+                            "Message part of type text contains non-string value"
+                        )
+                    except Exception as e:
+                        logging.error(
+                            "Error with interpreting text message part\n" + repr(e)
+                        )
+                case "coord":
+                    try:
+
+                        value.reshape(2)
+                        new_message += f"Cell ({value[0]}, {value[1]})"
+                    except Exception as e:
+                        logging.error(
+                            "Error with interpreting coord message part\n" + repr(e)
+                        )
+
+                case "coords":
+                    try:
+                        new_message += "Cells"
+                        for coord in value:
+
+                            new_message += f" ({coord[0]}, {coord[1]}),"
+                    except Exception as e:
+                        logging.error(
+                            "Error with interpreting coords message part\n" + repr(e)
+                        )
+                case "num":
+                    try:
+                        if isinstance(value, np.ndarray):
+                            value.reshape(1)
+                            value = value[0]
+
+                        new_message += "number " + str(value)
+                    except Exception as e:
+                        logging.error(
+                            "Error with interpreting num message part\n" + repr(e)
+                        )
+                case "nums":
+                    try:
+                        new_message += "numbers"
+                        for num in value:
+                            new_message += " " + str(num.reshape(1)[0])
+                    except Exception as e:
+                        logging.error(
+                            "Error with interpreting nums message part\n" + repr(e)
+                        )
+                case "candidates":
+                    raise NotImplementedError("candidates don't work yet :(")
+                case _:
+                    raise NotImplementedError("Invalid type for part in message")
+            new_message += " "
+
         return new_message
 
-    def __init__(self, technique, message):
+    def __init__(
+        self, technique: str, message: list[dict[str, str | npt.NDArray[np.int8]]]
+    ):
         self.technique = technique
         self.message = self.set_message(message)
 
@@ -81,10 +133,18 @@ class Human_Solver:
     def _naked_singles(self):
         for coord in np.argwhere(np.add.reduce(self.candidates, axis=0) == 1):
             row, column = coord
-            num = np.argwhere(self.candidates[:, row, column])
+            num = np.argwhere(self.candidates[:, row, column]).reshape(1)
             yield Technique(
                 "Naked Single",
-                [coord, "is", num, "because it is the only candidate for the cell."],
+                [
+                    {"type": "coord", "value": coord},
+                    {"type": "text", "value": "is"},
+                    {"type": "num", "value": num},
+                    {
+                        "type": "text",
+                        "value": "because it is the only candidate for the cell.",
+                    },
+                ],  # TODO: this is kinda tedious to write but pretty versatile. Consider other options but this is ok. Could use a custom class instead of dict ig.
             )
 
     def _hidden_singles(self):
@@ -98,10 +158,27 @@ class Human_Solver:
             for func, adjacency in types.items():
                 if (
                     np.count_nonzero(func((row, column)) & self.candidates[num]) == 1
-                ):  # TODO: also check for naked singles, honestly naked varieties seem like they tend to be different enough that it might make more sense to have in seperate functions. It would also make checking which technique is easiest easier as only the method used needs to be considered instead of the specifics of how the technique was applied.
+                    and len(np.argwhere(self.candidates[:, row, column])) != 1
+                ):
+
+                    # TODO: also check for naked singles, honestly naked varieties seem like they tend to be different enough that it might make more sense to have in seperate functions. It would also make checking which technique is easiest easier as only the method used needs to be considered instead of the specifics of how the technique was applied.
+
                     x = Technique(
                         "Hidden Single",  # It could be a naked single but _naked_singles() should be ran first
-                        f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}",
+                        # TODO: check if comment above is actually right.
+                        [
+                            {
+                                "type": "coord",
+                                "value": np.array([row, column], dtype=np.int8),
+                            },
+                            {"type": "text", "value": "is"},
+                            {"type": "num", "value": num},
+                            {
+                                "type": "text",
+                                "value": f"because there are no others in the {adjacency}",
+                            },
+                        ],
+                        # f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}",
                     )
                     x.add_cell(coord)
                     #                     print(
@@ -116,6 +193,7 @@ class Human_Solver:
                     yield x  # Maybe yield instead but this is prob best, only getting first one. Could make testing harder tho because if I reimplement it in a different way it could find a different single instead and which single to find really doesn't matter. Yielding could maybe give more flexibility with a hint system, allowing the user to see several examples.
 
     def _naked_pairs(self):
+        # TODO: it can give the same pair twice because it checks coordinates of both items. Fix this. Also a problem for hidden pairs. This isn't actually a problem, all the hints are still correct its just some are redundant. It would be quite nice for the hint to say stuff like it is a pair along the box and the column or whatever.
         types = {
             Board.adjacent_row: "row",
             Board.adjacent_column: "column",
@@ -126,6 +204,7 @@ class Human_Solver:
             row, column = coord
             nums = np.argwhere(self.candidates[:, row, column])
             for func, adjacency in types.items():
+
                 coords = np.argwhere(
                     np.logical_and.reduce(
                         func((row, column))
@@ -133,14 +212,21 @@ class Human_Solver:
                         & (np.add.reduce(self.candidates, axis=0) == 2),
                     ).reshape(9, 9)
                 )
-                if len(coords) == 1:
+                if len(coords) != 2:
                     continue
 
-                nums = np.argwhere(self.candidates[:, coords[0][0], coords[0][1]])
+                # Should be the same as checking the second coord. I think it is guarenteed but worth double checking.
+
+                nums = np.argwhere(self.candidates[:, coords[0, 0], coords[0, 1]])
+
                 yield Technique(
                     "Naked Pair",
-                    [coords, "numbers", nums, "along", adjacency],
-                )  # TODO: format coords
+                    [
+                        {"type": "coords", "value": coords},
+                        {"type": "nums", "value": nums},
+                        {"type": "text", "value": f"along {adjacency}"},
+                    ],
+                )
 
     def _hidden_pairs(self):
         types = {
@@ -153,12 +239,12 @@ class Human_Solver:
 
             # Hidden pairs
             for func, adjacency in types.items():
-                if np.count_nonzero(
-                    func((row, column)) & self.candidates[num]
-                ) == 2 and np.argwhere(
-                    np.add.reduce(self.candidates, axis=0)
+                if (
+                    np.count_nonzero(func((row, column)) & self.candidates[num]) == 2
                 ):  # TODO: some of these snippets will appear in lots of techniques, maybe make some helper functions
                     coords = np.argwhere(func((row, column)) & self.candidates[num])
+                    if len(coords) != 2:
+                        continue
 
                     # Num is always increasing so only check against higher nums
                     # There is probably a better way of doing this with some numpy tricks
@@ -167,10 +253,25 @@ class Human_Solver:
                             np.argwhere(func((row, column)) & self.candidates[i]),
                             coords,
                         ):
+
                             x = Technique(
                                 "Hidden Pair",
-                                f"Cells {coords[0]} and {coords[1]} are the only cells that can be {num} or {i} in their {adjacency}, so we can remove all other candidates from them.",
-                            )  # TODO: make coords prettier and have something to check for other actions like removing those numbers in their box, so need to check if split or in same box
+                                [
+                                    {"type": "coords", "value": coords},
+                                    {
+                                        "type": "text",
+                                        "value": "are the only cells that can be",
+                                    },
+                                    {"type": "num", "value": num},
+                                    {"type": "text", "value": "or"},
+                                    {"type": "num", "value": i},
+                                    {
+                                        "type": "text",
+                                        "value": f"in their {adjacency}, so we can remove all other candidates from them.",
+                                    },
+                                ],
+                            )
+                            # TODO: explanation incomplete and I don't like they way it uses way too many dictionaries. Make message input to Technique easier.
                             yield x
 
     def hint(self):
