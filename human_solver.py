@@ -1,9 +1,73 @@
+from typing import Optional, Protocol, Type, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
 from sudoku import Board
 import logging
+from functools import reduce
 
-# TODO: this whole codebase has way too many outdated comments filled with outdated information and deprecated code and this file is no exception. Remove some of them and add comments/docstrings that are actually accurate.
+
+# TODO: fix types. Mostly which specific np int type? Also consider non-numpy types being passed in such as int to MessageNum
+class MessagePart(Protocol):
+    text: str
+    highlight: Optional[int]
+
+    def get_text(self) -> str:
+        return self.text
+
+    def get_highlight(self) -> int | None:
+        return self.highlight
+
+
+class MessageText(MessagePart):
+    def __init__(self, text, highlight=None) -> None:
+        self.text = text
+        self.highlight = highlight
+
+
+class MessageCoord(MessagePart):
+    def __init__(self, coord: npt.NDArray[np.intp], highlight=None) -> None:
+        self.highlight = highlight
+        coord.reshape(2)
+        self.text = "Cell ({}, {})".format(*coord)
+
+
+class MessageCoords(MessagePart):
+    def __init__(self, coords: npt.NDArray[np.intp], highlight=None) -> None:
+        self.highlight = highlight
+        tmp = "Cells"
+        for coord in coords:
+            tmp += " ({}, {})".format(*coord.reshape(2))
+        self.text = tmp
+
+
+class MessageNum(MessagePart):
+    def __init__(self, num: npt.NDArray[np.intp], highlight=None) -> None:
+        self.highlight = highlight
+        self.text = "number " + str(num.reshape(1)[0])
+
+
+class MessageNums(MessagePart):
+    def __init__(self, nums: npt.NDArray[np.intp], highlight=None) -> None:
+        self.highlight = highlight
+        tmp = "numbers"
+        for num in nums:
+            tmp += " " + str(num.reshape(1)[0])
+        self.text = tmp
+
+
+class MessageCandidates(MessagePart):
+    def __init__(self, candidates: npt.NDArray[np.bool], highlight=None) -> None:
+        self.highlight = highlight
+        raise NotImplementedError
+
+
+T = TypeVar("T", bound=MessagePart)
+
+
+class Action:
+    def __init__(self, add_cells, remove_candidates) -> None: ...
+
+    # Board highlighting will be based off action if a full hint is used. And it will fully represent the candidates that can be removed / cells that can be added.
 
 
 class Technique:
@@ -16,105 +80,11 @@ class Technique:
     # Highlighting could be good, cell groups mentioned in the message can have different colours. Maybe {adjacency} can be bold or smth.
     # Might be better if it is just a string with stuff like %1 for 1st group and give a dictionary {1: some numpy array of coords}
 
-    @staticmethod
-    def set_message(message: list[dict[str, str | npt.NDArray[np.int8]]]):
-        new_message: str = ""
-        for part in message:
-            try:
-                tmp_value = part["value"]
-
-                if isinstance(tmp_value, np.ndarray):
-                    value: npt.NDArray[np.int8] = np.copy(tmp_value)
-                    value += 1
-                elif isinstance(tmp_value, str):
-                    value: str = tmp_value
-                elif isinstance(tmp_value, int):
-                    value = tmp_value + 1
-                elif isinstance(tmp_value, np.int8):
-                    value = tmp_value + 1
-                elif isinstance(tmp_value, np.int64):
-                    # 64 bit int not ideal. Shouldn't need to be more than 8 but it isn't much of an issue.
-                    value = tmp_value + 1
-                else:
-                    logging.warning(
-                        f"Part of message has unknown type {type(tmp_value)}"
-                    )
-                    value = tmp_value
-
-            except Exception as e:
-                logging.error(
-                    "Error with part of message\n" + repr(e)
-                )  # TODO: make more descriptive and handle actual error instead
-                break
-
-            match part.get("type"):
-                # TODO: I hate every part of this. Input is clunky and so is the way it's handled.
-                # also needs different options for showing coords and stuff. (x, y) is not how sudoku coords are usually shown
-                # rxcy would be better and may as well have chess coord notation as well
-                case "text":
-                    try:
-                        new_message += value
-                    except TypeError:
-                        logging.error(
-                            "Message part of type text contains non-string value"
-                        )
-                    except Exception as e:
-                        logging.error(
-                            "Error with interpreting text message part\n" + repr(e)
-                        )
-                case "coord":
-                    try:
-
-                        value.reshape(2)
-                        new_message += f"Cell ({value[0]}, {value[1]})"
-                    except Exception as e:
-                        logging.error(
-                            "Error with interpreting coord message part\n" + repr(e)
-                        )
-
-                case "coords":
-                    try:
-                        new_message += "Cells"
-                        for coord in value:
-
-                            new_message += f" ({coord[0]}, {coord[1]}),"
-                    except Exception as e:
-                        logging.error(
-                            "Error with interpreting coords message part\n" + repr(e)
-                        )
-                case "num":
-                    try:
-                        if isinstance(value, np.ndarray):
-                            value.reshape(1)
-                            value = value[0]
-
-                        new_message += "number " + str(value)
-                    except Exception as e:
-                        logging.error(
-                            "Error with interpreting num message part\n" + repr(e)
-                        )
-                case "nums":
-                    try:
-                        new_message += "numbers"
-                        for num in value:
-                            new_message += " " + str(num.reshape(1)[0])
-                    except Exception as e:
-                        logging.error(
-                            "Error with interpreting nums message part\n" + repr(e)
-                        )
-                case "candidates":
-                    raise NotImplementedError("candidates don't work yet :(")
-                case _:
-                    raise NotImplementedError("Invalid type for part in message")
-            new_message += " "
-
-        return new_message
-
-    def __init__(
-        self, technique: str, message: list[dict[str, str | npt.NDArray[np.int8]]]
-    ):
+    def __init__(self, technique: str, message: list[T]):
         self.technique = technique
-        self.message = self.set_message(message)
+
+        # TODO: highlights are ignored rewrite in a way that actually uses them.
+        self.message = reduce(lambda prev, next: prev + next.get_text(), message, "")
 
     def add_cell(self, *coords: npt.NDArray[np.int8]): ...
 
@@ -123,6 +93,7 @@ class Technique:
 
 class Human_Solver:
     def __init__(self, board: Board) -> None:
+        # TODO: take MessagePart and Action instead.
         self.candidates: npt.NDArray[np.bool] = board.get_candidates()  # 9x9x9
         # dimension 1 = number
 
@@ -131,20 +102,19 @@ class Human_Solver:
         return f"({row+1}, {column+1})"
 
     def _naked_singles(self):
-        for coord in np.argwhere(np.add.reduce(self.candidates, axis=0) == 1):
+        for coord in np.argwhere(
+            np.add.reduce(self.candidates, axis=0, dtype=np.int8) == 1
+        ):
             row, column = coord
-            num = np.argwhere(self.candidates[:, row, column]).reshape(1)
+            num = np.argwhere(self.candidates[:, row, column])  # .reshape(1)
             yield Technique(
                 "Naked Single",
                 [
-                    {"type": "coord", "value": coord},
-                    {"type": "text", "value": "is"},
-                    {"type": "num", "value": num},
-                    {
-                        "type": "text",
-                        "value": "because it is the only candidate for the cell.",
-                    },
-                ],  # TODO: this is kinda tedious to write but pretty versatile. Consider other options but this is ok. Could use a custom class instead of dict ig.
+                    MessageCoord(coord, highlight=1),
+                    MessageText("is"),
+                    MessageNum(num),
+                    MessageText("because it is the only candidate for the cell."),
+                ],
             )
 
     def _hidden_singles(self):
@@ -167,16 +137,14 @@ class Human_Solver:
                         "Hidden Single",  # It could be a naked single but _naked_singles() should be ran first
                         # TODO: check if comment above is actually right.
                         [
-                            {
-                                "type": "coord",
-                                "value": np.array([row, column], dtype=np.int8),
-                            },
-                            {"type": "text", "value": "is"},
-                            {"type": "num", "value": num},
-                            {
-                                "type": "text",
-                                "value": f"because there are no others in the {adjacency}",
-                            },
+                            MessageCoord(
+                                np.array([row, column], dtype=np.int8), highlight=1
+                            ),
+                            MessageText("is"),
+                            MessageNum(num),
+                            MessageText(
+                                f"because there are no others in the {adjacency}"
+                            ),
                         ],
                         # f"Cell ({row+1}, {column+1}) is {num+1} because there are no other {num+1}s in the {adjacency}",
                     )
@@ -222,9 +190,9 @@ class Human_Solver:
                 yield Technique(
                     "Naked Pair",
                     [
-                        {"type": "coords", "value": coords},
-                        {"type": "nums", "value": nums},
-                        {"type": "text", "value": f"along {adjacency}"},
+                        MessageCoords(coords, highlight=1),
+                        MessageNums(nums),
+                        MessageText(f"along {adjacency}"),
                     ],
                 )
 
@@ -257,18 +225,14 @@ class Human_Solver:
                             x = Technique(
                                 "Hidden Pair",
                                 [
-                                    {"type": "coords", "value": coords},
-                                    {
-                                        "type": "text",
-                                        "value": "are the only cells that can be",
-                                    },
-                                    {"type": "num", "value": num},
-                                    {"type": "text", "value": "or"},
-                                    {"type": "num", "value": i},
-                                    {
-                                        "type": "text",
-                                        "value": f"in their {adjacency}, so we can remove all other candidates from them.",
-                                    },
+                                    MessageCoords(coords, highlight=1),
+                                    MessageText("are the only cells that can be "),
+                                    MessageNum(num),
+                                    MessageText("or"),
+                                    MessageNum(i),
+                                    MessageText(
+                                        f"in their {adjacency}, so we can remove all other candidates from them."
+                                    ),
                                 ],
                             )
                             # TODO: explanation incomplete and I don't like they way it uses way too many dictionaries. Make message input to Technique easier.
