@@ -1,4 +1,4 @@
-from typing import Optional, Protocol, Type, TypeVar, Union
+from typing import Callable, Optional, Protocol, Type, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
 from sudoku import Board
@@ -18,6 +18,7 @@ class MessagePart(Protocol):
         return self.highlight
 
 
+# TODO: some sort of logic to work out when to capitalise words, where to put spaces etc.
 class MessageText(MessagePart):
     def __init__(self, text, highlight=None) -> None:
         self.text = text
@@ -41,9 +42,13 @@ class MessageCoords(MessagePart):
 
 
 class MessageNum(MessagePart):
-    def __init__(self, num: npt.NDArray[np.intp], highlight=None) -> None:
+    def __init__(self, num: npt.NDArray[np.intp] | int, highlight=None) -> None:
         self.highlight = highlight
-        self.text = "number " + str(num.reshape(1)[0])
+
+        if isinstance(num, np.ndarray):
+            self.text = "number " + str(num.reshape(1)[0])
+        else:
+            self.text = "number " + str(num)
 
 
 class MessageNums(MessagePart):
@@ -65,6 +70,7 @@ T = TypeVar("T", bound=MessagePart)
 
 
 class Action:
+    # TODO: actually use this
     def __init__(self, add_cells, remove_candidates) -> None: ...
 
     # Board highlighting will be based off action if a full hint is used. And it will fully represent the candidates that can be removed / cells that can be added.
@@ -80,7 +86,7 @@ class Technique:
     # Highlighting could be good, cell groups mentioned in the message can have different colours. Maybe {adjacency} can be bold or smth.
     # Might be better if it is just a string with stuff like %1 for 1st group and give a dictionary {1: some numpy array of coords}
 
-    def __init__(self, technique: str, message: list[T]):
+    def __init__(self, technique: str, message: list[T]):  # TODO: also take Action
         self.technique = technique
 
         # TODO: highlights are ignored rewrite in a way that actually uses them.
@@ -93,7 +99,6 @@ class Technique:
 
 class Human_Solver:
     def __init__(self, board: Board) -> None:
-        # TODO: take MessagePart and Action instead.
         self.candidates: npt.NDArray[np.bool] = board.get_candidates()  # 9x9x9
         # dimension 1 = number
 
@@ -238,12 +243,107 @@ class Human_Solver:
                             # TODO: explanation incomplete and I don't like they way it uses way too many dictionaries. Make message input to Technique easier.
                             yield x
 
+    def _locked_candidates(self):
+        types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
+        for coord in np.argwhere(self.candidates):
+            num, row, column = coord
+            for adjacency, func in types.items():
+                # TODO: passing in row, column in like this sucks. Make it take an np array instead.
+                if np.count_nonzero(
+                    func((row, column)) & self.candidates[num]
+                ) == np.count_nonzero(
+                    x := (
+                        func((row, column))
+                        & Board.adjacent_box((row, column))
+                        & self.candidates[num]
+                    )
+                ) and np.count_nonzero(
+                    x
+                ) > np.count_nonzero(
+                    Board.adjacent_box((row, column)) & self.candidates[num]
+                ):
+                    yield Technique(
+                        "Locked Candidate",
+                        [
+                            MessageCoords(np.argwhere(x)),
+                            MessageText("are the only cells that can be"),
+                            MessageNum(num),
+                            MessageText(f"In their {adjacency} so we can remove"),
+                            MessageNum(num),
+                            MessageText(
+                                "from the other cells in their house"
+                            ),  # TODO: make this MessageCandidates
+                        ],
+                    )
+
+    def _pointing_tuples(self):
+        types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
+        for coord in np.argwhere(self.candidates):
+            num, row, column = coord
+            for adjacency, func in types.items():
+                if (
+                    x := np.count_nonzero(
+                        Board.adjacent_box((row, column)) & self.candidates[num]
+                    )
+                ) == np.count_nonzero(
+                    self.candidates[num]
+                    & Board.adjacent_box((row, column))
+                    & func((row, column))
+                ) and np.count_nonzero(
+                    self.candidates[num] & func((row, column))
+                ) > x:
+                    # TODO: allow it to be several nums at same time. + avoid yielding effectively the same thing multiple times if possible
+                    yield Technique(
+                        "Pointing Tuple",
+                        [
+                            MessageCoords(
+                                np.argwhere(
+                                    Board.adjacent_box((row, column))
+                                    & func((row, column))
+                                    & self.candidates[num]
+                                )
+                            ),
+                            MessageText(
+                                f"are the only cells that can be {num} in their box so we can remove other options from their {adjacency}."
+                            ),
+                        ],
+                    )
+
+    def _naked_triples(self):
+        pass
+
+    # TODO:
+    # Locked Candidates - untested but should work hopefully
+    # Pointing Tuples - untested and probably needs a little tweaking
+    # Naked Triple
+    # X-Wing
+    # Hidden Triple
+    # Naked Quadruple
+    # Y-Wing
+    # Avoidable Rectangle
+    # XYZ Wing
+    # Hidden Quadruple
+    # Unique Rectangle
+    # Hidden Rectangle
+    # Pointing Rectangle
+    # Swordfish
+    # Jellyfish
+    # Skyscraper
+    # 2-String Kite
+    # Empty Rectangle
+    # Color Chain
+    # Finned X-Wing
+    # Finned Swordfish
+    # Finned Jellyfish
+
     def hint(self):
         types = [
             self._naked_singles,
             self._hidden_singles,
             self._naked_pairs,
             self._hidden_pairs,
+            self._locked_candidates,
+            self._pointing_tuples,
         ]
         # Maybe doing this async in some way could help. But because if only returns the easiest technique it might not be the easiest to do.
         # Could potentially start looking for all types at the same time and await them in order of easiest to hardest and return first non-null.
