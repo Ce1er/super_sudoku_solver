@@ -281,6 +281,7 @@ class Human_Solver:
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
             for adjacency, func in types.items():
+                # TODO: these one-liners are getting way too long. Probably worth splitting up a bit to make things clearer.
                 if (
                     x := np.count_nonzero(
                         Board.adjacent_box((row, column)) & self.candidates[num]
@@ -349,9 +350,7 @@ class Human_Solver:
         # Could potentially start looking for all types at the same time and await them in order of easiest to hardest and return first non-null.
         # As long as I keep writing the techniques efficiently, using numpy as much as possible it shouldn't really matter if it is async or not but maybe it would with some of the more advanced techniques, like if I do 3d medusa chain analysis.
         for technique in types:
-            for y in technique():
-                if y:
-                    yield y
+            yield from technique()
 
 
 if __name__ == "__main__":
