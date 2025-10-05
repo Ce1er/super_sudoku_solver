@@ -36,6 +36,19 @@ class Cells:
             cells.append((*coord, int(self.cells[coord[0], coord[1]])))
         return cells
 
+    # TODO: deprecate above method and use this instead
+    def get_cells_np(self, include_empty=False) -> npt.NDArray[np.int8]:
+        """
+        Returns:
+            list of (column, row, digit)
+            column, row are 0 based but digit is 1 based
+        """
+        cells = []
+        for coord in np.argwhere(self.cells > (-2 if include_empty else 0)):
+            coord = np.append(coord, self.cells[*coord])
+            cells.append(coord)
+        return np.array(cells)
+
 
 class Hints:
     """
@@ -92,6 +105,9 @@ class Board:
         AUTONORMAL = True  # TODO: move this to somewhere else. Idealing reading from a settings.* file.
         if AUTONORMAL:
             self.all_normal()
+
+    def get_cells(self, include_empty=False):
+        return self.cells.get_cells_np(include_empty)
 
     def add_hint_type(
         self,

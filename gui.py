@@ -1,97 +1,165 @@
+from PySide6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem
+from PySide6.QtGui import QPainter, QPen, QBrush, QFont, QColor
+from PySide6.QtCore import QRectF, Qt
+import sys
+import numpy as np
+import numpy.typing as npt
+from typing import Optional
+from itertools import product
+
+import settings
 from sudoku import Board as BoardData
 
-# TODO: PyQt6 and PySide6 do the same thing but are not compatible. Choose which one to use.
-import sys
-from PyQt6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QPushButton,
-    QLineEdit,
-    QLabel,
-    QGridLayout,
-    QListWidget,
-)
-from PyQt6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPaintDevice
-from PySide6.QtCore import QRect
 
-from itertools import product
-from collections import defaultdict
+class Cell(QGraphicsItem):
+    def __init__(
+        self,
+        coord: npt.NDArray[np.int8],
+        candidates: npt.NDArray[np.bool],
+        highlight_colours: dict[int, QColor],
+        border_colour: QColor,
+        background_colour: QColor,
+        border_size: int = 1,
+        size: int = 60,
+    ) -> None:
+        """
+        Args:
+            coord: [row, column, value] (all 0-8 inclusive but value can also be -1 to indicate no value)
+            candidates: 1d boolean array where candidates[n] == True means number n+1 can be in cell
+        """
+        super().__init__()
+        self.row: int = coord[0] + 1
+        self.col: int = coord[1] + 1
+        self.value: int = coord[2] + 1 if coord[2] != -1 else -1
+        self.candidates: npt.NDArray[np.bool] = candidates
+        self.highlight: Optional[int] = None
+        self.size: int = size
 
+        self.border_colour = border_colour
+        self.background_colour = background_colour
+        self.highlight_colours = highlight_colours
 
-class Cell(QPaintDevice):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.candidates = []
-        self.initial_value = None
-        self.entered_value = None
+        self.border_size = border_size
 
-    def set_candidates(self, candidates):
-        self.candidates = candidates
+    def boundingRect(self):
+        return QRectF(0, 0, self.size, self.size)
 
-    def paintEvent(self, event):
-        painter = QPainter()
-        painter.begin(self)
-        if self.initial_value:
-            font = painter.font()
-            font.setPointSize(24)
-            painter.setFont(font)
-            painter.drawText(
-                rect, Qt.AlignmentFlag.AlignCenter, str(self.initial_value)
-            )
-        elif self.entered_value:  # TODO: make look different from initial value
-            font = painter.font()
-            font.setPointSize(24)
-            painter.setFont(font)
-            painter.drawText(
-                rect, Qt.AlignmentFlag.AlignCenter, str(self.entered_value)
+    def paint(self, painter, option, widget):
+        if self.highlight:
+            painter.fillRect(
+                self.boundingRect(),
+                QBrush(self.highlight_colours.get(self.highlight)),
             )
         else:
-            font = painter.font()
-            font.setPointSize(8)
-            painter.setFont(font)
-            for candidate in self.candidates:
-                row, col = divmod(candidate - 1, 3)
-                sub_rect = QRect(
-                    rect.left() + col * self.width() // 3,
-                    rect.top() + row * self.height() // 3,
-                    self.width() // 3,
-                    self.height() // 3,
-                )
-                painter.drawText(sub_rect, Qt.AlignmentFlag.AlignCenter, str(candidate))
+            painter.fillRect(self.boundingRect(), QBrush(self.background_colour))
+
+        pen = QPen(self.border_colour, self.border_size)
+        painter.setPen(pen)
+        painter.drawRect(self.boundingRect())
+
+        if self.value != -1:
+            painter.setFont(QFont("Arial", int(self.size * 0.5)))
+            painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self.value))
+        elif np.count_nonzero(self.candidates) != 0:
+            painter.setFont(QFont("Arial", int(self.size * 0.2)))
+            width = self.size / 3
+            height = self.size / 3
+            for i in range(9):
+                if self.candidates[i]:
+                    row = i // 3
+                    column = i % 3
+                    x = column * width
+                    y = row * height
+                    painter.drawText(
+                        QRectF(x, y, width, height), Qt.AlignCenter, str(i + 1)
+                    )
 
 
-class Board(QWidget):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        layout = QGridLayout()
-        self.setLayout(layout)
-        self.board = BoardData("." * 81)
-        self.cells = defaultdict()
+class Board(QGraphicsScene):
+    def __init__(
+        self,
+        data: BoardData,
+        highlight_colours: dict[int, QColor],
+        border_colour: QColor,
+        background_colour: QColor,
+        border_size: int,
+        big_border_colour: QColor,
+        big_border_size: int,
+        cell_size: int = 60,
+    ):
+        super().__init__()
+        self.data = data
+        self.cell_size = cell_size
 
-        for row, column in product(range(9), repeat=2):
-            cell = Cell()
-            self.cells[(row, column)] = cell
-            layout.addWidget(cell, row, column)
+        self.highlight_colours = highlight_colours
+        self.border_colour = border_colour
+        self.background_colour = background_colour
+        self.border_size = border_size
+        self.big_border_colour = big_border_colour
+        self.big_border_size = big_border_size
+        self.paint_board()
 
-    def foo(self): ...
+    def paint_board(self):
+        for row, col in product(range(9), repeat=2):
+            for coord in self.data.get_cells():
+                if coord[0] == row and coord[1] == col:
+                    value = coord[2]
+                    break
+            else:
+                value = -1
+
+            cell = Cell(
+                np.array([row, col, value]),
+                self.data.get_candidates()[row, col],
+                self.highlight_colours,
+                self.border_colour,
+                self.background_colour,
+                self.border_size,
+                self.cell_size,
+            )
+            cell.setPos(col * self.cell_size, row * self.cell_size)
+            self.addItem(cell)
+
+        pen = QPen(self.big_border_colour, self.big_border_size)
+        for i in range(10):
+            width = self.cell_size * 9
+            x = i * self.cell_size
+            self.addLine(
+                x,
+                0,
+                x,
+                width,
+                pen if i % 3 == 0 else QPen(self.border_colour, self.border_size),
+            )
+
+            y = i * self.cell_size
+            self.addLine(
+                0,
+                y,
+                width,
+                y,
+                pen if i % 3 == 0 else QPen(self.border_colour, self.border_size),
+            )
 
 
-class MainWindow(QWidget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.setWindowTitle("Sudoku")
-
-        layout = QGridLayout()
-        self.setLayout(layout)
-
-        layout.addWidget(Board())
-
-        self.show()
+def main():
+    app = QApplication(sys.argv)
+    scene = Board(
+        BoardData(
+            "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
+        ),
+        settings.highlight_colours,
+        settings.border_colour,
+        settings.background_colour,
+        settings.border_size,
+        settings.big_border_colour,
+        settings.big_border_size,
+        settings.cell_size,
+    )
+    view = QGraphicsView(scene)
+    view.show()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    sys.exit(app.exec())
+    main()
