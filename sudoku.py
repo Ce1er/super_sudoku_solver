@@ -49,6 +49,10 @@ class Cells:
             cells.append(coord)
         return np.array(cells)
 
+    # Naming things is hard
+    def get_all_cells(self) -> npt.NDArray[np.int8]:
+        return self.cells
+
 
 class Hints:
     """
@@ -108,6 +112,12 @@ class Board:
 
     def get_cells(self, include_empty=False):
         return self.cells.get_cells_np(include_empty)
+
+    def get_all_cells(self):
+        return self.cells.get_all_cells()
+
+    def add_cell(self, coord: npt.NDArray[np.int8]):
+        self.cells.add_cell((coord[0], coord[1]), coord[2] + 1)
 
     def add_hint_type(
         self,
@@ -255,7 +265,7 @@ class Board:
     def solve(
         self,
         # , one_solution: bool = True
-    ) -> Generator[npt.NDArray[np.int8], None, int]:
+    ) -> Generator[npt.NDArray[np.int8], None, None]:
         """
         Returns: -1 if no solutions otherwise the number of solutions.
         """
@@ -266,6 +276,13 @@ class Board:
             #     one_solution
             # ):  # This is for performance but the solver is so quick I might just remove it
             #     break
+
+    def auto_solve(self):
+        """
+        Set the cells to the values they should be when solved
+        """
+        for solution in self.solve():
+            self.cells.cells = solution
 
 
 # board = Board(

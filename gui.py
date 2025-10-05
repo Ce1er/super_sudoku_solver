@@ -1,4 +1,10 @@
-from PySide6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsItem
+from PySide6.QtWidgets import (
+    QApplication,
+    QGraphicsView,
+    QGraphicsScene,
+    QGraphicsItem,
+    QGraphicsSceneMouseEvent,
+)
 from PySide6.QtGui import QPainter, QPen, QBrush, QFont, QColor
 from PySide6.QtCore import QRectF, Qt
 import sys
@@ -28,9 +34,9 @@ class Cell(QGraphicsItem):
             candidates: 1d boolean array where candidates[n] == True means number n+1 can be in cell
         """
         super().__init__()
-        self.row: int = coord[0] + 1
-        self.col: int = coord[1] + 1
-        self.value: int = coord[2] + 1 if coord[2] != -1 else -1
+        self.row: int = coord[0]
+        self.col: int = coord[1]
+        self.value: int = coord[2]
         self.candidates: npt.NDArray[np.bool] = candidates
         self.highlight: Optional[int] = None
         self.size: int = size
@@ -40,6 +46,9 @@ class Cell(QGraphicsItem):
         self.highlight_colours = highlight_colours
 
         self.border_size = border_size
+
+        self.setAcceptedMouseButtons(Qt.LeftButton)
+        self.highlighted = False
 
     def boundingRect(self):
         return QRectF(0, 0, self.size, self.size)
@@ -74,6 +83,26 @@ class Cell(QGraphicsItem):
                         QRectF(x, y, width, height), Qt.AlignCenter, str(i + 1)
                     )
 
+    def mousePressEvent(self, event) -> None:
+        scene = self.scene()
+        if hasattr(scene, "cell_clicked"):
+            scene.cell_clicked(self)
+        event.accept()
+
+    def set_value(self, value: int):
+        self.value = value
+        if value != -1:
+            self.candidates = np.full([9], False)
+        self.update()
+
+    def set_candidates(self, value: npt.NDArray[np.bool]):
+        self.candidates = value
+        self.update()
+
+    def set_highlighted(self, value: bool):
+        self.highlighted = value
+        self.update()
+
 
 class Board(QGraphicsScene):
     def __init__(
@@ -91,6 +120,9 @@ class Board(QGraphicsScene):
         self.data = data
         self.cell_size = cell_size
 
+        self.selected_cell = None
+        self.cells: list[list[Cell]] = []
+
         self.highlight_colours = highlight_colours
         self.border_colour = border_colour
         self.background_colour = background_colour
@@ -100,7 +132,11 @@ class Board(QGraphicsScene):
         self.paint_board()
 
     def paint_board(self):
+        x = -1
         for row, col in product(range(9), repeat=2):
+            if row > x:
+                x = row
+                self.cells.append([])
             for coord in self.data.get_cells():
                 if coord[0] == row and coord[1] == col:
                     value = coord[2]
@@ -119,6 +155,7 @@ class Board(QGraphicsScene):
             )
             cell.setPos(col * self.cell_size, row * self.cell_size)
             self.addItem(cell)
+            self.cells[-1].append(cell)
 
         pen = QPen(self.big_border_colour, self.big_border_size)
         for i in range(10):
@@ -141,12 +178,58 @@ class Board(QGraphicsScene):
                 pen if i % 3 == 0 else QPen(self.border_colour, self.border_size),
             )
 
+    def update_candidates(self):
+        """
+        Updates candidates and cells
+        """
+        for row, col in product(range(9), repeat=2):
+            self.cells[row][col].set_candidates(self.data.get_candidates()[row, col])
+            self.cells[row][col].set_value(self.data.get_all_cells()[row, col])
+
+    def cell_clicked(self, cell: Cell):
+        if self.selected_cell:
+            self.selected_cell.set_highlighted(False)
+        self.selected_cell = cell
+        cell.set_highlighted(True)
+
+    def keyPressEvent(self, event) -> None:
+        # TEMPORARY HARDCODED KEYBINDS
+        # LMB - select cell
+        # 1-9 enter cell
+        # a - autonote
+        if not self.selected_cell:
+            return
+
+        key = event.key()
+        if Qt.Key_1 <= key <= Qt.Key_9:
+            value = key - Qt.Key_0
+            self.selected_cell.set_value(value)
+            self.data.add_cell(
+                np.array(
+                    [
+                        self.selected_cell.row,
+                        self.selected_cell.col,
+                        self.selected_cell.value,
+                    ]
+                )
+            )
+        # TODO: keybindings in settings.py
+        elif key == Qt.Key_Backspace:
+            self.selected_cell.set_value(-1)
+        elif key == Qt.Key_A:
+            self.data.auto_normal()
+            self.update_candidates()
+        elif key == Qt.Key_S:
+            print(self.data.auto_solve())
+            self.update_candidates()
+
 
 def main():
     app = QApplication(sys.argv)
     scene = Board(
         BoardData(
             "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
+            # "................................................................................."
         ),
         settings.highlight_colours,
         settings.border_colour,
@@ -157,6 +240,7 @@ def main():
         settings.cell_size,
     )
     view = QGraphicsView(scene)
+    view.setFocusPolicy(Qt.StrongFocus)
     view.show()
     sys.exit(app.exec())
 
