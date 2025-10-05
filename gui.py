@@ -183,7 +183,10 @@ class Board(QGraphicsScene):
         Updates candidates and cells
         """
         for row, col in product(range(9), repeat=2):
-            self.cells[row][col].set_candidates(self.data.get_candidates()[row, col])
+            self.cells[row][col].set_candidates(
+                (self.data.get_candidates()[:, row, col])
+            )
+            print(row, col, self.data.get_candidates()[row, col])
             self.cells[row][col].set_value(self.data.get_all_cells()[row, col])
 
     def cell_clicked(self, cell: Cell):
@@ -217,6 +220,7 @@ class Board(QGraphicsScene):
         elif key == Qt.Key_Backspace:
             self.selected_cell.set_value(-1)
         elif key == Qt.Key_A:
+            # FIXME: doesn't do anything when used after the user inputs a guess
             self.data.auto_normal()
             self.update_candidates()
         elif key == Qt.Key_S:

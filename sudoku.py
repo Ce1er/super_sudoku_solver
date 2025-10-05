@@ -57,8 +57,7 @@ class Cells:
 class Hints:
     """
     Attributes:
-        hints: 9x9x9 boolean array. First dimension is row, second is column, third is whether there is a hint there or not
-            This means (x, y) 5 would be hints[y][x][4]
+        hints: 9x9x9 boolean array. First dimension is num, second is row, third is col
     """
 
     def __init__(
