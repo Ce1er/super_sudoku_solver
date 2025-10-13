@@ -15,8 +15,11 @@ from itertools import product
 
 import settings
 from sudoku import Board as BoardData
+from utils import get_first
+from human_solver import Human_Solver, Technique
 
 
+# TODO: pass in font so it is customisable
 class Cell(QGraphicsItem):
     def __init__(
         self,
@@ -25,8 +28,9 @@ class Cell(QGraphicsItem):
         highlight_colours: dict[int, QColor],
         border_colour: QColor,
         background_colour: QColor,
-        border_size: int = 1,
-        size: int = 60,
+        border_size: int,
+        size: int,
+        clue: bool,
     ) -> None:
         """
         Args:
@@ -40,6 +44,7 @@ class Cell(QGraphicsItem):
         self.candidates: npt.NDArray[np.bool] = candidates
         self.highlight: Optional[int] = None
         self.size: int = size
+        self.clue: bool = clue
 
         self.border_colour = border_colour
         self.background_colour = background_colour
@@ -67,8 +72,13 @@ class Cell(QGraphicsItem):
         painter.drawRect(self.boundingRect())
 
         if self.value != -1:
-            painter.setFont(QFont("Arial", int(self.size * 0.5)))
-            painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self.value))
+            if self.clue:
+                painter.setFont(QFont("Arial", int(self.size * 0.5), QFont.Bold))
+                painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self.value))
+            else:
+                painter.setFont(QFont("Arial", int(self.size * 0.5)))
+                painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self.value))
+
         elif np.count_nonzero(self.candidates) != 0:
             painter.setFont(QFont("Arial", int(self.size * 0.2)))
             width = self.size / 3
@@ -102,6 +112,47 @@ class Cell(QGraphicsItem):
     def set_highlighted(self, value: bool):
         self.highlighted = value
         self.update()
+
+
+# NOTE: Use QLabel instead? Doing things manually does increase flexibility but maybe QLabel is enough.
+class HintBox(QGraphicsItem):
+    def __init__(
+        self,
+        technique: Technique,
+        text_size,
+        border_colour,
+        border_size,
+        background_colour,
+    ):  # TODO: take colours and stuff as well. Probably should implement Action before trying to get cell highlighting working but the message box part can be done at any time.
+
+        # Width and height set based on text length.
+        self.width = ...
+        self.height = ...
+
+        self.technique = technique
+        self.text_size = text_size
+        self.border_colour = border_colour
+        self.border_size = border_size
+        self.background_colour = background_colour
+
+        pass
+
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+
+    def paint(self, painter, option, widget):
+        painter.fillRect(self.boundingRect(), QBrush(self.background_colour))
+        pen = QPen(self.border_colour, self.border_size)
+        painter.setPen(pen)
+        painter.drawRect(self.boundingRect)
+
+        painter.setFont(QFont("Arial", self.text_size))
+        # TODO: handle special text highlighting and stuff.
+        painter.drawText(self.boundingRect(), Qt.AlignCenter, self.technique.message)
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
+        # TODO: handle mouse press event to do smth.
+        return super().mousePressEvent(event)
 
 
 class Board(QGraphicsScene):
@@ -144,6 +195,7 @@ class Board(QGraphicsScene):
             else:
                 value = -1
 
+            print("foo", self.data.is_clue(np.array([row, col])))
             cell = Cell(
                 np.array([row, col, value]),
                 self.data.get_candidates()[row, col],
@@ -152,6 +204,7 @@ class Board(QGraphicsScene):
                 self.background_colour,
                 self.border_size,
                 self.cell_size,
+                self.data.is_clue(np.array([row, col])),
             )
             cell.setPos(col * self.cell_size, row * self.cell_size)
             self.addItem(cell)
@@ -194,6 +247,18 @@ class Board(QGraphicsScene):
         self.selected_cell = cell
         cell.set_highlighted(True)
 
+    def show_hint(self):
+        human = Human_Solver(self.data)
+        print(type(human))
+
+        # NOTE: finding a hint relies on candidates being set. It does not auto_normal automatically.
+        technique = get_first(human.hint())
+        if technique is None:
+            print("No technique found")
+            return
+
+        print(technique.message)
+
     def keyPressEvent(self, event) -> None:
         # TEMPORARY HARDCODED KEYBINDS
         # LMB - select cell
@@ -225,6 +290,8 @@ class Board(QGraphicsScene):
         elif key == Qt.Key_S:
             self.data.auto_solve()
             self.update_candidates()
+        elif key == Qt.Key_H:
+            self.show_hint()
 
 
 def main():

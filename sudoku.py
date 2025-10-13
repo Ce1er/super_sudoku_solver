@@ -21,6 +21,10 @@ class Cells:
 
         self.cells = np.copy(self._clues)
 
+    def is_clue(self, coord: npt.NDArray[np.int8]) -> bool:
+        print(coord, self._clues[*coord])
+        return self._clues[*coord] != -1
+
     def add_cell(self, coordinate: tuple[int, int], value: int) -> None:
         self.cells[*coordinate] = value
 
@@ -108,6 +112,9 @@ class Board:
         AUTONORMAL = True  # TODO: move this to somewhere else. Idealing reading from a settings.* file.
         if AUTONORMAL:
             self.all_normal()
+
+    def is_clue(self, coord: npt.NDArray[np.int8]) -> bool:
+        return self.cells.is_clue(coord)
 
     def get_cells(self, include_empty=False):
         return self.cells.get_cells_np(include_empty)
