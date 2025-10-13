@@ -124,10 +124,11 @@ class HintBox(QGraphicsItem):
         border_size,
         background_colour,
     ):  # TODO: take colours and stuff as well. Probably should implement Action before trying to get cell highlighting working but the message box part can be done at any time.
+        super().__init__()
 
-        # Width and height set based on text length.
-        self.width = ...
-        self.height = ...
+        # TODO: Width and height set based on text length.
+        self.width = 100
+        self.height = 100
 
         self.technique = technique
         self.text_size = text_size
@@ -256,6 +257,11 @@ class Board(QGraphicsScene):
         if technique is None:
             print("No technique found")
             return
+
+        hint = HintBox(
+            technique, 11, self.border_colour, self.border_size, self.background_colour
+        )
+        hint.setPos(0, 0)
 
         print(technique.message)
 
