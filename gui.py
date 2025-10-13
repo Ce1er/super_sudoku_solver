@@ -186,7 +186,6 @@ class Board(QGraphicsScene):
             self.cells[row][col].set_candidates(
                 (self.data.get_candidates()[:, row, col])
             )
-            print(row, col, self.data.get_candidates()[row, col])
             self.cells[row][col].set_value(self.data.get_all_cells()[row, col])
 
     def cell_clicked(self, cell: Cell):
@@ -205,8 +204,8 @@ class Board(QGraphicsScene):
 
         key = event.key()
         if Qt.Key_1 <= key <= Qt.Key_9:
-            value = key - Qt.Key_0
-            self.selected_cell.set_value(value)
+            value = key - Qt.Key_0 - 1
+            self.selected_cell.set_value(value + 1)
             self.data.add_cell(
                 np.array(
                     [
@@ -224,7 +223,7 @@ class Board(QGraphicsScene):
             self.data.auto_normal()
             self.update_candidates()
         elif key == Qt.Key_S:
-            print(self.data.auto_solve())
+            self.data.auto_solve()
             self.update_candidates()
 
 

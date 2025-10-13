@@ -116,7 +116,11 @@ class Board:
         return self.cells.get_all_cells()
 
     def add_cell(self, coord: npt.NDArray[np.int8]):
-        self.cells.add_cell((coord[0], coord[1]), coord[2] + 1)
+        """
+        Args:
+            coord: (row, col, value) all between 1-8 inclusive.
+        """
+        self.cells.add_cell((coord[0], coord[1]), coord[2])  # + 1)
 
     def add_hint_type(
         self,
@@ -203,7 +207,7 @@ class Board:
         candidates = np.full((9, 9, 9), False, dtype=bool)
 
         for hint_type in self.hints.values():
-            if hint_type.is_candidate():
+            if hint_type.candidate:
                 candidates = candidates | hint_type.get_hints()
         return candidates
 
@@ -316,3 +320,5 @@ if __name__ == "__main__":
     # print(board.adjacent((0, 0)))
     # print("5, 8")
     # print(board.adjacent((5, 8)))
+
+# TODO: just make literally everything 0-based.

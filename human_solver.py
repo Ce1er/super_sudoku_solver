@@ -71,7 +71,9 @@ T = TypeVar("T", bound=MessagePart)
 
 class Action:
     # TODO: actually use this
-    def __init__(self, add_cells, remove_candidates) -> None: ...
+    def __init__(
+        self, add_cells: npt.NDArray[np.int8], remove_candidates: npt.NDArray[np.bool]
+    ) -> None: ...
 
     # Board highlighting will be based off action if a full hint is used. And it will fully represent the candidates that can be removed / cells that can be added.
 
