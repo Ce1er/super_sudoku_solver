@@ -1,3 +1,4 @@
+from time import time
 from typing import Optional, Generator
 import numpy as np
 import numpy.typing as npt
@@ -112,6 +113,11 @@ class Board:
         AUTONORMAL = True  # TODO: move this to somewhere else. Idealing reading from a settings.* file.
         if AUTONORMAL:
             self.all_normal()
+
+    def remove_candidates(
+        self, candidates: npt.NDArray[np.bool], type: str = "normal"
+    ) -> None:
+        self.hints[type].remove_hints(candidates)
 
     def is_clue(self, coord: npt.NDArray[np.int8]) -> bool:
         return self.cells.is_clue(coord)
@@ -312,10 +318,16 @@ class Board:
 
 if __name__ == "__main__":
     board = Board(
-        "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",
+        ".................................................................................",
     )
+    start = time()
+    i = 0
     for solution in board.solve():
-        print(solution)
+        i += 1
+        if i > 100_000:
+            break
+        # print(solution)
+    print(time() - start)
 
     # print("1, 2")
     # print(board.adjacent((1, 2)))

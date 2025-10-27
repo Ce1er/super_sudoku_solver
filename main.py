@@ -4,6 +4,9 @@ from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsItem,
     QGraphicsSceneMouseEvent,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
 )
 from PySide6.QtGui import QPainter, QPen, QBrush, QFont, QColor
 from PySide6.QtCore import QRectF, Qt
@@ -154,6 +157,30 @@ class HintBox(QGraphicsItem):
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
         # TODO: handle mouse press event to do smth.
         return super().mousePressEvent(event)
+
+
+# Replace above class if this turns out to be better
+class HintBox2(QWidget):
+    def __init__(
+        self,
+        technique: Technique,
+        text_size: int,
+        border_colour: QColor,
+        border_size: int,
+        background_colour: QColor,
+    ) -> None:
+        super().__init__()
+        self.technique: Technique = technique
+        self.text_size: int = text_size
+        self.border_colour: QColor = border_colour
+        self.border_size: int = border_size
+        self.background_colour: QColor = background_colour
+        self.text: str = self.technique.message
+
+        layout = QVBoxLayout()
+
+        self.label = QLabel(self.text)
+        layout.addWidget(self.label)
 
 
 class Board(QGraphicsScene):
