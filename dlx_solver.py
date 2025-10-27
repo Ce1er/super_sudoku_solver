@@ -100,8 +100,6 @@ class Matrix:
             and regular nodes linked to those header nodes.
 
         column_header: Maps labels to their root nodes for faster access.
-        search_calls: List with number of calls to search method
-            for each level in the recursion.
     """
 
     def __init__(self, labels: list[int], rows: list[list[int]]) -> None:
@@ -113,12 +111,6 @@ class Matrix:
         """
         self.root: Node = Node()
         self.column_header: dict[int, HeaderNode] = {}
-
-        # At the start 0 calls to search method have been made
-        # The 0 will represent the lowest level of recursion
-        # As recursive calls to search() happen more ints will be added to this list
-        # Gets assigned in generate_solutions() method
-        self.search_calls: list[int]
 
         # Root will be the first node in the structure
         prev = self.root
@@ -240,24 +232,16 @@ class Matrix:
         column.left.right = column
 
     def _search(
-        self, recursion_level: int = 0, solution: Optional[list[Node]] = None
+        self, solution: Optional[list[Node]] = None
     ) -> Generator[list[Node], None, None]:
         """Recursive search algorithm to find exact cover solutions.
         Args:
-            recursion_level: Level of the recursive call.
             solution: List of rows in the (partial) solution
         Yields:
             List of rows consisting a solution
         """
         if solution is None:
             solution = []
-
-        # Check if there is already an int for the current level of recursion in search_calls
-        if len(self.search_calls) <= recursion_level:
-            self.search_calls.append(0)
-
-        # This is a call to search() so increment counter in search_calls based on recursion level
-        self.search_calls[recursion_level] += 1
 
         if self.root.right == self.root:
             # If there are no columns to the right of root. Then all must be covered. So there is a solution.
@@ -294,9 +278,7 @@ class Matrix:
             # Recursive call to search(), extending the partial solution with x.
             # yield from passes up all valid solutions found before.
             # When search() ends a generator function with all solutions will be given.
-            yield from self._search(
-                recursion_level=recursion_level + 1, solution=solution + [x]
-            )
+            yield from self._search(solution=solution + [x])
 
             # If a solution wasn't found then uncover all nodes that we just covered.
             # Direction is arbritrary but must be the opposite of the one used when covering columns
@@ -328,8 +310,6 @@ class Matrix:
             All possible exact cover matrices.
             Gives each row as an array of their Node's column label.
         """
-        self.search_calls = [0]
-
         for solution in self._search():
             # Yielding here allows processing solutions as soon as they are found instead of waiting for them all
             yield [self._get_row_labels(s) for s in solution]
