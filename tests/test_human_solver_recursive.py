@@ -1,4 +1,4 @@
-import line_profiler
+# import line_profiler
 import copy
 import pytest
 from sudoku import Board
@@ -14,8 +14,10 @@ def board():
     )
 
 
-@line_profiler.profile
-def apply_all_techniques(board: Human_Solver, seen=None):
+# @line_profiler.profile
+def apply_all_techniques(board: Human_Solver, max_depth=5, depth=0, seen=None):
+    if depth > max_depth:
+        return
     board.auto_normal()
     if seen is None:
         seen = set()
@@ -47,7 +49,7 @@ def apply_all_techniques(board: Human_Solver, seen=None):
                 f"Technique {technique.get_technique()} did not change any candidates"
             )
 
-        apply_all_techniques(new, seen)
+        apply_all_techniques(new, max_depth, depth+1, seen)
 
 
 def test_human_techniques(board):

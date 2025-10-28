@@ -1,5 +1,5 @@
 import pytest
-from test_utils import valid_sudoku
+from tests.test_utils import valid_sudoku
 from sudoku import Board
 
 @pytest.fixture

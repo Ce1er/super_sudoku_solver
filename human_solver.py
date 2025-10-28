@@ -1,4 +1,5 @@
-import line_profiler
+# import line_profiler
+from collections.abc import Generator
 from typing import Callable, Optional, Protocol, Type, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
@@ -148,7 +149,7 @@ class Human_Solver:
     def get_candidates(self) -> npt.NDArray[np.bool]:
         return self.candidates
 
-    @line_profiler.profile
+    # @line_profiler.profile
     def is_valid(self) -> bool:
         # for s in self.board.solve():
         #     if solution is not None:
@@ -162,7 +163,9 @@ class Human_Solver:
 
         for row, col in np.argwhere(self.solution):
             if self.cells[row, col] not in (self.solution[row, col], -1):
-                print("Cells in wrong place")
+                print(
+                    f"{self._pretty_coords(row,col)} is {self.cells[row,col]+1} but should be {self.solution[row,col]+1}"
+                )
                 return False
 
             if self.cells[row, col] != -1 and (
@@ -182,7 +185,7 @@ class Human_Solver:
         # TODO: maybe make this a hint technique that explains why hints being removed
         self.board.auto_normal()
 
-    def _naked_singles(self):
+    def _naked_singles(self) -> Generator[Technique]:
         for coord in np.argwhere(
             (np.add.reduce(self.candidates, axis=0, dtype=np.int8)) == 1
         ):
