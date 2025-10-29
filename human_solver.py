@@ -294,52 +294,85 @@ class Human_Solver:
 
     def _hidden_pairs(self) -> Generator[Technique]:
         types = {
-            Board.adjacent_row: "row",
-            Board.adjacent_column: "column",
-            Board.adjacent_box: "box",
+            "row": Board.adjacent_row,
+            "column": Board.adjacent_column,
+            "box": Board.adjacent_box,
         }
-        for coord in np.argwhere(self.candidates):
-            num, row, column = coord
 
-            # Hidden pairs
-            for func, adjacency in types.items():
-                if (
-                    np.count_nonzero(func((row, column)) & self.candidates[num]) == 2
-                ):  # TODO: some of these snippets will appear in lots of techniques, maybe make some helper functions
-                    coords = np.argwhere(func((row, column)) & self.candidates[num])
-                    if len(coords) != 2:
-                        continue
+        # Not strictly more than 2 because if one of them is hidden it counts as a hidden pair
+        coords = np.argwhere(np.add.reduce(self.candidates, axis=0) >= 2)
+        for pair in combinations(coords, r=2):
+            cell1 = pair[0]
+            cell2 = pair[1]
+            nums1 = self.candidates[:, *cell1]
+            nums2 = self.candidates[:, *cell2]
 
-                    # Num is always increasing so only check against higher nums
-                    # There is probably a better way of doing this with some numpy tricks
-                    for i in range(num + 1, 9):
-                        if np.array_equal(
-                            np.argwhere(func((row, column)) & self.candidates[i]),
-                            coords,
-                        ):
+            common_nums_mask = nums1 & nums2
+            common_nums = np.argwhere(common_nums_mask)
 
-                            removed_candidates = np.full(
-                                (9, 9, 9), False, dtype=np.bool
-                            )
-                            for coord in coords:
-                                removed_candidates[*coord] = True
-                                removed_candidates[*coord, num] = False
-                                removed_candidates[*coord, i] = False
+            # Pairs need at least 2 common candidates
+            if len(common_nums) < 2:
+                continue
 
-                            yield Technique(
-                                "Hidden Pair",
-                                [
-                                    MessageCoords(coords, highlight=1),
-                                    MessageText("are the only cells that can be "),
-                                    MessageNum(num),
-                                    MessageText("or"),
-                                    MessageNum(i),
-                                    MessageText(
-                                        f"in their {adjacency}, so we can remove all other candidates from them."
-                                    ),
-                                ],
-                                Action(remove_candidates=removed_candidates),
-                            )
+            # this would make them naked
+            if np.count_nonzero(
+                nums1 | nums2
+            ) == 2:
+                continue
+
+            # Pairs must be adjacent
+            if not Board.adjacent((cell1[0], cell1[1]))[*cell2]:
+                continue
+
+            # Not super elegant or performant but the arrays are small enough that it really doesn't matter
+            for num_pair in combinations(common_nums, r=2):
+                num_pair = np.array([*num_pair])
+                # print(num_pair)
+                adjacent_by = []
+                for adjacency, func in types.items():
+                    # If they are adjacent by {adjacency} append adjacency to adjacent_by
+                    if func((cell1[0], cell1[1]))[*cell2]:
+                        adjacent_by.append(adjacency)
+
+                temp = adjacent_by.copy()
+                # 9x9 array where True means either (or both) nums are there
+                # print(self.candidates[num_pair])
+                other_occurences = np.logical_or.reduce(self.candidates[num_pair])
+                # print(other_occurences)
+                for adjacency in adjacent_by:
+                    func = types[adjacency]
+                    # print(func((cell1[0],cell1[1])))
+                    if np.count_nonzero(func((cell1[0], cell1[1])) & other_occurences) != 2:
+                        temp.remove(adjacency)
+
+                adjacent_by = temp
+
+                if len(adjacent_by) == 0:
+                    continue
+
+                removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+
+                cells = np.array([cell1, cell2])
+
+                num_pair_mask=np.full((9), False, dtype=np.bool)
+
+                num_pair_mask[num_pair] = True
+
+                other_nums = np.argwhere(~num_pair_mask)
+
+                # Remove any other candidates from the 2 cells that are part of the hidden pair
+                removed_candidates[other_nums, cells[:, 0], cells[:, 1]] = True
+
+                yield Technique(
+                    "Hidden Pair",
+                    [
+                        MessageCoords(cells),
+                        MessageText(" are the only cells that can be "),
+                        MessageNums(num_pair),
+                        MessageText(" in their " + ", ".join(adjacent_by) + " so we can remove all other candidates from them"),
+                    ],
+                    Action(remove_candidates=removed_candidates),
+                )
 
     def _locked_candidates(self) -> Generator[Technique]:
         types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
