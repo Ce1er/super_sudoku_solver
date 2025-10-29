@@ -70,7 +70,7 @@ class TestTechnique:
     def test_removed_candidates(self, removed_candidates, action_fixt, null):
         for action in action_fixt:
             if (candidates := action.get_candidates()) is None:
-                assert None in removed_candidates
+                assert None in removed_candidates, "Technique did not find any candidates to remove"
             else:
                 assert (
                     candidates.tolist() in removed_candidates
