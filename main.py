@@ -19,7 +19,7 @@ from itertools import product
 import settings
 from sudoku import Board as BoardData
 from utils import get_first
-from human_solver import Human_Solver, Technique
+from human_solver import HumanSolver, Technique
 
 
 # TODO: pass in font so it is customisable
@@ -276,7 +276,7 @@ class Board(QGraphicsScene):
         cell.set_highlighted(True)
 
     def show_hint(self):
-        human = Human_Solver(self.data)
+        human = HumanSolver(self.data)
         print(type(human))
 
         # NOTE: finding a hint relies on candidates being set. It does not auto_normal automatically.

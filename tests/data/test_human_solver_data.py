@@ -1,20 +1,20 @@
 # vim: foldmethod=marker
 from _pytest.mark import ParameterSet
-from human_solver import Technique, Human_Solver
+from human_solver import Technique, HumanSolver
 from collections.abc import Generator, Callable
 from typing import Optional
 import pytest
 from sudoku import Board
 import numpy as np
 
-board_1 = Human_Solver(
+board_1 = HumanSolver(
     Board(
         ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
     )
 )
 board_1.auto_normal()
 
-board_2 = Human_Solver(
+board_2 = HumanSolver(
     Board(
         ".....2...71.95.....86.34..997542.......573.9..3..91574...2476383...15927.273.9..."
     )
@@ -28,14 +28,14 @@ remove_candidates[5, 0, 3] = True
 board_2.remove_candidates(remove_candidates)
 
 
-boards: dict[int, Human_Solver] = {1: board_1, 2: board_2}
+boards: dict[int, HumanSolver] = {1: board_1, 2: board_2}
 
 
 test_technique: list[ParameterSet] = []
 
 naked_singles_board_1 = {
     "name": "Naked Singles::Board 1",
-    "func": Human_Solver._naked_singles,
+    "func": HumanSolver._naked_singles,
     "board": boards[1],
     "cases": [
         # Cases {{{
@@ -98,7 +98,7 @@ naked_singles_board_1 = {
 
 hidden_singles_board_1 = {
     "name": "Hidden Singles::Board 1",
-    "func": Human_Solver._hidden_singles,
+    "func": HumanSolver._hidden_singles,
     "board": boards[1],
     "cases": [
         # Cases {{{
@@ -431,7 +431,7 @@ hidden_singles_board_1 = {
 
 naked_pairs_board_1 = {
     "name": "Naked Pairs::Board 1",
-    "func": Human_Solver._naked_pairs,
+    "func": HumanSolver._naked_pairs,
     "board": boards[1],
     "cases": [
         # Cases {{{
@@ -759,7 +759,7 @@ naked_pairs_board_1 = {
 
 hidden_pairs_board_1 = {
     "name": "Hidden Pairs::Board 1",
-    "func": Human_Solver._hidden_pairs,
+    "func": HumanSolver._hidden_pairs,
     "board": boards[1],
     "cases": [
         {
@@ -873,7 +873,7 @@ hidden_pairs_board_1 = {
 
 skyscrapers_board_2 = {
     "name": "Skyscrapers::Board 2",
-    "func": Human_Solver._skyscraper,
+    "func": HumanSolver._skyscraper,
     "board": boards[2],
     "cases": [
         # Cases {{{

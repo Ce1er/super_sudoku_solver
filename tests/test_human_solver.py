@@ -2,7 +2,7 @@
 # TODO: think about how is actually best to hide the long techniques arrays, maybe importing from a different file.
 from collections.abc import Generator, Callable
 import pytest
-from human_solver import Human_Solver, Technique
+from human_solver import HumanSolver, Technique
 from sudoku import Board
 import tests.data.test_human_solver_data as test_human_solver_data
 import re
@@ -17,8 +17,8 @@ class TestTechnique:
     @pytest.fixture
     def null(
         self,
-        board: Human_Solver,
-        technique: Callable[[Human_Solver], Generator[Technique]],
+        board: HumanSolver,
+        technique: Callable[[HumanSolver], Generator[Technique]],
         add_cells: Optional[list[list[list[int]]]],
         removed_candidates: Optional[list[list[list[list[bool]]]]],
         message_has: list[list[str]],
@@ -30,8 +30,8 @@ class TestTechnique:
         return
 
     @pytest.fixture
-    def board_fixt(self, board) -> Human_Solver:
-        # new = Human_Solver(Board(board))
+    def board_fixt(self, board) -> HumanSolver:
+        # new = HumanSolver(Board(board))
         # new.auto_normal()
         # return new
         return board

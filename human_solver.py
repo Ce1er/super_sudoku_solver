@@ -117,7 +117,7 @@ class Technique:
         return self.technique
 
 
-class Human_Solver:
+class HumanSolver:
     def __init__(self, board: Board) -> None:
         # TODO: maybe use board directly instead of copying from it. Or just stop using it entierly.
         # dimension 1 = number
@@ -640,7 +640,7 @@ if __name__ == "__main__":
 
     board.auto_normal()
 
-    human: Human_Solver = Human_Solver(board)
+    human: HumanSolver = HumanSolver(board)
 
     for technique in human._hidden_singles():
         print("found")

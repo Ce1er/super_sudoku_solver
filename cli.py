@@ -1,5 +1,5 @@
 from sudoku import Board
-from human_solver import Human_Solver
+from human_solver import HumanSolver
 from utils import get_first, text_board, text_hints
 import os
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
             case "a":
                 board.auto_normal()
-                human = Human_Solver(board)
+                human = HumanSolver(board)
                 for hint in human.hint():
                     print(hint.technique)
                     print(hint.message)
