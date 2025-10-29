@@ -17,7 +17,7 @@ class TestTechnique:
     @pytest.fixture
     def null(
         self,
-        board: str,
+        board: Human_Solver,
         technique: Callable[[Human_Solver], Generator[Technique]],
         add_cells: Optional[list[list[list[int]]]],
         removed_candidates: Optional[list[list[list[list[bool]]]]],
@@ -31,13 +31,15 @@ class TestTechnique:
 
     @pytest.fixture
     def board_fixt(self, board) -> Human_Solver:
-        new = Human_Solver(Board(board))
-        new.auto_normal()
-        return new
+        # new = Human_Solver(Board(board))
+        # new.auto_normal()
+        # return new
+        return board
 
     @pytest.fixture
     def technique_fixt(self, board_fixt, technique):
         techniques = []
+        assert technique(board_fixt) is not None, f"{technique} does not yield any Techniques"
         for technique_found in technique(board_fixt):
             techniques.append(technique_found)
         return techniques
