@@ -578,7 +578,7 @@ class Human_Solver:
         types = [
             self._naked_singles,
             self._hidden_singles,
-            # self._naked_pairs,
+            self._naked_pairs,
             # self._hidden_pairs,
             # self._locked_candidates,
             # self._pointing_tuples,
