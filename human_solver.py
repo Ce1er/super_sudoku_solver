@@ -215,31 +215,30 @@ class Human_Solver:
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
             for func, adjacency in types.items():
-                if (
-                    np.count_nonzero(func((row, column)) & self.candidates[num]) == 1
-                    and len(np.argwhere(self.candidates[:, row, column])) != 1
+                adjacent = func((row, column)) & self.candidates[num]
+                candidates_at_cell = self.candidates[:, row, column]
+                if not (
+                    np.count_nonzero(adjacent) == 1
+                    and len(np.argwhere(candidates_at_cell)) != 1
                 ):
+                    continue
 
-                    # TODO: also check for naked singles, honestly naked varieties seem like they tend to be different enough that it might make more sense to have in seperate functions. It would also make checking which technique is easiest easier as only the method used needs to be considered instead of the specifics of how the technique was applied.
+                new_cells = np.full((9, 9), -1, dtype=np.int8)
+                new_cells[row, column] = num
 
-                    new_cells = np.full((9, 9), -1, dtype=np.int8)
-                    new_cells[row, column] = num
-
-                    yield Technique(
-                        "Hidden Single",  # It could be a naked single but _naked_singles() should be ran first
-                        # TODO: check if comment above is actually right.
-                        [
-                            MessageCoord(
-                                np.array([row, column], dtype=np.int8), highlight=1
-                            ),
-                            MessageText("is"),
-                            MessageNum(num),
-                            MessageText(
-                                f"because there are no others in the {adjacency}"
-                            ),
-                        ],
-                        Action(new_cells),
-                    )
+                yield Technique(
+                    "Hidden Single",  # It could be a naked single but _naked_singles() should be ran first
+                    # TODO: check if comment above is actually right.
+                    [
+                        MessageCoord(
+                            np.array([row, column], dtype=np.int8), highlight=1
+                        ),
+                        MessageText("is"),
+                        MessageNum(num),
+                        MessageText(f"because there are no others in the {adjacency}"),
+                    ],
+                    Action(new_cells),
+                )
 
     def _naked_pairs(self) -> Generator[Technique]:
         # TODO: it can give the same pair twice because it checks coordinates of both items. Fix this. Also a problem for hidden pairs. This isn't actually a problem, all the hints are still correct its just some are redundant. It would be quite nice for the hint to say stuff like it is a pair along the box and the column or whatever.
@@ -570,10 +569,10 @@ class Human_Solver:
         types = [
             self._naked_singles,
             self._hidden_singles,
-            self._naked_pairs,
-            self._hidden_pairs,
-            self._locked_candidates,
-            self._pointing_tuples,
+            # self._naked_pairs,
+            # self._hidden_pairs,
+            # self._locked_candidates,
+            # self._pointing_tuples,
             self._skyscraper,
         ]
         # Maybe doing this async in some way could help. But because if only returns the easiest technique it might not be the easiest to do.

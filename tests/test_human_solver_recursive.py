@@ -50,6 +50,7 @@ def apply_all_techniques(board: Human_Solver, max_depth=5, depth=0, seen=None):
             )
 
         apply_all_techniques(new, max_depth, depth+1, seen)
+        break
 
 
 def test_human_techniques(board):
