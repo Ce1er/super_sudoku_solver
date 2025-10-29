@@ -187,16 +187,13 @@ class Human_Solver:
         self.board.auto_normal()
 
     def _naked_singles(self) -> Generator[Technique]:
-        for coord in np.argwhere(
-            (np.add.reduce(self.candidates, axis=0, dtype=np.int8)) == 1
-        ):
+        naked_singles = np.add.reduce(self.candidates, axis=0, dtype=np.int8) == 1
+        for coord in np.argwhere(naked_singles):
             row, column = coord
-            num = np.argwhere(self.candidates[:, row, column])  # .reshape(1)
-            if num.size != 1:
-                continue  # HACK: this should not be needed. The condition in the for loop should handle it but for some reason it is behaving weirdly.
+            num = np.argwhere(self.candidates[:, row, column])
 
             new_cells = np.full((9, 9), -1, dtype=np.int8)
-            new_cells[row, column] = num[0][0]  # .reshape(1)
+            new_cells[row, column] = num[0][0]
 
             yield Technique(
                 "Naked Single",
