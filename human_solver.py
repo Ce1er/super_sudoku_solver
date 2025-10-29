@@ -421,18 +421,15 @@ class Human_Solver:
 
         for adjacency, func in types.items():
             for num in range(9):
-                potential: npt.NDArray[np.int8]
                 # Find rows or columns with 2 occurences of num. Will give 1d arr with ints representing index of row/column.
                 if adjacency == "column":
-                    potential = np.argwhere(
-                        np.add.reduce(self.candidates[num], axis=0, dtype=np.int8) == 2
-                    )
+                    rows = np.add.reduce(self.candidates[num], axis=0, dtype=np.int8)
+                    potential = np.argwhere(rows == 2)
                 elif adjacency == "row":
-                    # print(self.candidates[num])
-                    # print(np.add.reduce(self.candidates[num], axis=1, dtype=np.int8))
-                    potential = np.argwhere(
-                        np.add.reduce(self.candidates[num], axis=1, dtype=np.int8) == 2
-                    )
+                    columns = np.add.reduce(self.candidates[num], axis=1, dtype=np.int8)
+                    potential = np.argwhere(columns == 2)
+                else:
+                    raise ValueError("Invalid adjacency")
 
                 if len(potential) < 2:
                     continue
@@ -441,106 +438,112 @@ class Human_Solver:
                     # Check that one of the candidates in pairing[0] in same row/column to one of the candidates in pairing[0]
                     # The adjacency to check should be the opposite to adjacency
                     # So the check below is actually checking row adjacency not column
+                    totals = None
                     if adjacency == "column":
-                        shared = np.add.reduce(
+                        totals = np.add.reduce(
                             self.candidates[num, :, pairing], axis=0, dtype=np.int8
                         )
                     elif adjacency == "row":
-                        shared = np.add.reduce(
+                        totals = np.add.reduce(
                             self.candidates[num, pairing, :], axis=0, dtype=np.int8
                         )
 
+                    assert totals is not None
+
+                    shared = totals == 2
+                    non_shared = totals == 1
+
                     # Check that one pair of candidates share a row/column
-                    if (
-                        np.count_nonzero(shared == 1) == 2
-                        and np.count_nonzero(shared == 2) == 1
+                    if not (
+                        np.count_nonzero(non_shared) == 2
+                        and np.count_nonzero(shared) == 1
                     ):
-                        # Find cells that see both of the instances of num in the row/column in pairing which do not share a row/column
-                        # Any cells that do see both can have num removed as a candidate
-                        # These checks are checking the adjacency in the condition
-                        if adjacency == "column":
-                            # continue
-                            cell1_row = np.argwhere(
-                                (self.candidates[num, :, pairing] & ~(shared == 2))[0][
-                                    0
-                                ]
-                            )[0][0]
-                            cell2_row = np.argwhere(
-                                (self.candidates[num, :, pairing] & ~(shared == 2))[1][
-                                    0
-                                ]
-                            )[0][0]
+                        continue
 
-                            cell1_coord= np.array([cell1_row, pairing[0][0]])
-                            cell2_coord= np.array([cell2_row, pairing[1][0]])
+                    # Find cells that see both of the instances of num in the row/column in pairing which do not share a row/column
+                    # Any cells that do see both can have num removed as a candidate
+                    # These checks are actually checking the adjacency in the condition
+                    if adjacency == "column":
+                        rows = self.candidates[num, :, pairing] & ~shared
+                        row1 = rows[0][0]
+                        row2 = rows[1][0]
+                        cell1_row = np.argwhere(row1)[0][0]
+                        cell2_row = np.argwhere(row2)[0][0]
 
-                            # Will be the same for the other 2 because they have to share a column
-                            other_row = np.argwhere((self.candidates[num, :, pairing]& ~(shared==1))[0][0])[0][0]
+                        cell1_coord = np.array([cell1_row, pairing[0][0]])
+                        cell2_coord = np.array([cell2_row, pairing[1][0]])
 
-                            cell3_coord = np.array([other_row, pairing[0][0]])
-                            cell4_coord = np.array([other_row, pairing[1][0]])
+                        # Will be the same for the other 2 because they have to share a row
+                        shared_row = self.candidates[num, :, pairing] & ~non_shared
+                        shared_row = np.argwhere(shared_row[0][0])[0][0]
 
-                            # cell3 and cell4 must be the only cells in the column
-                            if np.count_nonzero(self.candidates[num, other_row, :]) != 2:
-                                continue
+                        cell3_coord = np.array([shared_row, pairing[0][0]])
+                        cell4_coord = np.array([shared_row, pairing[1][0]])
 
-                        elif adjacency == "row":
-                            cell1_col = np.argwhere(
-                                (self.candidates[num, pairing, :] & ~(shared == 2))[0][
-                                    0
-                                ]
-                            )[0][0]
-                            cell2_col = np.argwhere(
-                                (self.candidates[num, pairing, :] & ~(shared == 2))[1][
-                                    0
-                                ]
-                            )[0][0]
-
-                            cell1_coord = np.array([pairing[0][0], cell1_col])
-                            cell2_coord = np.array([pairing[1][0], cell2_col])
-
-                            # Will be the same for the other 2 because they have to share a column
-                            other_col = np.argwhere((self.candidates[num, pairing, :]& ~(shared==1))[0][0])[0][0]
-
-                            cell3_coord = np.array([pairing[0][0], other_col])
-                            cell4_coord = np.array([pairing[1][0], other_col])
-
-                            # cell3 and cell4 must be the only cells in the column
-                            if np.count_nonzero(self.candidates[num, :, other_col]) != 2:
-                                continue
-
-                        removed_candidates = np.full((9,9,9), False, dtype=np.bool)
-
-                        removed_candidates[num] = (
-                            self.candidates[num]
-                            & Board.adjacent((cell1_coord[0], cell1_coord[1]))
-                            & Board.adjacent((cell2_coord[0], cell2_coord[1]))
-                        )
-
-                        if np.count_nonzero(removed_candidates) == 0:
+                        # cell3 and cell4 must be the only cells in the column
+                        if np.count_nonzero(self.candidates[num, shared_row, :]) != 2:
                             continue
 
+                    elif adjacency == "row":
+                        cols = self.candidates[num, pairing, :] & ~shared
+                        col1 = cols[0][0]
+                        col2 = cols[1][0]
+                        cell1_col = np.argwhere(col1)[0][0]
+                        cell2_col = np.argwhere(col2)[0][0]
 
-                        other_adjacency = "row" if adjacency == "column" else "column"
+                        cell1_coord = np.array([pairing[0][0], cell1_col])
+                        cell2_coord = np.array([pairing[1][0], cell2_col])
 
-                        yield Technique(
-                            "Skyscraper",
-                            [
+                        # Will be the same for the other 2 because they have to share a column
+                        other_col = np.argwhere(
+                            (self.candidates[num, pairing, :] & ~(non_shared))[0][0]
+                        )[0][0]
+
+                        cell3_coord = np.array([pairing[0][0], other_col])
+                        cell4_coord = np.array([pairing[1][0], other_col])
+
+                        # cell3 and cell4 must be the only cells in the column
+                        if np.count_nonzero(self.candidates[num, :, other_col]) != 2:
+                            continue
+                    else:
+                        raise ValueError("Invalid adjacency")
+
+                    removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+
+                    # Remove candidates that can see both cell1 and cell2
+                    removed_candidates[num] = (
+                        self.candidates[num]
+                        & Board.adjacent((cell1_coord[0], cell1_coord[1]))
+                        & Board.adjacent((cell2_coord[0], cell2_coord[1]))
+                    )
+
+                    # If nothing actually gets removed then the Technique is kinda useless
+                    if np.count_nonzero(removed_candidates) == 0:
+                        continue
+
+                    other_adjacency = "row" if adjacency == "column" else "column"
+
+                    yield Technique(
+                        "Skyscraper",
+                        [
                             MessageText("At least one of"),
                             MessageCoords(np.array([cell1_coord, cell2_coord])),
                             MessageText("must be"),
                             MessageNum(num),
-                            MessageText(f" because they are the only {num+1} in their {adjacency} except these "),
-                            MessageCoords(
-                                np.array([cell3_coord, cell4_coord])
+                            MessageText(
+                                f" because they are the only {num+1} in their {adjacency} except these "
                             ),
-                            MessageText(f" which share a {other_adjacency}. That means"),
+                            MessageCoords(np.array([cell3_coord, cell4_coord])),
+                            MessageText(
+                                f" which share a {other_adjacency}. That means"
+                            ),
                             # MessageCandidates(removed_candidates),
-                            MessageText(f" which see both the cells that do not share a {other_adjacency} can't be {num+1}"),
-                            ],
-                            Action(remove_candidates=removed_candidates)
-                        )
-
+                            MessageText(
+                                f" which see both the cells that do not share a {other_adjacency} can't be {num+1}"
+                            ),
+                        ],
+                        Action(remove_candidates=removed_candidates),
+                    )
 
     # TODO:
     # Locked Candidates - untested but should work hopefully
