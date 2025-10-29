@@ -421,7 +421,6 @@ class Human_Solver:
 
         for adjacency, func in types.items():
             for num in range(9):
-                print(num)
                 potential: npt.NDArray[np.int8]
                 # Find rows or columns with 2 occurences of num. Will give 1d arr with ints representing index of row/column.
                 if adjacency == "column":
@@ -443,7 +442,6 @@ class Human_Solver:
                     # The adjacency to check should be the opposite to adjacency
                     # So the check below is actually checking row adjacency not column
                     if adjacency == "column":
-                        # print(self.candidates[num, :, pairing])
                         shared = np.add.reduce(
                             self.candidates[num, :, pairing], axis=0, dtype=np.int8
                         )
@@ -461,7 +459,6 @@ class Human_Solver:
                         # Any cells that do see both can have num removed as a candidate
                         # These checks are checking the adjacency in the condition
                         if adjacency == "column":
-                            # print(self.candidates[num, pairing, :])
                             # continue
                             cell1_row = np.argwhere(
                                 (self.candidates[num, :, pairing] & ~(shared == 2))[0][
@@ -483,7 +480,6 @@ class Human_Solver:
                             cell3_coord = np.array([other_row, pairing[0][0]])
                             cell4_coord = np.array([other_row, pairing[1][0]])
 
-                            # print(self.candidates[num, :, other_col])
                             # cell3 and cell4 must be the only cells in the column
                             if np.count_nonzero(self.candidates[num, other_row, :]) != 2:
                                 continue
