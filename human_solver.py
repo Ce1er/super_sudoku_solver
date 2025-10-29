@@ -61,7 +61,7 @@ class MessageNums(MessagePart):
         self.highlight = highlight
         tmp = "numbers"
         for num in nums:
-            tmp += " " + str(num.reshape(1)[0])
+            tmp += " " + str(num.reshape(1)[0] + 1)
         self.text = tmp
 
 
@@ -241,47 +241,56 @@ class Human_Solver:
                 )
 
     def _naked_pairs(self) -> Generator[Technique]:
-        # TODO: it can give the same pair twice because it checks coordinates of both items. Fix this. Also a problem for hidden pairs. This isn't actually a problem, all the hints are still correct its just some are redundant. It would be quite nice for the hint to say stuff like it is a pair along the box and the column or whatever.
         types = {
-            Board.adjacent_row: "row",
-            Board.adjacent_column: "column",
-            Board.adjacent_box: "box",
+            "row": Board.adjacent_row,
+            "column": Board.adjacent_column,
+            "box": Board.adjacent_box,
         }
 
-        for coord in np.argwhere(np.add.reduce(self.candidates, axis=0) == 2):
-            row, column = coord
-            nums = np.argwhere(self.candidates[:, row, column])
-            for func, adjacency in types.items():
+        # Get cells where there are 2 candidates
+        coords = np.argwhere(np.add.reduce(self.candidates, axis=0) == 2)
+        for pair in combinations(coords, r=2):
+            cell1 = pair[0]
+            cell2 = pair[1]
+            nums1 = self.candidates[:, *cell1]
+            nums2 = self.candidates[:, *cell2]
 
-                coords = np.argwhere(
-                    np.logical_and.reduce(
-                        func((row, column))
-                        & self.candidates[nums]
-                        & (np.add.reduce(self.candidates, axis=0) == 2),
-                    ).reshape(9, 9)
-                )
-                if len(coords) != 2:
-                    continue
+            # If they don't have the same 2 candidates they aren't a pair
+            if nums1.tolist() != nums2.tolist():
+                continue
 
-                # Should be the same as checking the second coord. I think it is guarenteed but worth double checking.
+            nums = nums1
 
-                nums = np.argwhere(self.candidates[:, coords[0, 0], coords[0, 1]])
+            # If they aren't adjacent they aren't a pair.
+            if not Board.adjacent((cell1[0], cell1[1]))[*cell2]:
+                continue
 
-                removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-                for coord in coords:
-                    removed_candidates[*coord] = True
-                    removed_candidates[*coord, nums[0]] = False
-                    removed_candidates[*coord, nums[1]] = False
+            remove_from = []
+            for adjacency, func in types.items():
+                if func((cell1[0], cell1[1]))[*cell2]:
+                    remove_from.append(adjacency)
 
-                yield Technique(
-                    "Naked Pair",
-                    [
-                        MessageCoords(coords, highlight=1),
-                        MessageNums(nums),
-                        MessageText(f"along {adjacency}"),
-                    ],
-                    Action(remove_candidates=removed_candidates),
-                )
+            removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+            for adjacency in remove_from:
+                removed_candidates[nums] |= types[adjacency]((cell1[0], cell1[1]))
+
+            removed_candidates &= self.candidates
+
+            if np.count_nonzero(removed_candidates) == 0:
+                continue
+
+            yield Technique(
+                "Naked Pair",
+                [
+                    MessageCoords(np.array([*pair])),
+                    MessageText("are"),
+                    MessageNums(np.argwhere(nums)),
+                    MessageText(
+                        f" because they are adjacent by {", ".join(remove_from)}"
+                    ),
+                ],
+                Action(remove_candidates=removed_candidates),
+            )
 
     def _hidden_pairs(self) -> Generator[Technique]:
         types = {
