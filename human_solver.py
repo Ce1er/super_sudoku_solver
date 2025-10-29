@@ -209,7 +209,7 @@ class Human_Solver:
                 Action(new_cells),
             )
 
-    def _hidden_singles(self):
+    def _hidden_singles(self) -> Generator[Technique]:
         types = {
             Board.adjacent_row: "row",
             Board.adjacent_column: "column",
@@ -244,7 +244,7 @@ class Human_Solver:
                         Action(new_cells),
                     )
 
-    def _naked_pairs(self):
+    def _naked_pairs(self) -> Generator[Technique]:
         # TODO: it can give the same pair twice because it checks coordinates of both items. Fix this. Also a problem for hidden pairs. This isn't actually a problem, all the hints are still correct its just some are redundant. It would be quite nice for the hint to say stuff like it is a pair along the box and the column or whatever.
         types = {
             Board.adjacent_row: "row",
@@ -287,7 +287,7 @@ class Human_Solver:
                     Action(remove_candidates=removed_candidates),
                 )
 
-    def _hidden_pairs(self):
+    def _hidden_pairs(self) -> Generator[Technique]:
         types = {
             Board.adjacent_row: "row",
             Board.adjacent_column: "column",
@@ -336,7 +336,7 @@ class Human_Solver:
                                 Action(remove_candidates=removed_candidates),
                             )
 
-    def _locked_candidates(self):
+    def _locked_candidates(self) -> Generator[Technique]:
         types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
@@ -374,7 +374,7 @@ class Human_Solver:
                         Action(new_nums),
                     )
 
-    def _pointing_tuples(self):
+    def _pointing_tuples(self) -> Generator[Technique]:
         types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
@@ -569,7 +569,7 @@ class Human_Solver:
     # Finned Swordfish
     # Finned Jellyfish
 
-    def hint(self):
+    def hint(self) -> Generator[Technique]:
         types = [
             self._naked_singles,
             self._hidden_singles,
@@ -577,6 +577,7 @@ class Human_Solver:
             self._hidden_pairs,
             self._locked_candidates,
             self._pointing_tuples,
+            self._skyscraper,
         ]
         # Maybe doing this async in some way could help. But because if only returns the easiest technique it might not be the easiest to do.
         # Could potentially start looking for all types at the same time and await them in order of easiest to hardest and return first non-null.
