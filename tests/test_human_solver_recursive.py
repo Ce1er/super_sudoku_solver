@@ -49,7 +49,7 @@ def apply_all_techniques(board: HumanSolver, max_depth=5, depth=0, seen=None):
                 f"Technique {technique.get_technique()} did not change any candidates"
             )
 
-        apply_all_techniques(new, max_depth, depth+1, seen)
+        apply_all_techniques(new, max_depth, depth + 1, seen)
         break
 
 

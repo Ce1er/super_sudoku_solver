@@ -8,7 +8,7 @@ def valid_sudoku(board: npt.NDArray[np.int8]):
     if board.shape != (9, 9):
         return False
 
-    for num in range(1, 10):
+    for num in range(9):
         mask = board == num
         for coord in np.argwhere(mask):
             x = coord[0]
@@ -20,7 +20,7 @@ def valid_sudoku(board: npt.NDArray[np.int8]):
     for x, y in product(range(9), repeat=2):
         for adjacency in adjacencies:
             nums = board[adjacency((x, y))]
-            for i in range(1, 10):
+            for i in range(9):
                 if np.count_nonzero(nums == i) != 1:
                     return False
 

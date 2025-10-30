@@ -194,14 +194,16 @@ class Board(QGraphicsScene):
             if row > x:
                 x = row
                 self.cells.append([])
-            for coord in self.data.get_cells():
+            # for coord in self.data.get_cells():
+            for coord in np.argwhere(self.data.get_all_cells()):
                 if coord[0] == row and coord[1] == col:
-                    value = coord[2]
+                    value = self.data.get_all_cells()[row, col]
                     break
             else:
                 value = -1
 
             print("foo", self.data.is_clue(np.array([row, col])))
+            print(row,col,value)
             cell = Cell(
                 np.array([row, col, value]),
                 self.data.get_candidates()[row, col],

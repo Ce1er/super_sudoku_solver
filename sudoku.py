@@ -19,10 +19,10 @@ class Cells:
     def __init__(self, clues: str) -> None:
         r"""
         Args:
-            clues: given clues of puzzle. Matches regex ^[0-9\.]{81}$
+            clues: given clues of puzzle. Matches regex ^[1-9\.]{81}$
         """
-        assert re.match(r"^[0-9\.]{81}", clues), "Invalid clues given to Cells object"
-        values = [-1 if clue == "." else int(clue) for clue in clues]
+        assert re.match(r"^[1-9\.]{81}", clues), "Invalid clues given to Cells object"
+        values = [-1 if clue == "." else int(clue) - 1 for clue in clues]
         self._clues = np.array(values, dtype=np.int8).reshape((9, 9))
         self._clues.flags.writeable = False
 
@@ -50,6 +50,7 @@ class Cells:
             list of (column, row, digit)
             column, row are 0 based but digit is 1 based
         """
+        raise DeprecationWarning
         cells = []
         for coord in np.argwhere(self.cells > (-2 if include_empty else 0)):
             coord = list(map(int, coord))
@@ -63,6 +64,7 @@ class Cells:
             list of (column, row, digit)
             column, row are 0 based but digit is 1 based
         """
+        raise DeprecationWarning
         cells = []
         for coord in np.argwhere(self.cells > (-2 if include_empty else 0)):
             coord = np.append(coord, self.cells[*coord])
@@ -184,6 +186,7 @@ class Board:
             list of (column, row, digit)
             column, row are 0 based but digit is 1 based
         """
+        raise DeprecationWarning
         return self.cells.get_cells_np(include_empty)
 
     def get_all_cells(self):
@@ -290,8 +293,10 @@ class Board:
         Remove candidates from cells if they have a number adjacent to them
         """
         mask = np.full((9, 9, 9), False, dtype=bool)
-        for cell in self.cells.get_cells():
-            mask[cell[2] - 1] = self.adjacent((cell[0], cell[1])) | mask[cell[2] - 1]
+        cells = self.cells.get_all_cells()
+        for cell in np.argwhere(cells != -1):
+            num = cells[*cell]
+            mask[num] = self.adjacent((cell[0], cell[1])) | mask[num]
 
             # Remove all hints if a cell is there
             mask[:, cell[0], cell[1]] = True
@@ -317,9 +322,9 @@ class Board:
         """
         return [  # One value per constraint
             9 * row + column,  # Cell constraint
-            81 + 9 * row + (value - 1),  # Row constraint
-            162 + 9 * column + (value - 1),  # Column constraint
-            243 + 9 * (3 * (row // 3) + (column // 3)) + (value - 1),  # Box constraint
+            81 + 9 * row + value,  # Row constraint
+            162 + 9 * column + value,  # Column constraint
+            243 + 9 * (3 * (row // 3) + (column // 3)) + value,  # Box constraint
         ]
 
     def create_matrix(self) -> dlx.Matrix:
@@ -332,14 +337,27 @@ class Board:
         """
         rows = []
 
+        x = 0
+        y = 0
         # Number of rows = clues + 9 * (81-clues)
-        for column, row, value in self.cells.get_cells(include_empty=True):
+        # for column, row, value in self.cells.get_cells(include_empty=True):
+        cells = self.cells.get_all_cells()
+        print(cells)
+        for column, row in np.argwhere(cells > -2):
+            value = cells[column,row]
+            print(value)
+            # print(value)
             if value != -1:
-                rows.append(self._row_add(column, row, value))
+                x+=1
+                rows.append(self._row_add(int(column), int(row), int(value)))
             else:
-                for i in range(1, 10):
-                    rows.append(self._row_add(column, row, i))
+                for i in range(9):
+                    y+=1
+                    rows.append(self._row_add(int(column), int(row), i))
 
+
+        print(len(rows))
+        print(x,y)
         # Only make labels for the ones referenced in rows
         labels = list(set(item for row in rows for item in row))
         return dlx.Matrix(labels, rows)
@@ -362,7 +380,7 @@ class Board:
             x = row[0] % 9
             y = row[0] // 9
 
-            value = (row[1] - 81) % 9 + 1
+            value = (row[1] - 81) % 9 
             board[x][y] = value
             count += 1
         return board
@@ -378,6 +396,7 @@ class Board:
         """
         matrix = self.create_matrix()
         for solution in matrix.generate_solutions():
+            print(solution)
             yield self.extract_from_matrix(solution)
             # if (
             #     one_solution

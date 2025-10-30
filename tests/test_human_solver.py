@@ -39,7 +39,9 @@ class TestTechnique:
     @pytest.fixture
     def technique_fixt(self, board_fixt, technique):
         techniques = []
-        assert technique(board_fixt) is not None, f"{technique} does not yield any Techniques"
+        assert (
+            technique(board_fixt) is not None
+        ), f"{technique} does not yield any Techniques"
         for technique_found in technique(board_fixt):
             techniques.append(technique_found)
         return techniques
@@ -70,11 +72,13 @@ class TestTechnique:
     def test_removed_candidates(self, removed_candidates, action_fixt, null):
         for action in action_fixt:
             if (candidates := action.get_candidates()) is None:
-                assert None in removed_candidates, "Technique did not find any candidates to remove"
+                assert (
+                    None in removed_candidates
+                ), "Technique did not find any candidates to remove"
             else:
                 assert (
                     candidates.tolist() in removed_candidates
-                ), f"Invalid removed_candidates:\n{removed_candidates}"
+                ), "Invalid removed_candidates"
 
     def test_technique_message(self, technique_fixt, message_has, null):
         correct = False

@@ -168,6 +168,7 @@ class Action:
 
     def get_candidates(self) -> Optional[npt.NDArray[np.bool]]:
         return self.remove_candidates
+    
 
 
 class Technique:
@@ -260,7 +261,8 @@ class HumanSolver:
         9x9 arr of cells to add
         """
         for row, col in np.argwhere(cells != -1):
-            self.cells[row, col] = cells[row, col] + 1
+            # TODO: just keep it 0-based
+            self.cells[row, col] = cells[row, col] # + 1
             self.candidates[:, row, col] = False
 
     def remove_candidates(self, candidates: npt.NDArray[np.bool]):
@@ -306,13 +308,17 @@ class HumanSolver:
         Yields:
             Technique
         """
+        print(self.candidates)
         naked_singles = np.add.reduce(self.candidates, axis=0, dtype=np.int8) == 1
+        print(naked_singles)
         for coord in np.argwhere(naked_singles):
             row, column = coord
             num = np.argwhere(self.candidates[:, row, column])
 
             new_cells = np.full((9, 9), -1, dtype=np.int8)
             new_cells[row, column] = num[0][0]
+
+            print(num)
 
             yield Technique(
                 "Naked Single",
@@ -578,6 +584,7 @@ class HumanSolver:
         Yields:
             Technique
         """
+        seen = []
         types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
@@ -601,6 +608,10 @@ class HumanSolver:
                         & self.candidates[num]
                     )
 
+                    if (result:=(coords.tobytes(), num) )in seen:
+                        continue
+                    seen.append(result)
+
                     removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
                     removed_candidates[num, :, :] |= func((row, column))
                     new = np.full((9), True, dtype=np.bool)
@@ -613,8 +624,8 @@ class HumanSolver:
                         [
                             MessageCoords(coords),
                             MessageText(
-                                f"are the only cells that can be {num} in their box so we can remove other options from their {adjacency}."
-                            ),
+                                " are the only cells that can be "),MessageNum(num),MessageText(f" in their box so we can remove other options from their {adjacency}."),
+                            
                         ],
                         Action(remove_candidates=removed_candidates),
                     )
@@ -809,6 +820,14 @@ class HumanSolver:
 
         if (x := action.get_candidates()) is not None:
             self.remove_candidates(x)
+
+    def action_is_null(self, action: Action) -> bool:
+        """
+        To determine if an action will have any impact on the candidates
+        Returns:
+            True if action will have no effect. False if it will have an effect.
+        """
+        raise NotImplementedError
 
 
 if __name__ == "__main__":
