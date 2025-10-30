@@ -328,7 +328,8 @@ class HumanSolver:
     @staticmethod
     def _non_null_actions(func: Callable[[Self], Generator[Technique]]) -> Callable[[Self], Generator[Technique]]:  # type: ignore[misc]
         """
-        Decorator to filter Techniques to only include ones where the action has an effect on candidates and/or cells
+        Decorator to filter Techniques to only include ones where the action has an effect on candidates and/or cells.
+        Slightly simplifies technique detection as those functions are not responsible for checking if it has an effect or not.
         """
 
         # @wraps preserves dunder attributes of decorated functions
