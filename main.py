@@ -126,12 +126,13 @@ class HintBox(QGraphicsItem):
         border_colour,
         border_size,
         background_colour,
+        height
     ):  # TODO: take colours and stuff as well. Probably should implement Action before trying to get cell highlighting working but the message box part can be done at any time.
         super().__init__()
 
         # TODO: Width and height set based on text length.
-        self.width = 100
-        self.height = 100
+        self.width = len(technique.get_message()) * text_size
+        self.height = height
 
         self.technique = technique
         self.text_size = text_size
@@ -148,7 +149,7 @@ class HintBox(QGraphicsItem):
         painter.fillRect(self.boundingRect(), QBrush(self.background_colour))
         pen = QPen(self.border_colour, self.border_size)
         painter.setPen(pen)
-        painter.drawRect(self.boundingRect)
+        painter.drawRect(self.boundingRect())
 
         painter.setFont(QFont("Arial", self.text_size))
         # TODO: handle special text highlighting and stuff.
@@ -158,29 +159,6 @@ class HintBox(QGraphicsItem):
         # TODO: handle mouse press event to do smth.
         return super().mousePressEvent(event)
 
-
-# Replace above class if this turns out to be better
-class HintBox2(QWidget):
-    def __init__(
-        self,
-        technique: Technique,
-        text_size: int,
-        border_colour: QColor,
-        border_size: int,
-        background_colour: QColor,
-    ) -> None:
-        super().__init__()
-        self.technique: Technique = technique
-        self.text_size: int = text_size
-        self.border_colour: QColor = border_colour
-        self.border_size: int = border_size
-        self.background_colour: QColor = background_colour
-        self.text: str = self.technique.message
-
-        layout = QVBoxLayout()
-
-        self.label = QLabel(self.text)
-        layout.addWidget(self.label)
 
 
 class Board(QGraphicsScene):
@@ -286,9 +264,10 @@ class Board(QGraphicsScene):
             return
 
         hint = HintBox(
-            technique, 11, self.border_colour, self.border_size, self.background_colour
+            technique, 11, self.border_colour, self.border_size, self.background_colour, self.cell_size
         )
-        hint.setPos(0, 0)
+        hint.setPos(self.cell_size * 9+5, 0)
+        self.addItem(hint)
 
         print(technique.message)
 
