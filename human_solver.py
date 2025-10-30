@@ -1,11 +1,13 @@
 # import line_profiler
+from __future__ import annotations
+import copy
 from collections.abc import Generator
-from typing import Callable, Optional, Protocol, Type, TypeVar, Union
+from typing import Callable, Optional, Protocol, Self, Type, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
 from sudoku import Board
 import logging
-from functools import reduce
+from functools import reduce, wraps
 from itertools import combinations
 import np_candidates as npc
 
@@ -277,6 +279,12 @@ class HumanSolver:
         """
         return self.candidates
 
+    def get_cells(self) -> npt.NDArray[np.int8]:
+        """
+        9x9 arr of cells
+        """
+        return self.cells
+
     def is_valid(self) -> bool:
         """
         Checks board is valid based on solution
@@ -301,15 +309,48 @@ class HumanSolver:
         # TODO: maybe make this a hint technique that explains why hints being removed
         self.board.auto_normal()
 
+    def _action_is_null(self, action: Action) -> bool:
+        """
+        To determine if an action will have any impact on the candidates
+        Returns:
+            True if action will have no effect. False if it will have an effect.
+        """
+        board_copy = copy.deepcopy(self)
+        board_copy.apply_action(action)
+        diff_cands = (
+            self.get_candidates().tobytes() == board_copy.get_candidates().tobytes()
+        )
+        diff_cells = self.cells.tobytes() == board_copy.cells.tobytes()
+        return diff_cands and diff_cells
+
+    # Static method because the decorator (non_null_actions) does not take self.
+    # But it will still only ever be called over non-static methods.
+    @staticmethod
+    def _non_null_actions(func: Callable[[Self], Generator[Technique]]) -> Callable[[Self], Generator[Technique]]:  # type: ignore[misc]
+        """
+        Decorator to filter Techniques to only include ones where the action has an effect on candidates and/or cells
+        """
+
+        # @wraps preserves dunder attributes of decorated functions
+        # without it those attributes would refer to wrapper instead
+        @wraps(func)
+        def wrapper(self: Self) -> Generator[Technique]:
+            for technique in func(self):
+                if not self._action_is_null(technique.get_action()):
+                    yield technique
+
+        return wrapper
+
+    @_non_null_actions
     def _naked_singles(self) -> Generator[Technique]:
         """
         Search for Naked Singles based on self.candidates.
         Yields:
             Technique
         """
-        print(self.candidates)
+        # print(self.candidates)
         naked_singles = np.add.reduce(self.candidates, axis=0, dtype=np.int8) == 1
-        print(naked_singles)
+        # print(naked_singles)
         for coord in np.argwhere(naked_singles):
             row, column = coord
             num = np.argwhere(self.candidates[:, row, column])
@@ -317,7 +358,7 @@ class HumanSolver:
             new_cells = np.full((9, 9), -1, dtype=np.int8)
             new_cells[row, column] = num[0][0]
 
-            print(num)
+            # print(num)
 
             yield Technique(
                 "Naked Single",
@@ -330,6 +371,7 @@ class HumanSolver:
                 Action(new_cells),
             )
 
+    @_non_null_actions
     def _hidden_singles(self) -> Generator[Technique]:
         """
         Search for Hidden Singles based on self.candidates.
@@ -369,6 +411,7 @@ class HumanSolver:
                     Action(new_cells),
                 )
 
+    @_non_null_actions
     def _naked_pairs(self) -> Generator[Technique]:
         """
         Search for Naked Pairs based on self.candidates.
@@ -426,6 +469,7 @@ class HumanSolver:
                 Action(remove_candidates=removed_candidates),
             )
 
+    @_non_null_actions
     def _hidden_pairs(self) -> Generator[Technique]:
         """
         Search for Hidden Pairs based on self.candidates
@@ -518,6 +562,7 @@ class HumanSolver:
                     Action(remove_candidates=removed_candidates),
                 )
 
+    @_non_null_actions
     def _locked_candidates(self) -> Generator[Technique]:
         """
         Search for Locked Candidates based on self.candidates
@@ -577,6 +622,7 @@ class HumanSolver:
                     Action(remove_candidates=removed_candidates),
                 )
 
+    @_non_null_actions
     def _pointing_tuples(self) -> Generator[Technique]:
         """
         Search for Pointing Tuples
@@ -631,6 +677,7 @@ class HumanSolver:
                         Action(remove_candidates=removed_candidates),
                     )
 
+    @_non_null_actions
     def _skyscraper(self) -> Generator[Technique]:
         """
         Search for skyscrapers based on self.candidates
@@ -821,14 +868,6 @@ class HumanSolver:
 
         if (x := action.get_candidates()) is not None:
             self.remove_candidates(x)
-
-    def action_is_null(self, action: Action) -> bool:
-        """
-        To determine if an action will have any impact on the candidates
-        Returns:
-            True if action will have no effect. False if it will have an effect.
-        """
-        raise NotImplementedError
 
 
 if __name__ == "__main__":
