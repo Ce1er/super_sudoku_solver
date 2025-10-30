@@ -7,6 +7,7 @@ from sudoku import Board
 import logging
 from functools import reduce
 from itertools import combinations
+import np_candidates as npc
 
 
 # TODO: fix types. Mostly which specific np int type? Also consider non-numpy types being passed in such as int to MessageNum
@@ -518,42 +519,58 @@ class HumanSolver:
         Yields:
             Technique
         """
-        types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
+        seen = []
+        types = {"column": npc.adjacent_column, "row": npc.adjacent_row}
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
             for adjacency, func in types.items():
-                # TODO: passing in row, column in like this sucks. Make it take an np array instead.
-                if np.count_nonzero(
-                    func((row, column)) & self.candidates[num]
-                ) == np.count_nonzero(
-                    x := (
-                        func((row, column))
-                        & Board.adjacent_box((row, column))
-                        & self.candidates[num]
-                    )
-                ) and np.count_nonzero(
-                    x
-                ) > np.count_nonzero(
-                    Board.adjacent_box((row, column)) & self.candidates[num]
-                ):
+                # How many times candidate appears in adjacency
+                adjacency_occurences = func(coord[1:]) & self.candidates[num]
 
-                    new_nums = np.full((9, 9, 9), -1, dtype=np.int8)
-                    for coord in np.argwhere(x):
-                        new_nums[*coord] = num
-                    yield Technique(
-                        "Locked Candidate",
-                        [
-                            MessageCoords(np.argwhere(x)),
-                            MessageText("are the only cells that can be"),
-                            MessageNum(num),
-                            MessageText(f"In their {adjacency} so we can remove"),
-                            MessageNum(num),
-                            MessageText(
-                                "from the other cells in their house"
-                            ),  # TODO: make this MessageCandidates
-                        ],
-                        Action(new_nums),
-                    )
+                # How many of those times are in the current box
+                adjacency_box_occurences = (
+                    npc.adjacent_box(coord[1:]) & self.candidates[num]
+                )
+
+                adjacency_combined_occurences = (
+                    adjacency_occurences & adjacency_box_occurences
+                )
+
+                # If all the occurences are in the box then it is a locked candidate
+                if not (
+                    np.count_nonzero(adjacency_occurences)
+                    == np.count_nonzero(adjacency_combined_occurences)
+                ):
+                    continue
+                # If there are no candidates to remove then there's no point in yielding the technique
+                if np.count_nonzero(adjacency_box_occurences) == np.count_nonzero(
+                    adjacency_combined_occurences
+                ):
+                    continue
+
+                removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+                removed_candidates[num] = (
+                    adjacency_box_occurences & ~adjacency_occurences
+                )
+
+                coords = np.argwhere(adjacency_combined_occurences)
+
+                if coords.tobytes() in seen:
+                    continue
+                seen.append(coords.tobytes())
+
+                yield Technique(
+                    "Locked Candidate",
+                    [
+                        MessageCoords(coords),
+                        MessageText(" are the only cells that can be "),
+                        MessageNum(num),
+                        MessageText(f" in their {adjacency} so we can remove "),
+                        MessageNum(num),
+                        MessageText(" from the other cells in their house."),
+                    ],
+                    Action(remove_candidates=removed_candidates),
+                )
 
     def _pointing_tuples(self) -> Generator[Technique]:
         """
