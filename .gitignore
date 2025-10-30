@@ -4,3 +4,4 @@ __pycache__
 venv/
 bin/
 dev*.py
+.coverage

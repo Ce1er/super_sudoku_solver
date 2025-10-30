@@ -258,11 +258,7 @@ class Matrix:
                 size = column.size  # type: ignore[attr-defined]
                 smallest = column  # type: ignore[attr-defined]
 
-        if not smallest:
-            raise Exception("_search() failed. No columns to cover.")
-            # This Exception should never be raised as a solution should be yielded if there are no more columns
-            # It is just here to avoid typechecker warnings from smallest being unbound
-            # Despite that being impossible due to the afformentioned check
+        assert smallest is not None, "_search() failed. No columns to cover."
 
         self._cover(smallest.column)
 

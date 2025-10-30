@@ -649,7 +649,7 @@ class HumanSolver:
                     columns = np.add.reduce(self.candidates[num], axis=1, dtype=np.int8)
                     potential = np.argwhere(columns == 2)
                 else:
-                    raise ValueError("Invalid adjacency")
+                    assert False, "types has invalid key"
 
                 if len(potential) < 2:
                     continue
@@ -726,7 +726,7 @@ class HumanSolver:
                         if np.count_nonzero(self.candidates[num, :, other_col]) != 2:
                             continue
                     else:
-                        raise ValueError("Invalid adjacency")
+                        assert False, "types has invalid key"
 
                     removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
 

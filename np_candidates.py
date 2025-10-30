@@ -16,8 +16,6 @@ def adjacent_row(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
         coords = coords.reshape((coords.shape[-2], 2))
     elif coords.ndim == 2:
         pass
-    else:
-        raise ValueError(f"coords have invalid dimension {coords.ndim}")
 
     assert coords.ndim == 2, "np_candidates.adjacent_row failed to interpret coords"
 
@@ -40,8 +38,6 @@ def adjacent_column(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
         coords = coords.reshape((coords.shape[-2], 2))
     elif coords.ndim == 2:
         pass
-    else:
-        raise ValueError(f"coords have invalid dimension {coords.ndim}")
 
     assert coords.ndim == 2, "np_candidates.adjacent_column failed to interpret coords"
     board = np.full((9, 9), False, dtype=bool)
@@ -63,8 +59,6 @@ def adjacent_box(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
         coords = coords.reshape((coords.shape[-2], 2))
     elif coords.ndim == 2:
         pass
-    else:
-        raise ValueError(f"coords have invalid dimension {coords.ndim}")
 
     assert coords.ndim == 2, "np_candidates.adjacent_box failed to interpret coords"
     board = np.full((9, 9), False, dtype=bool)
@@ -89,8 +83,6 @@ def adjacent(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
         coords = coords.reshape((coords.shape[-2], 2))
     elif coords.ndim == 2:
         pass
-    else:
-        raise ValueError(f"coords have invalid dimension {coords.ndim}")
 
     assert coords.ndim == 2, "np_candidates.adjacent failed to interpret coords"
     return adjacent_row(coords) | adjacent_column(coords) | adjacent_box(coords)

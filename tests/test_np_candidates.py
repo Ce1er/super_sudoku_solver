@@ -17,8 +17,6 @@ class TestAdjacent:
         self, coords, adjacent_row, adjacent_column, adjacent_box, adjacent
     ):
         print(coords.dtype)
-        assert coords.shape[1] == 2, "Invalid coords shape"
-        assert coords.ndim == 2, "Invalid coords dimensions"
         # assert coords.dtype == np.integer, "Invalid coords dtype" # Exact type of integer doesn't matter but this is a direct check to abc np.integer. Check if subclass instead
         assert adjacent_row.shape == (9, 9), "Invalid adjacent_row shape"
         assert adjacent_column.shape == (9, 9), "Invalid adjacent_column shape"
