@@ -11,6 +11,11 @@ from itertools import combinations
 
 # TODO: fix types. Mostly which specific np int type? Also consider non-numpy types being passed in such as int to MessageNum
 class MessagePart(Protocol):
+    """
+    Base class for parts of message used by Technique
+    This class should not be used directly
+    """
+
     text: str
     highlight: Optional[int]
 
@@ -21,15 +26,34 @@ class MessagePart(Protocol):
         return self.highlight
 
 
-# TODO: some sort of logic to work out when to capitalise words, where to put spaces etc.
 class MessageText(MessagePart):
-    def __init__(self, text, highlight=None) -> None:
+    """
+    Raw text with simple highlighting
+    """
+
+    def __init__(self, text: str, highlight: Optional[int] = None) -> None:
+        """
+        Args:
+            text: raw text
+            highlight: highlight group
+        """
         self.text = text
         self.highlight = highlight
 
 
 class MessageCoord(MessagePart):
-    def __init__(self, coord: npt.NDArray[np.intp], highlight=None) -> None:
+    """
+    For a single coordinate
+    """
+
+    def __init__(
+        self, coord: npt.NDArray[np.intp], highlight: Optional[int] = None
+    ) -> None:
+        """
+        Args:
+            coord: 0-based coordinate. size 2 and can be any ndim as long as it can be reshaped to (2,).
+            highlight: highlight group
+        """
         self.highlight = highlight
         coord.reshape(2)
         coord += 1
@@ -37,7 +61,19 @@ class MessageCoord(MessagePart):
 
 
 class MessageCoords(MessagePart):
-    def __init__(self, coords: npt.NDArray[np.intp], highlight=None) -> None:
+    """
+    For multiple coordinates
+    """
+
+    def __init__(
+        self, coords: npt.NDArray[np.intp], highlight: Optional[int] = None
+    ) -> None:
+        """
+        Args:
+            coords: 0 based coordinates. shape (..., 2). Num preceeding 2 can be anything. Anything preceeding that has to be 1.
+            highlight: highlight group
+
+        """
         self.highlight = highlight
         tmp = "Cells"
         coords += 1
@@ -47,7 +83,18 @@ class MessageCoords(MessagePart):
 
 
 class MessageNum(MessagePart):
-    def __init__(self, num: npt.NDArray[np.intp] | int, highlight=None) -> None:
+    """
+    For a single number
+    """
+
+    def __init__(
+        self, num: npt.NDArray[np.intp] | int, highlight: Optional[int] = None
+    ) -> None:
+        """
+        Args:
+            num: np array size 1, any ndim. 0-based
+            highlight: highlight group
+        """
         self.highlight = highlight
 
         if isinstance(num, np.ndarray):
@@ -57,7 +104,18 @@ class MessageNum(MessagePart):
 
 
 class MessageNums(MessagePart):
-    def __init__(self, nums: npt.NDArray[np.intp], highlight=None) -> None:
+    """
+    For several numbers
+    """
+
+    def __init__(
+        self, nums: npt.NDArray[np.intp], highlight: Optional[int] = None
+    ) -> None:
+        """
+        Args:
+            nums: np array shape (..., 1). Num preceeding 1 can be anything. Anything preceeding that is optional and has to be 1.
+            highlight: highlight group
+        """
         self.highlight = highlight
         tmp = "numbers"
         for num in nums:
@@ -66,7 +124,18 @@ class MessageNums(MessagePart):
 
 
 class MessageCandidates(MessagePart):
-    def __init__(self, candidates: npt.NDArray[np.bool], highlight=None) -> None:
+    """
+    For candidates
+    """
+
+    def __init__(
+        self, candidates: npt.NDArray[np.bool], highlight: Optional[int] = None
+    ) -> None:
+        """
+        Args:
+            candidates: np shape (9,9,9) (num, row, col) all 0-based
+            highlight: highlight group
+        """
         self.highlight = highlight
         raise NotImplementedError
 
@@ -75,11 +144,20 @@ T = TypeVar("T", bound=MessagePart)
 
 
 class Action:
+    """
+    Represents the action that should be taken as a result of a Technique method
+    """
+
     def __init__(
         self,
         add_cells: Optional[npt.NDArray[np.int8]] = None,
         remove_candidates: Optional[npt.NDArray[np.bool]] = None,
     ) -> None:
+        """
+        Args:
+            add_cells: 9x9 0-based. -1 for no change.
+            remove_candidates: 9x9x9 0-based. True means remove.
+        """
         self.add_cells = add_cells
         self.remove_candidates = remove_candidates
 
@@ -92,6 +170,11 @@ class Action:
 
 
 class Technique:
+    """
+    Represents a specific instance of a technique being used.
+    Holds data about the technique and how to act on it.
+    """
+
     # Needs to contain data about highlighting
     # For hints and cells several types of highlighting will be available
     # Advanced example (Finned Jelyfish) to help decide how to implement
@@ -101,6 +184,12 @@ class Technique:
     # Might be better if it is just a string with stuff like %1 for 1st group and give a dictionary {1: some numpy array of coords}
 
     def __init__(self, technique: str, message: list[T], action: Action):
+        """
+        Args:
+            technique: Name of technique
+            message: List of MessagePart subclasses. Message displayed to user.
+            action: The action to perform. Which cells to add and which candidates to remove.
+        """
         self.technique = technique
 
         # TODO: highlights are ignored rewrite in a way that actually uses them.
@@ -118,55 +207,80 @@ class Technique:
 
 
 class HumanSolver:
+    """
+    Class holding methods for all human techniques
+    """
+
     def __init__(self, board: Board) -> None:
+        """
+        Args:
+            board: The board to start with
+        """
         # TODO: maybe use board directly instead of copying from it. Or just stop using it entierly.
         # dimension 1 = number
 
         self.board: Board = board
-        self.solution = None
-        for solution in self.board.solve():
-            if self.solution is not None:
-                logging.warning("Multiple solutions")
-                raise ValueError
-            self.solution: npt.NDArray[np.int8] = solution
+        # self.solution: Optional[npt.NDArray[np.int8]] = None
+        # for solution in self.board.solve():
+        #     if self.solution is not None:
+        #         logging.warning("Multiple solutions")
+        #         raise ValueError
+        #     self.solution = solution
 
     @property
-    def candidates(self):
+    def solution(self) -> npt.NDArray[np.int8]:
+        multiple_solutions = False
+        solution = None
+        for solution in self.board.solve():
+            if multiple_solutions:
+                raise ValueError("Board has multiple solutions")
+            multiple_solutions = True
+
+        if solution is None:
+            raise ValueError("No solutions for board")
+        return solution
+
+    @property
+    def candidates(self) -> npt.NDArray[np.bool]:
+        """
+        9x9x9
+        """
         return self.board.get_candidates()
 
     @property
-    def cells(self):
+    def cells(self) -> npt.NDArray[np.int8]:
+        """
+        9x9
+        """
         return self.board.get_all_cells()
 
-    def add_cells(self, cells: npt.NDArray[np.int8]):
+    def add_cells(self, cells: npt.NDArray[np.int8]) -> None:
+        """
+        9x9 arr of cells to add
+        """
         for row, col in np.argwhere(cells != -1):
             self.cells[row, col] = cells[row, col] + 1
             self.candidates[:, row, col] = False
 
     def remove_candidates(self, candidates: npt.NDArray[np.bool]):
+        """
+        9x9x9 arr of candidates to remove
+        """
         # self.candidates = (~candidates) & self.candidates
         self.board.remove_candidates(candidates)
 
     def get_candidates(self) -> npt.NDArray[np.bool]:
+        """
+        9x9x9 arr of candidates
+        """
         return self.candidates
 
-    # @line_profiler.profile
     def is_valid(self) -> bool:
-        # for s in self.board.solve():
-        #     if solution is not None:
-        #         logging.warning("Multiple solutions")
-        #         return False  # Multiple solutions
-        #     solution = s
-
-        # if solution is None:
-        #     logging.warning("No solution")
-        #     return False
-
+        """
+        Checks board is valid based on solution
+        """
         for row, col in np.argwhere(self.solution):
             if self.cells[row, col] not in (self.solution[row, col], -1):
-                print(
-                    f"{self._pretty_coords(row,col)} is {self.cells[row,col]+1} but should be {self.solution[row,col]+1}"
-                )
                 return False
 
             if self.cells[row, col] != -1 and (
@@ -178,15 +292,19 @@ class HumanSolver:
 
         return True
 
-    @staticmethod
-    def _pretty_coords(row, column):
-        return f"({row+1}, {column+1})"
-
-    def auto_normal(self):
+    def auto_normal(self) -> None:
+        """
+        Removes normal hints if they have a candidate that is invalid due to being adjacent to a cell with that number as guess/clue.
+        """
         # TODO: maybe make this a hint technique that explains why hints being removed
         self.board.auto_normal()
 
     def _naked_singles(self) -> Generator[Technique]:
+        """
+        Search for Naked Singles based on self.candidates.
+        Yields:
+            Technique
+        """
         naked_singles = np.add.reduce(self.candidates, axis=0, dtype=np.int8) == 1
         for coord in np.argwhere(naked_singles):
             row, column = coord
@@ -207,6 +325,11 @@ class HumanSolver:
             )
 
     def _hidden_singles(self) -> Generator[Technique]:
+        """
+        Search for Hidden Singles based on self.candidates.
+        Yields:
+            Technique
+        """
         types = {
             Board.adjacent_row: "row",
             Board.adjacent_column: "column",
@@ -241,6 +364,11 @@ class HumanSolver:
                 )
 
     def _naked_pairs(self) -> Generator[Technique]:
+        """
+        Search for Naked Pairs based on self.candidates.
+        Yields:
+            Technique
+        """
         types = {
             "row": Board.adjacent_row,
             "column": Board.adjacent_column,
@@ -293,6 +421,11 @@ class HumanSolver:
             )
 
     def _hidden_pairs(self) -> Generator[Technique]:
+        """
+        Search for Hidden Pairs based on self.candidates
+        Yields:
+            Technique
+        """
         types = {
             "row": Board.adjacent_row,
             "column": Board.adjacent_column,
@@ -315,9 +448,7 @@ class HumanSolver:
                 continue
 
             # this would make them naked
-            if np.count_nonzero(
-                nums1 | nums2
-            ) == 2:
+            if np.count_nonzero(nums1 | nums2) == 2:
                 continue
 
             # Pairs must be adjacent
@@ -342,7 +473,10 @@ class HumanSolver:
                 for adjacency in adjacent_by:
                     func = types[adjacency]
                     # print(func((cell1[0],cell1[1])))
-                    if np.count_nonzero(func((cell1[0], cell1[1])) & other_occurences) != 2:
+                    if (
+                        np.count_nonzero(func((cell1[0], cell1[1])) & other_occurences)
+                        != 2
+                    ):
                         temp.remove(adjacency)
 
                 adjacent_by = temp
@@ -354,7 +488,7 @@ class HumanSolver:
 
                 cells = np.array([cell1, cell2])
 
-                num_pair_mask=np.full((9), False, dtype=np.bool)
+                num_pair_mask = np.full((9), False, dtype=np.bool)
 
                 num_pair_mask[num_pair] = True
 
@@ -369,12 +503,21 @@ class HumanSolver:
                         MessageCoords(cells),
                         MessageText(" are the only cells that can be "),
                         MessageNums(num_pair),
-                        MessageText(" in their " + ", ".join(adjacent_by) + " so we can remove all other candidates from them"),
+                        MessageText(
+                            " in their "
+                            + ", ".join(adjacent_by)
+                            + " so we can remove all other candidates from them"
+                        ),
                     ],
                     Action(remove_candidates=removed_candidates),
                 )
 
     def _locked_candidates(self) -> Generator[Technique]:
+        """
+        Search for Locked Candidates based on self.candidates
+        Yields:
+            Technique
+        """
         types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
@@ -413,6 +556,11 @@ class HumanSolver:
                     )
 
     def _pointing_tuples(self) -> Generator[Technique]:
+        """
+        Search for Pointing Tuples
+        Yields:
+            Technique
+        """
         types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
@@ -455,6 +603,11 @@ class HumanSolver:
                     )
 
     def _skyscraper(self) -> Generator[Technique]:
+        """
+        Search for skyscrapers based on self.candidates
+        Yields:
+            Technique
+        """
         types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
 
         for adjacency, func in types.items():
@@ -608,6 +761,11 @@ class HumanSolver:
     # Finned Jellyfish
 
     def hint(self) -> Generator[Technique]:
+        """
+        Search for techniques in approximate order of difficulty
+        Yields:
+            Technique
+        """
         types = [
             self._naked_singles,
             self._hidden_singles,
@@ -624,6 +782,11 @@ class HumanSolver:
             yield from technique()
 
     def apply_action(self, action: Action) -> None:
+        """
+        Modify cells and candidates based on a Technique's Action
+        Args:
+            action: the Action to apply
+        """
         if (x := action.get_cells()) is not None:
             self.add_cells(x)
 
