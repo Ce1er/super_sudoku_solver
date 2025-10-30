@@ -1,8 +1,9 @@
 import numpy as np
+from numpy._typing import NDArray
 import numpy.typing as npt
 
 
-def adjacent_row(coords: npt.NDArray[np.int8]):
+def adjacent_row(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
     """
     Args:
         coords: [[row, column], [row, column]...] (0-based indexing). Column is required but will not change return value so can be set arbitrarily.
@@ -16,7 +17,7 @@ def adjacent_row(coords: npt.NDArray[np.int8]):
     return board
 
 
-def adjacent_column(coords: npt.NDArray[np.int8]):
+def adjacent_column(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
     """
     Args:
         coords: [[row, column], [row, column]...] (0-based indexing). Row is required but will not change return value so can be set arbitrarily.
@@ -30,7 +31,7 @@ def adjacent_column(coords: npt.NDArray[np.int8]):
     return board
 
 
-def adjacent_box(coords: npt.NDArray[np.int8]):
+def adjacent_box(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
     """
     Args:
         coords: [[row, column], [row, column]...] (0-based indexing).
@@ -47,7 +48,7 @@ def adjacent_box(coords: npt.NDArray[np.int8]):
     return board
 
 
-def adjacent(coords: npt.NDArray[np.int8]):
+def adjacent(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
     """
     Args:
         coords: [[row, column], [row, column]...] (0-based indexing).
