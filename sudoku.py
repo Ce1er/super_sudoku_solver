@@ -35,7 +35,6 @@ class Cells:
         Returns:
             If there is a clue at coord
         """
-        # print(coord, self._clues[*coord])
         return self._clues[*coord] != -1
 
     def add_cell(self, coordinate: tuple[int, int], value: int) -> None:
@@ -342,11 +341,8 @@ class Board:
         # Number of rows = clues + 9 * (81-clues)
         # for column, row, value in self.cells.get_cells(include_empty=True):
         cells = self.cells.get_all_cells()
-        print(cells)
         for column, row in np.argwhere(cells > -2):
             value = cells[column, row]
-            print(value)
-            # print(value)
             if value != -1:
                 x += 1
                 rows.append(self._row_add(int(column), int(row), int(value)))
@@ -355,8 +351,6 @@ class Board:
                     y += 1
                     rows.append(self._row_add(int(column), int(row), i))
 
-        print(len(rows))
-        print(x, y)
         # Only make labels for the ones referenced in rows
         labels = list(set(item for row in rows for item in row))
         return dlx.Matrix(labels, rows)
@@ -395,7 +389,6 @@ class Board:
         """
         matrix = self.create_matrix()
         for solution in matrix.generate_solutions():
-            print(solution)
             yield self.extract_from_matrix(solution)
             # if (
             #     one_solution
