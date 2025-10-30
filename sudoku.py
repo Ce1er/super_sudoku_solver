@@ -344,20 +344,19 @@ class Board:
         cells = self.cells.get_all_cells()
         print(cells)
         for column, row in np.argwhere(cells > -2):
-            value = cells[column,row]
+            value = cells[column, row]
             print(value)
             # print(value)
             if value != -1:
-                x+=1
+                x += 1
                 rows.append(self._row_add(int(column), int(row), int(value)))
             else:
                 for i in range(9):
-                    y+=1
+                    y += 1
                     rows.append(self._row_add(int(column), int(row), i))
 
-
         print(len(rows))
-        print(x,y)
+        print(x, y)
         # Only make labels for the ones referenced in rows
         labels = list(set(item for row in rows for item in row))
         return dlx.Matrix(labels, rows)
@@ -380,7 +379,7 @@ class Board:
             x = row[0] % 9
             y = row[0] // 9
 
-            value = (row[1] - 81) % 9 
+            value = (row[1] - 81) % 9
             board[x][y] = value
             count += 1
         return board

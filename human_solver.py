@@ -168,7 +168,6 @@ class Action:
 
     def get_candidates(self) -> Optional[npt.NDArray[np.bool]]:
         return self.remove_candidates
-    
 
 
 class Technique:
@@ -262,7 +261,7 @@ class HumanSolver:
         """
         for row, col in np.argwhere(cells != -1):
             # TODO: just keep it 0-based
-            self.cells[row, col] = cells[row, col] # + 1
+            self.cells[row, col] = cells[row, col]  # + 1
             self.candidates[:, row, col] = False
 
     def remove_candidates(self, candidates: npt.NDArray[np.bool]):
@@ -608,7 +607,7 @@ class HumanSolver:
                         & self.candidates[num]
                     )
 
-                    if (result:=(coords.tobytes(), num) )in seen:
+                    if (result := (coords.tobytes(), num)) in seen:
                         continue
                     seen.append(result)
 
@@ -623,9 +622,11 @@ class HumanSolver:
                         "Pointing Tuple",
                         [
                             MessageCoords(coords),
+                            MessageText(" are the only cells that can be "),
+                            MessageNum(num),
                             MessageText(
-                                " are the only cells that can be "),MessageNum(num),MessageText(f" in their box so we can remove other options from their {adjacency}."),
-                            
+                                f" in their box so we can remove other options from their {adjacency}."
+                            ),
                         ],
                         Action(remove_candidates=removed_candidates),
                     )

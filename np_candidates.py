@@ -11,7 +11,7 @@ def adjacent_row(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
         9x9 Boolean array where True represents cells in rows from coords given
     """
     if coords.ndim == 1:
-        coords = coords.reshape((1,2))
+        coords = coords.reshape((1, 2))
     elif coords.ndim > 2:
         coords = coords.reshape((coords.shape[-2], 2))
     elif coords.ndim == 2:
@@ -35,7 +35,7 @@ def adjacent_column(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
         9x9 Boolean array where True represents cells in columns from coords given
     """
     if coords.ndim == 1:
-        coords = coords.reshape((1,2))
+        coords = coords.reshape((1, 2))
     elif coords.ndim > 2:
         coords = coords.reshape((coords.shape[-2], 2))
     elif coords.ndim == 2:
@@ -58,7 +58,7 @@ def adjacent_box(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
         9x9 Boolean array where True represents cells in boxes from coords given
     """
     if coords.ndim == 1:
-        coords = coords.reshape((1,2))
+        coords = coords.reshape((1, 2))
     elif coords.ndim > 2:
         coords = coords.reshape((coords.shape[-2], 2))
     elif coords.ndim == 2:
@@ -84,7 +84,7 @@ def adjacent(coords: npt.NDArray[np.int8]) -> npt.NDArray[np.bool]:
         9x9 Boolean array where True represents cells in boxes from coords given
     """
     if coords.ndim == 1:
-        coords = coords.reshape((1,2))
+        coords = coords.reshape((1, 2))
     elif coords.ndim > 2:
         coords = coords.reshape((coords.shape[-2], 2))
     elif coords.ndim == 2:

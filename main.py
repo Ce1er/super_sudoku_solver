@@ -126,7 +126,7 @@ class HintBox(QGraphicsItem):
         border_colour,
         border_size,
         background_colour,
-        height
+        height,
     ):  # TODO: take colours and stuff as well. Probably should implement Action before trying to get cell highlighting working but the message box part can be done at any time.
         super().__init__()
 
@@ -158,7 +158,6 @@ class HintBox(QGraphicsItem):
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
         # TODO: handle mouse press event to do smth.
         return super().mousePressEvent(event)
-
 
 
 class Board(QGraphicsScene):
@@ -203,7 +202,7 @@ class Board(QGraphicsScene):
                 value = -1
 
             print("foo", self.data.is_clue(np.array([row, col])))
-            print(row,col,value)
+            print(row, col, value)
             cell = Cell(
                 np.array([row, col, value]),
                 self.data.get_candidates()[row, col],
@@ -266,9 +265,14 @@ class Board(QGraphicsScene):
             return
 
         hint = HintBox(
-            technique, 11, self.border_colour, self.border_size, self.background_colour, self.cell_size
+            technique,
+            11,
+            self.border_colour,
+            self.border_size,
+            self.background_colour,
+            self.cell_size,
         )
-        hint.setPos(self.cell_size * 9+5, 0)
+        hint.setPos(self.cell_size * 9 + 5, 0)
         self.addItem(hint)
 
         print(technique.message)
@@ -314,8 +318,7 @@ def main():
         BoardData(
             # "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
             # "................................................................................."
-                    ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
-
+            ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
         ),
         settings.highlight_colours,
         settings.border_colour,
