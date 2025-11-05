@@ -8,16 +8,20 @@ def board():
         ".83..241.2.4..5....1..74.283..49.15...7.1...69..753.8.84....6..5...4..31136.2.5.."
     )
 
+
 @pytest.fixture
 def invalid_board():
     return Board(
         "183..241.2.4..5....1..74.283..49.15...7.1...69..753.8.84....6..5...4..31136.2.5.."
     )
 
+
 @pytest.fixture
 def multiple_solutions_board():
-    return Board(".83...4..2.4..5....1..74..83.....15...7.1...69..753.8.84....6..5...4..31136.2.5.."
-)
+    return Board(
+        ".83...4..2.4..5....1..74..83.....15...7.1...69..753.8.84....6..5...4..31136.2.5.."
+    )
+
 
 def test_dlx_board_solve(board):
     n = 0
@@ -39,12 +43,14 @@ def test_dlx_board_solve(board):
 
     assert n == 1
 
+
 def test_dlx_board_solve_no_solutions(invalid_board):
     n = 0
     for _ in invalid_board.solve():
         n += 1
 
     assert n == 0
+
 
 def test_dlx_board_solve_multiple_solutions(multiple_solutions_board):
     # fmt: off

@@ -50,7 +50,7 @@ class MessageCoord(MessagePart):
     """
 
     def __init__(
-        self, coord: npt.NDArray[np.intp], highlight: Optional[int] = None
+        self, coord: npt.NDArray[np.signedinteger], highlight: Optional[int] = None
     ) -> None:
         """
         Args:
@@ -69,7 +69,7 @@ class MessageCoords(MessagePart):
     """
 
     def __init__(
-        self, coords: npt.NDArray[np.intp], highlight: Optional[int] = None
+        self, coords: npt.NDArray[np.signedinteger], highlight: Optional[int] = None
     ) -> None:
         """
         Args:
@@ -91,7 +91,7 @@ class MessageNum(MessagePart):
     """
 
     def __init__(
-        self, num: npt.NDArray[np.intp] | int, highlight: Optional[int] = None
+        self, num: npt.NDArray[np.signedinteger] | int, highlight: Optional[int] = None
     ) -> None:
         """
         Args:
@@ -112,7 +112,7 @@ class MessageNums(MessagePart):
     """
 
     def __init__(
-        self, nums: npt.NDArray[np.intp], highlight: Optional[int] = None
+        self, nums: npt.NDArray[np.signedinteger], highlight: Optional[int] = None
     ) -> None:
         """
         Args:
