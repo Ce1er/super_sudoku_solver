@@ -285,6 +285,20 @@ class HumanSolver:
         """
         return self.cells
 
+    def get_clues(self) -> npt.NDArray[np.int8]:
+        """
+        9x9 arr of clues
+        """
+        return self.board.get_clues()
+
+    def get_guesses(self) -> npt.NDArray[np.int8]:
+        """
+        9x9 arr of clues
+        """
+        return self.board.get_guesses()
+
+
+
     def is_valid(self) -> bool:
         """
         Checks board is valid based on solution

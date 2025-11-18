@@ -1,5 +1,7 @@
 import re
+from human_solver import Technique
 from time import time
+import techniques
 from typing import Optional, Generator
 import numpy as np
 import numpy.typing as npt
@@ -17,6 +19,7 @@ class Cells:
     cells: npt.NDArray[np.int8]
 
     def __init__(self, clues: str) -> None:
+        # TODO: take clues and guesses seperately
         r"""
         Args:
             clues: given clues of puzzle. Matches regex ^[1-9\.]{81}$
@@ -27,6 +30,10 @@ class Cells:
         self._clues.flags.writeable = False
 
         self.cells = np.copy(self._clues)
+
+    # def __init__(self, clues: npt.NDArray[np.int8], guesses: npt.NDArray[np.int8]) -> None:
+    #     self._clues = clues
+    #     self._guesses = guesses
 
     def is_clue(self, coord: npt.NDArray[np.int8]) -> bool:
         """
@@ -138,10 +145,14 @@ class Board:
     """
     Represents board as a whole
     """
+    TECHNIQUES = [
+        techniques.NakedSingles
+    ]
 
     def __init__(
         self,
-        cells: str,
+        cells: str, # TODO: maybe change this to different type
+                    # also needs to take more data like guesses and candidates optionally
     ) -> None:
         r"""
         Args:
@@ -191,9 +202,24 @@ class Board:
     def get_all_cells(self):
         """
         Returns:
-            9x9 int arr of cells and clues
+            9x9 int arr of guesses and clues
         """
         return self.cells.get_all_cells()
+
+    def get_clues(self):
+        """
+        Returns:
+            9x9 int arr of clues
+        """
+        return self.cells.get_clues()
+
+    def get_guesses(self):
+        """
+        Returns:
+            9x9 int arr of guesses
+        """
+        return self.cells.get_guesses()
+
 
     def add_cell(self, coord: npt.NDArray[np.int8]):
         """
@@ -394,6 +420,13 @@ class Board:
             #     one_solution
             # ):  # This is for performance but the solver is so quick I might just remove it
             #     break
+
+    def hint(self) -> Generator[Technique]:
+        for technique in Board.TECHNIQUES:
+            technique = technique(
+                self.get_candidates(), self.get_clues(), self.get_guesses()
+            )
+            yield from technique.find()
 
     def auto_solve(self):
         """

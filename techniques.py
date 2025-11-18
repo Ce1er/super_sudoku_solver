@@ -18,15 +18,22 @@ import np_candidates as npc
 import abc
 from typing import Any
 import logging
+from human_solver import HumanSolver
 
 
 class HumanTechniques(abc.ABC):
     def __init__(
         self,
-        candidates: npt.NDArray[np.bool],
-        clues: npt.NDArray[np.int8],
-        guesses: npt.NDArray[np.int8],
+        # candidates: npt.NDArray[np.bool],
+        # clues: npt.NDArray[np.int8],
+        # guesses: npt.NDArray[np.int8],
+        board: HumanSolver
     ):
+        candidates = board.get_candidates()
+        clues = board.get_clues()
+        guesses = board.get_guesses()
+        cells = board.get_cells()
+
         if candidates.shape != (9, 9, 9):
             raise ValueError("Candidates has invalid shape")
         if candidates.dtype != np.bool:
@@ -50,9 +57,20 @@ class HumanTechniques(abc.ABC):
                 f"{__name__} instantiated with guesses as dtype {guesses.dtype}"
             )  # Not a real error just a small waste of memory
 
+        if cells.shape != (9, 9):
+            raise ValueError("Cells has invalid shape")
+        if not np.issubdtype(cells.dtype, np.integer):
+            raise ValueError("Cells has invalid dtype")
+        if cells.dtype != np.int8:
+            logging.warning(
+                f"{__name__} instantiated with clues as dtype {cells.dtype}"
+            )  # Not a real error just a small waste of memory
+
+
         self.candidates = candidates
         self.clues = clues
         self.guesses = guesses
+        self.cells=cells
 
     @staticmethod
     @abc.abstractmethod
@@ -106,7 +124,6 @@ class NakedSingles(HumanTechniques):
                 self._generate_message(coord, num),
                 self._generate_action(coord, num),
             )
-
 
 class HiddenSingles(HumanTechniques):
     def __init__(
