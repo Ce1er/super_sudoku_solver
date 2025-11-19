@@ -83,10 +83,8 @@ class HumanTechniques(abc.ABC):
 
 
 def foo(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
-    print("b", coord)
     new_cells = np.full((9, 9), -1, dtype=np.int8)
     new_cells[*coord] = num.flatten()
-    # print(new_cells, coord)
     return Action(new_cells)
 
 
@@ -114,9 +112,7 @@ class NakedSingles(HumanTechniques):
 
     @staticmethod
     def _generate_action(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
-        print("b", coord)
         new_cells = np.full((9, 9), -1, dtype=np.int8)
-        print(num.ndim)
         new_cells[*coord] = num[0][0]
         return Action(new_cells)
 
@@ -131,7 +127,6 @@ class NakedSingles(HumanTechniques):
             row, column = coord
             num = np.argwhere(self.candidates[:, row, column])
 
-            print("a", coord)
             yield Technique(
                 self.get_name(),
                 NakedSingles._generate_message(coord, num),
