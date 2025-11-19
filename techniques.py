@@ -161,7 +161,9 @@ class HiddenSingles(HumanTechniques):
         Returns:
             Message for hidden single at given coord
         """
-        if coord.shape != (3):
+        print(coord)
+        print(coord.shape)
+        if coord.shape != (3,):
             raise ValueError("Invalid coord shape")
         if not np.issubdtype(coord.dtype, np.integer):
             raise ValueError("Invalid coord dtype")
@@ -184,7 +186,7 @@ class HiddenSingles(HumanTechniques):
         Args:
             coord: Shape (3,). [num, row, column]
         """
-        if coord.shape != (3):
+        if coord.shape != (3,):
             raise ValueError("Invalid coord shape")
         if not np.issubdtype(coord.dtype, np.integer):
             raise ValueError("Invalid coord dtype")
