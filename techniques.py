@@ -1,4 +1,5 @@
 from collections.abc import Generator
+
 # from sudoku import Board
 import sudoku
 import numpy as np
@@ -25,15 +26,16 @@ from human_solver import HumanSolver
 class HumanTechniques(abc.ABC):
     def __init__(
         self,
-        # candidates: npt.NDArray[np.bool],
-        # clues: npt.NDArray[np.int8],
-        # guesses: npt.NDArray[np.int8],
-        board: HumanSolver
+        candidates: npt.NDArray[np.bool],
+        clues: npt.NDArray[np.int8],
+        guesses: npt.NDArray[np.int8],
+        # board: HumanSolver
     ):
-        candidates = board.get_candidates()
-        clues = board.get_clues()
-        guesses = board.get_guesses()
-        cells = board.get_cells()
+        # candidates = board.get_candidates()
+        # clues = board.get_clues()
+        # guesses = board.get_guesses()
+        # cells = board.get_cells()
+        cells = np.where(clues != -1, clues, guesses)
 
         if candidates.shape != (9, 9, 9):
             raise ValueError("Candidates has invalid shape")
@@ -67,11 +69,10 @@ class HumanTechniques(abc.ABC):
                 f"{__name__} instantiated with clues as dtype {cells.dtype}"
             )  # Not a real error just a small waste of memory
 
-
         self.candidates = candidates
         self.clues = clues
         self.guesses = guesses
-        self.cells=cells
+        self.cells = cells
 
     @staticmethod
     @abc.abstractmethod
@@ -79,6 +80,14 @@ class HumanTechniques(abc.ABC):
 
     @abc.abstractmethod
     def find(self) -> Generator[Technique]: ...
+
+
+def foo(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
+    print("b", coord)
+    new_cells = np.full((9, 9), -1, dtype=np.int8)
+    new_cells[*coord] = num.flatten()
+    # print(new_cells, coord)
+    return Action(new_cells)
 
 
 class NakedSingles(HumanTechniques):
@@ -105,8 +114,10 @@ class NakedSingles(HumanTechniques):
 
     @staticmethod
     def _generate_action(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
+        print("b", coord)
         new_cells = np.full((9, 9), -1, dtype=np.int8)
-        new_cells[*coord] = num.flatten()
+        print(num.ndim)
+        new_cells[*coord] = num[0][0]
         return Action(new_cells)
 
     def find(self):
@@ -120,11 +131,13 @@ class NakedSingles(HumanTechniques):
             row, column = coord
             num = np.argwhere(self.candidates[:, row, column])
 
+            print("a", coord)
             yield Technique(
                 self.get_name(),
-                self._generate_message(coord, num),
-                self._generate_action(coord, num),
+                NakedSingles._generate_message(coord, num),
+                NakedSingles._generate_action(coord, num),
             )
+
 
 class HiddenSingles(HumanTechniques):
     def __init__(
@@ -534,7 +547,10 @@ class PointingTuples(HumanTechniques):
             Technique
         """
         seen = []
-        types = {"column": sudoku.Board.adjacent_column, "row": sudoku.Board.adjacent_row}
+        types = {
+            "column": sudoku.Board.adjacent_column,
+            "row": sudoku.Board.adjacent_row,
+        }
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
             for adjacency, func in types.items():
@@ -609,7 +625,10 @@ class Skyscrapers(HumanTechniques):
         Yields:
             Technique
         """
-        types = {"column": sudoku.Board.adjacent_column, "row": sudoku.Board.adjacent_row}
+        types = {
+            "column": sudoku.Board.adjacent_column,
+            "row": sudoku.Board.adjacent_row,
+        }
 
         for adjacency, func in types.items():
             for num in range(9):

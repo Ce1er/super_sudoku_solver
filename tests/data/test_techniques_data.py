@@ -1,5 +1,6 @@
 # vim: foldmethod=marker
 from _pytest.mark import ParameterSet
+
 # from human_solver import Technique, HumanSolver
 import techniques
 from collections.abc import Generator, Callable
@@ -7,36 +8,171 @@ from typing import Optional
 import pytest
 from sudoku import Board
 import numpy as np
+import human_solver
 
-board_1 = HumanSolver(
-    Board(
-        ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
-    )
-)
-board_1.auto_normal()
+# board_1 = human_solver.HumanSolver(
+#     Board(
+#         ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
+#     )
+# )
+# board_1.auto_normal()
+#
+# board_2 = human_solver.HumanSolver(
+#     Board(
+#         ".....2...71.95.....86.34..997542.......573.9..3..91574...2476383...15927.273.9..."
+#     )
+# )
+# board_2.auto_normal()
+#
+# remove_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+#
+# remove_candidates[5, 0, 3] = True
+#
+# board_2.remove_candidates(remove_candidates)
 
-board_2 = HumanSolver(
-    Board(
-        ".....2...71.95.....86.34..997542.......573.9..3..91574...2476383...15927.273.9..."
-    )
-)
-board_2.auto_normal()
+# Board 1 {{{
+board_1 = {
+    "candidates": np.array(
+        [
+            [
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, True, False, False, False, False, True, True],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, True, False],
+                [True, False, False, True, False, False, False, False, True],
+                [True, False, False, False, False, False, False, False, True],
+                [True, False, False, True, False, False, False, False, True],
+            ],
+            [
+                [True, False, False, True, True, True, False, False, False],
+                [True, False, False, True, True, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, True, False, False, True, True, False, False, True],
+                [False, True, False, False, False, True, False, False, True],
+                [False, True, False, True, True, False, False, False, False],
+                [False, False, False, True, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+            ],
+            [
+                [True, False, False, True, True, True, False, False, True],
+                [True, False, True, True, True, False, False, False, True],
+                [True, False, True, False, False, True, False, False, True],
+                [False, False, False, False, False, False, False, False, False],
+                [False, True, True, False, False, True, False, False, False],
+                [False, True, False, True, True, False, False, False, False],
+                [True, False, False, True, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [True, True, False, True, True, True, False, False, False],
+            ],
+            [
+                [True, False, False, True, True, True, True, False, True],
+                [True, False, False, True, True, False, False, False, True],
+                [True, False, False, False, False, True, False, False, True],
+                [False, False, False, False, True, True, False, False, True],
+                [False, False, False, False, False, True, True, False, True],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, True, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+            ],
+            [
+                [True, False, False, False, False, False, True, False, False],
+                [True, False, True, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, True, True, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [True, True, False, False, False, False, False, False, False],
+            ],
+            [
+                [False, False, False, False, True, True, True, False, True],
+                [False, False, False, False, True, False, False, True, True],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, True, True, False, True],
+                [False, False, False, False, True, False, False, True, False],
+                [False, False, False, False, False, False, True, False, True],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+            ],
+            [
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, True, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, True, False, False, False, True],
+                [False, False, False, False, True, True, False, False, True],
+            ],
+            [
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, True],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, True, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [False, True, False, False, False, False, True, False, True],
+                [False, True, False, False, False, False, False, False, True],
+            ],
+            [
+                [True, False, False, True, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [True, False, True, False, False, False, False, False, False],
+                [False, True, True, False, False, False, False, True, True],
+                [False, True, True, False, False, False, False, False, True],
+                [False, False, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False, False],
+                [True, True, False, False, False, False, False, False, True],
+                [True, True, False, False, False, False, False, False, True],
+            ],
+        ]
+    ),
+    "clues": np.array(
+        [
+            [-1, 0, 7, -1, -1, -1, -1, 6, -1],
+            [-1, 6, -1, -1, -1, 0, 8, -1, -1],
+            [-1, 5, -1, 7, 4, -1, 0, 1, -1],
+            [5, -1, -1, 6, -1, -1, 2, -1, -1],
+            [6, -1, -1, 4, 0, -1, -1, 7, -1],
+            [7, -1, 3, -1, -1, 8, 6, -1, 4],
+            [-1, 3, 6, -1, 8, 7, -1, 4, -1],
+            [-1, -1, 1, 5, -1, 4, -1, 2, -1],
+            [-1, -1, 5, -1, -1, -1, 1, 3, -1],
+        ]
+    ),
+    "guesses": np.array(
+        [
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        ]
+    ),
+}
+# }}}
 
-remove_candidates = np.full((9, 9, 9), False, dtype=np.bool)
 
-remove_candidates[5, 0, 3] = True
-
-board_2.remove_candidates(remove_candidates)
-
-
-boards: dict[int, HumanSolver] = {1: board_1, 2: board_2}
+boards: dict[int, human_solver.HumanSolver] = {1: board_1}
 
 
 test_technique: list[ParameterSet] = []
 
 naked_singles_board_1 = {
     "name": "Naked Singles::Board 1",
-    "func": techniques.NakedSingles.find,
+    "technique": techniques.NakedSingles,
     "board": boards[1],
     "cases": [
         # Cases {{{
@@ -99,7 +235,7 @@ naked_singles_board_1 = {
 
 hidden_singles_board_1 = {
     "name": "Hidden Singles::Board 1",
-    "func": HumanSolver._hidden_singles,
+    "technique": human_solver.HumanSolver._hidden_singles,
     "board": boards[1],
     "cases": [
         # Cases {{{
@@ -432,7 +568,7 @@ hidden_singles_board_1 = {
 
 naked_pairs_board_1 = {
     "name": "Naked Pairs::Board 1",
-    "func": HumanSolver._naked_pairs,
+    "technique": human_solver.HumanSolver._naked_pairs,
     "board": boards[1],
     "cases": [
         # Cases {{{
@@ -760,7 +896,7 @@ naked_pairs_board_1 = {
 
 hidden_pairs_board_1 = {
     "name": "Hidden Pairs::Board 1",
-    "func": HumanSolver._hidden_pairs,
+    "technique": human_solver.HumanSolver._hidden_pairs,
     "board": boards[1],
     "cases": [
         # Cases {{{
@@ -876,7 +1012,7 @@ hidden_pairs_board_1 = {
 
 locked_candidates_board_1 = {
     "name": "Locked Candidates::Board 1",
-    "func": HumanSolver._locked_candidates,
+    "technique": human_solver.HumanSolver._locked_candidates,
     "board": boards[1],
     "cases": [
         # Cases {{{
@@ -1742,7 +1878,7 @@ locked_candidates_board_1 = {
 #
 # pointing_tuples_board_1 = {
 #     "name": "Pointing Tuples::Board 1",
-#     "func": HumanSolver._pointing_tuples,
+#     "technique": human_solver.HumanSolver._pointing_tuples,
 #     "board": boards[1],
 #     "cases": [
 #         # Cases {{{
@@ -2718,243 +2854,243 @@ locked_candidates_board_1 = {
 #     ],
 # }
 #
-skyscrapers_board_2 = {
-    "name": "Skyscrapers::Board 2",
-    "func": HumanSolver._skyscraper,
-    "board": boards[2],
-    "cases": [
-        # Cases {{{
-        {
-            "add_cells": None,
-            "removed_candidates":
-            # num 6 cannot be at r6c1
-            [
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [True, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-            ],
-            "message_has": [
-                r"(5, 2)",
-                r"(6, 4)",
-                "only 6 in their column",
-                r"(8, 2)",
-                r"(8, 4)",
-                "share a row",
-            ],
-        },
-        {
-            "add_cells": None,
-            "removed_candidates":
-            # num 6 can't be at r9c1 or r5c2
-            [
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, True, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [True, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-                [
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                    [False, False, False, False, False, False, False, False, False],
-                ],
-            ],
-            "message_has": [
-                r"(6, 1)",
-                r"(8, 2)",
-                "only 6 in their row",
-                r"(6, 4)",
-                r"(8, 4)",
-                "share a column",
-            ],
-        },
-        # }}}
-    ],
-}
+# skyscrapers_board_2 = {
+#     "name": "Skyscrapers::Board 2",
+#     "technique": human_solver.HumanSolver._skyscraper,
+#     "board": boards[2],
+#     "cases": [
+#         # Cases {{{
+#         {
+#             "add_cells": None,
+#             "removed_candidates":
+#             # num 6 cannot be at r6c1
+#             [
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [True, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#             ],
+#             "message_has": [
+#                 r"(5, 2)",
+#                 r"(6, 4)",
+#                 "only 6 in their column",
+#                 r"(8, 2)",
+#                 r"(8, 4)",
+#                 "share a row",
+#             ],
+#         },
+#         {
+#             "add_cells": None,
+#             "removed_candidates":
+#             # num 6 can't be at r9c1 or r5c2
+#             [
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, True, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [True, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#                 [
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                     [False, False, False, False, False, False, False, False, False],
+#                 ],
+#             ],
+#             "message_has": [
+#                 r"(6, 1)",
+#                 r"(8, 2)",
+#                 "only 6 in their row",
+#                 r"(6, 4)",
+#                 r"(8, 4)",
+#                 "share a column",
+#             ],
+#         },
+#         # }}}
+#     ],
+# }
 
 tests = [
     naked_singles_board_1,
@@ -2979,7 +3115,7 @@ for test in tests:
     test_technique.append(
         pytest.param(
             test["board"],
-            test["func"],
+            test["technique"],
             add_cells,
             removed_candidates,
             message_has,

@@ -1,7 +1,11 @@
 import re
 import human_solver
 from time import time
-import techniques
+
+# TODO: make techniques work
+# could have some circular import problems so avoid relying on sudoku.py too much in techniques.py
+# import techniques
+
 from typing import Optional, Generator
 import numpy as np
 import numpy.typing as npt
@@ -86,6 +90,20 @@ class Cells:
         """
         return self.cells
 
+    def get_clues(self) -> npt.NDArray[np.int8]:
+        """
+        Returns:
+            9x9 int arr of only clues
+        """
+        return self._clues
+
+    def get_guesses(self) -> npt.NDArray[np.int8]:
+        """
+        Returns:
+            9x9 int arr of only guesses
+        """
+        return np.where(self._clues == -1, self.cells, -1)
+
 
 class Hints:
     """
@@ -146,7 +164,7 @@ class Board:
     Represents board as a whole
     """
 
-    TECHNIQUES = [techniques.NakedSingles]
+    # TECHNIQUES = [techniques.NakedSingles]
 
     def __init__(
         self,
@@ -419,7 +437,8 @@ class Board:
             # ):  # This is for performance but the solver is so quick I might just remove it
             #     break
 
-    def hint(self) -> Generator[human_solver.Technique]:
+    def hint(self):  # -> Generator[human_solver.Technique]:
+        raise NotImplementedError
         for technique in Board.TECHNIQUES:
             technique = technique(
                 self.get_candidates(), self.get_clues(), self.get_guesses()

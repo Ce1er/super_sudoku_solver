@@ -57,6 +57,7 @@ class MessageCoord(MessagePart):
             coord: 0-based coordinate. size 2 and can be any ndim as long as it can be reshaped to (2,).
             highlight: highlight group
         """
+        coord = np.copy(coord)
         self.highlight = highlight
         coord.reshape(2)
         coord += 1
@@ -77,6 +78,7 @@ class MessageCoords(MessagePart):
             highlight: highlight group
 
         """
+        coords = np.copy(coords)
         self.highlight = highlight
         tmp = "Cells"
         coords += 1
