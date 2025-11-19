@@ -5,7 +5,7 @@ from collections.abc import Generator
 from typing import Callable, Optional, Protocol, Self, Type, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
-from sudoku import Board
+import sudoku
 import logging
 from functools import reduce, wraps
 from itertools import combinations
@@ -214,7 +214,7 @@ class HumanSolver:
     Class holding methods for all human techniques
     """
 
-    def __init__(self, board: Board) -> None:
+    def __init__(self, board: sudoku.Board) -> None:
         """
         Args:
             board: The board to start with
@@ -222,7 +222,7 @@ class HumanSolver:
         # TODO: maybe use board directly instead of copying from it. Or just stop using it entierly.
         # dimension 1 = number
 
-        self.board: Board = board
+        self.board: sudoku.Board = board
         # self.solution: Optional[npt.NDArray[np.int8]] = None
         # for solution in self.board.solve():
         #     if self.solution is not None:
@@ -296,8 +296,6 @@ class HumanSolver:
         9x9 arr of clues
         """
         return self.board.get_guesses()
-
-
 
     def is_valid(self) -> bool:
         """
@@ -394,9 +392,9 @@ class HumanSolver:
             Technique
         """
         types = {
-            Board.adjacent_row: "row",
-            Board.adjacent_column: "column",
-            Board.adjacent_box: "box",
+            sudoku.Board.adjacent_row: "row",
+            sudoku.Board.adjacent_column: "column",
+            sudoku.Board.adjacent_box: "box",
         }  # TODO: make this a class constant, and probably worth switching keys and values
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
@@ -434,9 +432,9 @@ class HumanSolver:
             Technique
         """
         types = {
-            "row": Board.adjacent_row,
-            "column": Board.adjacent_column,
-            "box": Board.adjacent_box,
+            "row": sudoku.Board.adjacent_row,
+            "column": sudoku.Board.adjacent_column,
+            "box": sudoku.Board.adjacent_box,
         }
 
         # Get cells where there are 2 candidates
@@ -454,7 +452,7 @@ class HumanSolver:
             nums = nums1
 
             # If they aren't adjacent they aren't a pair.
-            if not Board.adjacent((cell1[0], cell1[1]))[*cell2]:
+            if not sudoku.Board.adjacent((cell1[0], cell1[1]))[*cell2]:
                 continue
 
             remove_from = []
@@ -492,9 +490,9 @@ class HumanSolver:
             Technique
         """
         types = {
-            "row": Board.adjacent_row,
-            "column": Board.adjacent_column,
-            "box": Board.adjacent_box,
+            "row": sudoku.Board.adjacent_row,
+            "column": sudoku.Board.adjacent_column,
+            "box": sudoku.Board.adjacent_box,
         }
 
         # Not strictly more than 2 because if one of them is hidden it counts as a hidden pair
@@ -517,7 +515,7 @@ class HumanSolver:
                 continue
 
             # Pairs must be adjacent
-            if not Board.adjacent((cell1[0], cell1[1]))[*cell2]:
+            if not sudoku.Board.adjacent((cell1[0], cell1[1]))[*cell2]:
                 continue
 
             # Not super elegant or performant but the arrays are small enough that it really doesn't matter
@@ -645,25 +643,28 @@ class HumanSolver:
             Technique
         """
         seen = []
-        types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
+        types = {
+            "column": sudoku.Board.adjacent_column,
+            "row": sudoku.Board.adjacent_row,
+        }
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
             for adjacency, func in types.items():
                 # TODO: these one-liners are getting way too long. Probably worth splitting up a bit to make things clearer.
                 if (
                     x := np.count_nonzero(
-                        Board.adjacent_box((row, column)) & self.candidates[num]
+                        sudoku.Board.adjacent_box((row, column)) & self.candidates[num]
                     )
                 ) == np.count_nonzero(
                     self.candidates[num]
-                    & Board.adjacent_box((row, column))
+                    & sudoku.Board.adjacent_box((row, column))
                     & func((row, column))
                 ) and np.count_nonzero(
                     self.candidates[num] & func((row, column))
                 ) > x:
 
                     coords = np.argwhere(
-                        Board.adjacent_box((row, column))
+                        sudoku.Board.adjacent_box((row, column))
                         & func((row, column))
                         & self.candidates[num]
                     )
@@ -699,7 +700,10 @@ class HumanSolver:
         Yields:
             Technique
         """
-        types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
+        types = {
+            "column": sudoku.Board.adjacent_column,
+            "row": sudoku.Board.adjacent_row,
+        }
 
         for adjacency, func in types.items():
             for num in range(9):
@@ -795,8 +799,8 @@ class HumanSolver:
                     # Remove candidates that can see both cell1 and cell2
                     removed_candidates[num] = (
                         self.candidates[num]
-                        & Board.adjacent((cell1_coord[0], cell1_coord[1]))
-                        & Board.adjacent((cell2_coord[0], cell2_coord[1]))
+                        & sudoku.Board.adjacent((cell1_coord[0], cell1_coord[1]))
+                        & sudoku.Board.adjacent((cell2_coord[0], cell2_coord[1]))
                     )
 
                     # If nothing actually gets removed then the Technique is kinda useless
@@ -886,7 +890,7 @@ class HumanSolver:
 
 
 if __name__ == "__main__":
-    board = Board(
+    board = sudoku.Board(
         ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
         # "................................................................................1"
         # "..............................................................................321"

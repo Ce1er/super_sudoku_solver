@@ -1,5 +1,5 @@
 import re
-from human_solver import Technique
+import human_solver
 from time import time
 import techniques
 from typing import Optional, Generator
@@ -145,14 +145,13 @@ class Board:
     """
     Represents board as a whole
     """
-    TECHNIQUES = [
-        techniques.NakedSingles
-    ]
+
+    TECHNIQUES = [techniques.NakedSingles]
 
     def __init__(
         self,
-        cells: str, # TODO: maybe change this to different type
-                    # also needs to take more data like guesses and candidates optionally
+        cells: str,  # TODO: maybe change this to different type
+        # also needs to take more data like guesses and candidates optionally
     ) -> None:
         r"""
         Args:
@@ -219,7 +218,6 @@ class Board:
             9x9 int arr of guesses
         """
         return self.cells.get_guesses()
-
 
     def add_cell(self, coord: npt.NDArray[np.int8]):
         """
@@ -421,7 +419,7 @@ class Board:
             # ):  # This is for performance but the solver is so quick I might just remove it
             #     break
 
-    def hint(self) -> Generator[Technique]:
+    def hint(self) -> Generator[human_solver.Technique]:
         for technique in Board.TECHNIQUES:
             technique = technique(
                 self.get_candidates(), self.get_clues(), self.get_guesses()

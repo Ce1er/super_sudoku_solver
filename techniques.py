@@ -1,5 +1,6 @@
 from collections.abc import Generator
-from sudoku import Board
+# from sudoku import Board
+import sudoku
 import numpy as np
 import numpy.typing as npt
 from human_solver import (
@@ -187,9 +188,9 @@ class HiddenSingles(HumanTechniques):
             Technique
         """
         types = {
-            Board.adjacent_row: "row",
-            Board.adjacent_column: "column",
-            Board.adjacent_box: "box",
+            sudoku.Board.adjacent_row: "row",
+            sudoku.Board.adjacent_column: "column",
+            sudoku.Board.adjacent_box: "box",
         }  # TODO: make this a class constant, and probably worth switching keys and values
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
@@ -259,9 +260,9 @@ class NakedPairs(HumanTechniques):
             Technique
         """
         types = {
-            "row": Board.adjacent_row,
-            "column": Board.adjacent_column,
-            "box": Board.adjacent_box,
+            "row": sudoku.Board.adjacent_row,
+            "column": sudoku.Board.adjacent_column,
+            "box": sudoku.Board.adjacent_box,
         }
 
         # Get cells where there are 2 candidates
@@ -279,7 +280,7 @@ class NakedPairs(HumanTechniques):
             nums = nums1
 
             # If they aren't adjacent they aren't a pair.
-            if not Board.adjacent((cell1[0], cell1[1]))[*cell2]:
+            if not sudoku.Board.adjacent((cell1[0], cell1[1]))[*cell2]:
                 continue
 
             remove_from = []
@@ -338,9 +339,9 @@ class HiddenPairs(HumanTechniques):
             Technique
         """
         types = {
-            "row": Board.adjacent_row,
-            "column": Board.adjacent_column,
-            "box": Board.adjacent_box,
+            "row": sudoku.Board.adjacent_row,
+            "column": sudoku.Board.adjacent_column,
+            "box": sudoku.Board.adjacent_box,
         }
 
         # Not strictly more than 2 because if one of them is hidden it counts as a hidden pair
@@ -363,7 +364,7 @@ class HiddenPairs(HumanTechniques):
                 continue
 
             # Pairs must be adjacent
-            if not Board.adjacent((cell1[0], cell1[1]))[*cell2]:
+            if not sudoku.Board.adjacent((cell1[0], cell1[1]))[*cell2]:
                 continue
 
             # Not super elegant or performant but the arrays are small enough that it really doesn't matter
@@ -533,25 +534,25 @@ class PointingTuples(HumanTechniques):
             Technique
         """
         seen = []
-        types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
+        types = {"column": sudoku.Board.adjacent_column, "row": sudoku.Board.adjacent_row}
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
             for adjacency, func in types.items():
                 # TODO: these one-liners are getting way too long. Probably worth splitting up a bit to make things clearer.
                 if (
                     x := np.count_nonzero(
-                        Board.adjacent_box((row, column)) & self.candidates[num]
+                        sudoku.Board.adjacent_box((row, column)) & self.candidates[num]
                     )
                 ) == np.count_nonzero(
                     self.candidates[num]
-                    & Board.adjacent_box((row, column))
+                    & sudoku.Board.adjacent_box((row, column))
                     & func((row, column))
                 ) and np.count_nonzero(
                     self.candidates[num] & func((row, column))
                 ) > x:
 
                     coords = np.argwhere(
-                        Board.adjacent_box((row, column))
+                        sudoku.Board.adjacent_box((row, column))
                         & func((row, column))
                         & self.candidates[num]
                     )
@@ -608,7 +609,7 @@ class Skyscrapers(HumanTechniques):
         Yields:
             Technique
         """
-        types = {"column": Board.adjacent_column, "row": Board.adjacent_row}
+        types = {"column": sudoku.Board.adjacent_column, "row": sudoku.Board.adjacent_row}
 
         for adjacency, func in types.items():
             for num in range(9):
@@ -704,8 +705,8 @@ class Skyscrapers(HumanTechniques):
                     # Remove candidates that can see both cell1 and cell2
                     removed_candidates[num] = (
                         self.candidates[num]
-                        & Board.adjacent((cell1_coord[0], cell1_coord[1]))
-                        & Board.adjacent((cell2_coord[0], cell2_coord[1]))
+                        & sudoku.Board.adjacent((cell1_coord[0], cell1_coord[1]))
+                        & sudoku.Board.adjacent((cell2_coord[0], cell2_coord[1]))
                     )
 
                     # If nothing actually gets removed then the Technique is kinda useless
