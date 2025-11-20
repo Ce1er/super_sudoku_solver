@@ -23,7 +23,7 @@ import logging
 from human_solver import HumanSolver
 
 
-class HumanTechniques(abc.ABC):
+class _HumanTechniques(abc.ABC):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -88,7 +88,7 @@ def foo(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
     return Action(new_cells)
 
 
-class NakedSingles(HumanTechniques):
+class NakedSingles(_HumanTechniques):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -134,7 +134,7 @@ class NakedSingles(HumanTechniques):
             )
 
 
-class HiddenSingles(HumanTechniques):
+class HiddenSingles(_HumanTechniques):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -223,7 +223,7 @@ class HiddenSingles(HumanTechniques):
                 )
 
 
-class NakedPairs(HumanTechniques):
+class NakedPairs(_HumanTechniques):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -321,7 +321,7 @@ class NakedPairs(HumanTechniques):
             )
 
 
-class HiddenPairs(HumanTechniques):
+class HiddenPairs(_HumanTechniques):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -435,7 +435,7 @@ class HiddenPairs(HumanTechniques):
                 )
 
 
-class LockedCandidates(HumanTechniques):
+class LockedCandidates(_HumanTechniques):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -516,86 +516,179 @@ class LockedCandidates(HumanTechniques):
                 )
 
 
-class PointingTuples(HumanTechniques):
+class _PointingTuples(_HumanTechniques):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
-        clues: npt.NDArray[np.int8],
+        clues: npt.NDArray,
         guesses: npt.NDArray[np.int8],
+        count: int,
     ):
         super().__init__(candidates, clues, guesses)
 
+        if type(count) is not int:
+            raise ValueError("Invalid type for count")
+        elif count not in (2, 3):
+            raise ValueError("Invalid tuple size. Only pairs and triples allowed.")
+        self.count = count
+
+    def partially_find(self):
+        TYPES = {"column": npc.adjacent_column, "row": npc.adjacent_row}
+        for num in range(9):
+            for coords in combinations(np.argwhere(self.candidates[num]), r=self.count):
+                coords = np.array([*coords])
+
+                # Check all coords are in the same box
+                if np.count_nonzero(npc.adjacent_box(coords)) != 9:
+                    continue
+
+                columns = np.count_nonzero(npc.adjacent_column(coords)) // 9
+                rows = np.count_nonzero(npc.adjacent_row(coords)) // 9
+
+                if np.count_nonzero(columns) == 1:
+                    direction = "column"
+                elif np.count_nonzero(rows) == 1:
+                    direction = "row"
+                else:
+                    continue
+
+                if (
+                    np.count_nonzero(TYPES[direction](coords) & self.candidates[num])
+                    <= self.count
+                ):
+                    continue
+
+                yield {"coords": coords, "num": num, "direction": direction}
+
+
+class PointingPairs(_PointingTuples):
+    def __init__(
+        self,
+        candidates: npt.NDArray[np.bool],
+        clues: npt.NDArray,
+        guesses: npt.NDArray[np.int8],
+    ):
+        _HumanTechniques.__init__(self, candidates, clues, guesses)
+        _PointingTuples.__init__(self, candidates, clues, guesses, 2)
+
     @staticmethod
     def get_name():
-        return "Pointing Tuples"
+        return "Pointing Pairs"
 
     @staticmethod
-    def _generate_message():
-        pass
+    def _generate_message(coords, num, direction):
+        return [
+            MessageCoords(coords),
+            MessageText(" are the only cells that can be "),
+            MessageNum(num),
+            MessageText(
+                f" in their box so we can remove other options from their {direction}."
+            ),
+        ]
 
     @staticmethod
-    def _generate_action():
-        pass
+    def _generate_action(coords, num, direction):
+        removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+        func = npc.adjacent_row if direction == "row" else npc.adjacent_column
+
+        # TODO: np_candidates adjacency methods need more options. Like not including coords + and'ing coords instead of or
+        removed_candidates[num, :, :] |= func(coords)
+        for coord in coords:
+            removed_candidates[num, coord[0], coord[1]] = False
+        return Action(remove_candidates=removed_candidates)
 
     def find(self):
-        """
-        Search for Pointing Tuples
-        Yields:
-            Technique
-        """
-        seen = []
-        types = {
-            "column": sudoku.Board.adjacent_column,
-            "row": sudoku.Board.adjacent_row,
-        }
-        for coord in np.argwhere(self.candidates):
-            num, row, column = coord
-            for adjacency, func in types.items():
-                # TODO: these one-liners are getting way too long. Probably worth splitting up a bit to make things clearer.
-                if (
-                    x := np.count_nonzero(
-                        sudoku.Board.adjacent_box((row, column)) & self.candidates[num]
-                    )
-                ) == np.count_nonzero(
-                    self.candidates[num]
-                    & sudoku.Board.adjacent_box((row, column))
-                    & func((row, column))
-                ) and np.count_nonzero(
-                    self.candidates[num] & func((row, column))
-                ) > x:
-
-                    coords = np.argwhere(
-                        sudoku.Board.adjacent_box((row, column))
-                        & func((row, column))
-                        & self.candidates[num]
-                    )
-
-                    if (result := (coords.tobytes(), num)) in seen:
-                        continue
-                    seen.append(result)
-
-                    removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-                    removed_candidates[num, :, :] |= func((row, column))
-                    new = np.full((9), True, dtype=np.bool)
-                    new[num] = False
-                    for coord in coords:
-                        removed_candidates[*coord] = new
-
-                    yield Technique(
-                        "Pointing Tuple",
-                        [
-                            MessageCoords(coords),
-                            MessageText(" are the only cells that can be "),
-                            MessageNum(num),
-                            MessageText(
-                                f" in their box so we can remove other options from their {adjacency}."
-                            ),
-                        ],
-                        Action(remove_candidates=removed_candidates),
-                    )
+        for pair in self.partially_find():
+            coords = pair["coords"]
+            num = pair["num"]
+            direction = pair["direction"]
+            yield Technique(
+                self.get_name(),
+                self._generate_message(coords, num, direction),
+                self._generate_action(coords, num, direction),
+            )
 
 
-class Skyscrapers(HumanTechniques):
+# class PointingTuples(HumanTechniques):
+#     def __init__(
+#         self,
+#         candidates: npt.NDArray[np.bool],
+#         clues: npt.NDArray[np.int8],
+#         guesses: npt.NDArray[np.int8],
+#     ):
+#         super().__init__(candidates, clues, guesses)
+#
+#     @staticmethod
+#     def get_name():
+#         return "Pointing Tuples"
+#
+#     @staticmethod
+#     def _generate_message():
+#         pass
+#
+#     @staticmethod
+#     def _generate_action():
+#         pass
+#
+#     def find(self):
+#         """
+#         Search for Pointing Tuples
+#         Yields:
+#             Technique
+#         """
+
+# seen = []
+# types = {
+#     "column": sudoku.Board.adjacent_column,
+#     "row": sudoku.Board.adjacent_row,
+# }
+# for coord in np.argwhere(self.candidates):
+#     num, row, column = coord
+#     for adjacency, func in types.items():
+#         if (
+#             x := np.count_nonzero(
+#                 sudoku.Board.adjacent_box((row, column)) & self.candidates[num]
+#             )
+#         ) == np.count_nonzero(
+#             self.candidates[num]
+#             & sudoku.Board.adjacent_box((row, column))
+#             & func((row, column))
+#         ) and np.count_nonzero(
+#             self.candidates[num] & func((row, column))
+#         ) > x:
+#
+#             coords = np.argwhere(
+#                 sudoku.Board.adjacent_box((row, column))
+#                 & func((row, column))
+#                 & self.candidates[num]
+#             )
+#
+#             if (result := (coords.tobytes(), num)) in seen:
+#                 continue
+#             seen.append(result)
+#
+#             removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+#             removed_candidates[num, :, :] |= func((row, column))
+#             new = np.full((9), True, dtype=np.bool)
+#             new[num] = False
+#             for coord in coords:
+#                 removed_candidates[*coord] = new
+#
+#             yield Technique(
+#                 "Pointing Tuple",
+#                 [
+#                     MessageCoords(coords),
+#                     MessageText(" are the only cells that can be "),
+#                     MessageNum(num),
+#                     MessageText(
+#                         f" in their box so we can remove other options from their {adjacency}."
+#                     ),
+#                 ],
+#                 Action(remove_candidates=removed_candidates),
+#             )
+
+
+class Skyscrapers(_HumanTechniques):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -755,8 +848,11 @@ class Skyscrapers(HumanTechniques):
 
 
 if __name__ == "__main__":
-    print("going")
-    x = NakedSingles(np.array([True]), np.array([1, 2]), np.array([1, 2]))
-
-    for y in x.find():
-        print(y)
+    # print("going")
+    # x = NakedSingles(np.array([True]), np.array([1, 2]), np.array([1, 2]))
+    #
+    # for y in x.find():
+    #     print(y)
+    # foo = PointingPairs(np.array([]), np.array([]), np.array([]))
+    print(PointingPairs.__mro__)
+    print(foo.__mro__)

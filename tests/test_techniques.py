@@ -21,7 +21,7 @@ class TestTechnique:
     def null(
         self,
         board: dict[str, npt.NDArray[np.int8 | np.bool]],
-        technique: techniques.HumanTechniques,
+        technique: techniques._HumanTechniques,
         add_cells: Optional[list[list[list[int]]]],
         removed_candidates: Optional[list[list[list[list[bool]]]]],
         message_has: list[list[str]],
@@ -47,7 +47,7 @@ class TestTechnique:
     @pytest.fixture
     def board_fixt(
         self, candidates_fixt, clues_fixt, guesses_fixt, technique
-    ) -> techniques.HumanTechniques:
+    ) -> techniques._HumanTechniques:
         return technique(candidates_fixt, clues_fixt, guesses_fixt)
 
     @pytest.fixture
