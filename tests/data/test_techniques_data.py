@@ -299,7 +299,7 @@ board_2 = {
 # }}}
 
 
-boards: dict[int, techniques.HumanTechniques] = {1: board_1, 2: board_2}
+boards: dict[int, techniques._HumanTechniques] = {1: board_1, 2: board_2}
 
 
 test_technique: list[ParameterSet] = []
