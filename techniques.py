@@ -76,16 +76,49 @@ class _HumanTechniques(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def get_name() -> str: ...
+    def get_name() -> str:
+        """
+        Returns:
+            Name of the technique
+        """
+        ...
+
+    @staticmethod
+    @abc.abstractmethod
+    def _generate_message(*args, **kwargs) -> list[MessagePart]:
+        """
+        Returns:
+            The message that explains the technique
+        """
+
+        ...
+
+    @staticmethod
+    @abc.abstractmethod
+    def _generate_action(*args, **kwargs) -> Action:
+        """
+        Returns:
+            The action for a technique
+        """
+        ...
+
+    def _generate_techniques(self, *args, **kwargs) -> Technique:
+        """
+        Returns:
+            The technique which contains the name, message and action
+        """
+        return Technique(
+            self.get_name(),
+            self._generate_message(*args, **kwargs),
+            self._generate_action(*args, **kwargs),
+        )
 
     @abc.abstractmethod
-    def find(self) -> Generator[Technique]: ...
+    def _find(self) -> Generator[tuple]: ...
 
-
-def foo(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
-    new_cells = np.full((9, 9), -1, dtype=np.int8)
-    new_cells[*coord] = num.flatten()
-    return Action(new_cells)
+    def find(self):
+        for technique in self._find():
+            yield self._generate_techniques(*technique)
 
 
 class NakedSingles(_HumanTechniques):
@@ -102,6 +135,12 @@ class NakedSingles(_HumanTechniques):
         return "Naked Singles"
 
     @staticmethod
+    def _generate_action(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
+        new_cells = np.full((9, 9), -1, dtype=np.int8)
+        new_cells[*coord] = num[0][0]
+        return Action(new_cells)
+
+    @staticmethod
     def _generate_message(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
         return [
             MessageCoord(coord, highlight=1),
@@ -110,13 +149,7 @@ class NakedSingles(_HumanTechniques):
             MessageText("because it is the only candidate for the cell."),
         ]
 
-    @staticmethod
-    def _generate_action(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
-        new_cells = np.full((9, 9), -1, dtype=np.int8)
-        new_cells[*coord] = num[0][0]
-        return Action(new_cells)
-
-    def find(self):
+    def _find(self):
         """
         Iterator of all Naked Singles based on self.candidates.
         Yields:
@@ -127,11 +160,7 @@ class NakedSingles(_HumanTechniques):
             row, column = coord
             num = np.argwhere(self.candidates[:, row, column])
 
-            yield Technique(
-                self.get_name(),
-                NakedSingles._generate_message(coord, num),
-                NakedSingles._generate_action(coord, num),
-            )
+            yield (coord, num)
 
 
 class HiddenSingles(_HumanTechniques):
