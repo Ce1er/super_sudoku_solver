@@ -18,7 +18,7 @@ from human_solver import (
 from itertools import combinations
 import np_candidates as npc
 import abc
-from typing import Any
+from typing import Any, Type, TypedDict
 import logging
 from human_solver import HumanSolver
 
@@ -85,7 +85,7 @@ class _HumanTechniques(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def _generate_message(*args, **kwargs) -> list[MessagePart]:
+    def _generate_message(technique: dict) -> list[MessagePart]:
         """
         Returns:
             The message that explains the technique
@@ -95,33 +95,48 @@ class _HumanTechniques(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def _generate_action(*args, **kwargs) -> Action:
+    def _generate_action(technique: dict) -> Action:
         """
         Returns:
             The action for a technique
         """
         ...
 
-    def _generate_techniques(self, *args, **kwargs) -> Technique:
+    def _generate_techniques(self, technique: dict) -> Technique:
         """
         Returns:
             The technique which contains the name, message and action
         """
-        return Technique(
-            self.get_name(),
-            self._generate_message(*args, **kwargs),
-            self._generate_action(*args, **kwargs),
-        )
+        name = self.get_name()
+        message = self._generate_message(technique)
+        action = self._generate_action(technique)
+        return Technique(name, message, action)
 
     @abc.abstractmethod
-    def _find(self) -> Generator[tuple]: ...
+    def _find(self) -> Generator[dict]: ...
+
+    @staticmethod
+    @abc.abstractmethod
+    def _hash(technique: dict) -> int:
+        """
+        Returns:
+            int which should be unique to every possible occurence of the technique
+        """
 
     def find(self):
+        seen = []
         for technique in self._find():
-            yield self._generate_techniques(*technique)
+            hashed = self._hash(technique)
+            if hashed in seen:
+                continue
+
+            seen.append(hashed)
+
+            yield self._generate_techniques(technique)
 
 
 class NakedSingles(_HumanTechniques):
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -135,19 +150,33 @@ class NakedSingles(_HumanTechniques):
         return "Naked Singles"
 
     @staticmethod
-    def _generate_action(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
+    def _generate_action(technique):
+        coord = technique["coord"]
+        num = technique["num"]
+
         new_cells = np.full((9, 9), -1, dtype=np.int8)
         new_cells[*coord] = num[0][0]
         return Action(new_cells)
 
     @staticmethod
-    def _generate_message(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
+    # def _generate_message(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
+    def _generate_message(technique):
+        coord = technique["coord"]
+        num = technique["num"]
+
         return [
             MessageCoord(coord, highlight=1),
             MessageText("is"),
             MessageNum(num),
             MessageText("because it is the only candidate for the cell."),
         ]
+
+    @staticmethod
+    def _hash(technique):
+        coord = technique["coord"].tobytes()
+        num = technique["num"].tobytes()
+
+        return hash((coord, num))
 
     def _find(self):
         """
@@ -160,7 +189,7 @@ class NakedSingles(_HumanTechniques):
             row, column = coord
             num = np.argwhere(self.candidates[:, row, column])
 
-            yield (coord, num)
+            yield {"coord": coord, "num": num}
 
 
 class HiddenSingles(_HumanTechniques):
@@ -177,7 +206,8 @@ class HiddenSingles(_HumanTechniques):
         return "Hidden Singles"
 
     @staticmethod
-    def _generate_message(coord: npt.NDArray[np.int8], adjacency: str):
+    # def _generate_message(coord: npt.NDArray[np.int8], adjacency: str):
+    def _generate_message(technique: dict):
         """
         Args:
             coord: Shape (3,). [num, row, column]
@@ -185,8 +215,9 @@ class HiddenSingles(_HumanTechniques):
         Returns:
             Message for hidden single at given coord
         """
-        print(coord)
-        print(coord.shape)
+        coord = technique["coord"]
+        adjacency = technique["adjacency"]
+
         if coord.shape != (3,):
             raise ValueError("Invalid coord shape")
         if not np.issubdtype(coord.dtype, np.integer):
@@ -197,6 +228,8 @@ class HiddenSingles(_HumanTechniques):
         if adjacency not in ("row", "column", "box"):
             raise ValueError("Invalid adjacency value")
 
+        print(coord)
+
         return [
             MessageCoord(coord[1:], highlight=1),
             MessageText(" is "),
@@ -205,11 +238,14 @@ class HiddenSingles(_HumanTechniques):
         ]
 
     @staticmethod
-    def _generate_action(coord: npt.NDArray[np.int8]):
+    # def _generate_action(coord: npt.NDArray[np.int8]):
+    def _generate_action(technique):
         """
         Args:
             coord: Shape (3,). [num, row, column]
         """
+        coord = technique["coord"]
+
         if coord.shape != (3,):
             raise ValueError("Invalid coord shape")
         if not np.issubdtype(coord.dtype, np.integer):
@@ -220,7 +256,14 @@ class HiddenSingles(_HumanTechniques):
 
         return Action(new_cells)
 
-    def find(self) -> Generator[Technique]:
+    @staticmethod
+    def _hash(technique):
+        coord = technique["coord"].tobytes()
+        adjacency = technique["adjacency"]
+
+        return hash((coord, adjacency))
+
+    def _find(self):
         """
         Search for Hidden Singles based on candidates.
         Yields:
@@ -244,12 +287,7 @@ class HiddenSingles(_HumanTechniques):
                 ):
                     continue
 
-                yield Technique(
-                    "Hidden Single",  # It could be a naked single but _naked_singles() should be ran first
-                    # TODO: check if comment above is actually right.
-                    self._generate_message(coord, adjacency),
-                    self._generate_action(coord),
-                )
+                yield {"coord": coord, "adjacency": adjacency}
 
 
 class NakedPairs(_HumanTechniques):
@@ -266,9 +304,25 @@ class NakedPairs(_HumanTechniques):
         return "Naked Pair"
 
     @staticmethod
-    def _generate_message(pair, nums, remove_from):
+    def remove_from(types, cell1, cell2):
+        remove_from = []
+        for adjacency, func in types.items():
+            if func((cell1[0], cell1[1]))[*cell2]:
+                remove_from.append(adjacency)
+        return remove_from
+
+    @staticmethod
+    # def _generate_message(pair, nums, remove_from):
+    def _generate_message(technique):
+        pair = technique["pair"]
+        nums = technique["nums"]
+        cell1 = technique["cell1"]
+        cell2 = technique["cell2"]
+        types = technique["types"]
+
+        remove_adjacencies = NakedPairs.remove_from(types, cell1, cell2)
         adjacencies = ""
-        for item in remove_from:
+        for item in remove_adjacencies:
             if len(adjacencies) == 0:
                 pass
             else:
@@ -286,13 +340,37 @@ class NakedPairs(_HumanTechniques):
         ]
 
     @staticmethod
-    def _generate_action(remove_from, cell, nums):
-        pass
-        # removed_candidates = np.full((9,9,9), False, dtype=np.bool)
-        # for adjacency in remove_from:
-        #     removed_candidates[nums] |= types[adjacency
+    # def _generate_action(cell1, cell2, nums, types, candidates):
+    def _generate_action(technique):
+        cell1 = technique["cell1"]
+        cell2 = technique["cell2"]
+        nums = technique["nums"]
+        types = technique["types"]
+        candidates = technique["candidates"]
 
-    def find(self):
+        remove_adjacencies = NakedPairs.remove_from(types, cell1, cell2)
+        removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+        for adjacency in remove_adjacencies:
+            removed_candidates[nums] |= types[adjacency]((cell1[0], cell1[1]))
+
+        removed_candidates &= candidates
+
+        if np.count_nonzero(removed_candidates) == 0:
+            return Action()
+
+        return Action(remove_candidates=removed_candidates)
+
+    @staticmethod
+    def _hash(technique):
+        cell1 = technique["cell1"].tobytes()
+        cell2 = technique["cell2"].tobytes()
+        nums = technique["nums"]
+        num1 = nums[0].tobytes()
+        num2 = nums[1].tobytes()
+
+        return hash(cell1) ^ hash(cell2) ^ hash(num1) ^ hash(num2)
+
+    def _find(self):
         """
         Search for Naked Pairs based on candidates.
         Yields:
@@ -322,32 +400,14 @@ class NakedPairs(_HumanTechniques):
             if not sudoku.Board.adjacent((cell1[0], cell1[1]))[*cell2]:
                 continue
 
-            remove_from = []
-            for adjacency, func in types.items():
-                if func((cell1[0], cell1[1]))[*cell2]:
-                    remove_from.append(adjacency)
-
-            removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-            for adjacency in remove_from:
-                removed_candidates[nums] |= types[adjacency]((cell1[0], cell1[1]))
-
-            removed_candidates &= self.candidates
-
-            if np.count_nonzero(removed_candidates) == 0:
-                continue
-
-            yield Technique(
-                "Naked Pair",
-                [
-                    MessageCoords(np.array([*pair])),
-                    MessageText("are"),
-                    MessageNums(np.argwhere(nums)),
-                    MessageText(
-                        f" because they are adjacent by {", ".join(remove_from)}"
-                    ),
-                ],
-                Action(remove_candidates=removed_candidates),
-            )
+            yield {
+                "pair": pair,
+                "nums": nums,
+                "cell1": cell1,
+                "cell2": cell2,
+                "types": types,
+                "candidates": self.candidates,
+            }
 
 
 class HiddenPairs(_HumanTechniques):
@@ -364,14 +424,52 @@ class HiddenPairs(_HumanTechniques):
         return "Hidden Pairs"
 
     @staticmethod
-    def _generate_message():
-        pass
+    def _generate_message(technique):
+        cells = technique["cells"]
+        num_pair = technique["num_pair"]
+        adjacent_by = technique["adjacent_by"]
+
+        return [
+            MessageCoords(cells),
+            MessageText(" are the only cells that can be "),
+            MessageNums(num_pair),
+            MessageText(
+                " in their "
+                + ", ".join(adjacent_by)
+                + " so we can remove all other candidates from them"
+            ),
+        ]
 
     @staticmethod
-    def _generate_action():
-        pass
+    def _generate_action(technique):
+        cells = technique["cells"]
+        num_pair = technique["num_pair"]
 
-    def find(self):
+        removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+
+        num_pair_mask = np.full((9), False, dtype=np.bool)
+
+        num_pair_mask[num_pair] = True
+
+        other_nums = np.argwhere(~num_pair_mask)
+
+        # Remove any other candidates from the 2 cells that are part of the hidden pair
+        removed_candidates[other_nums, cells[:, 0], cells[:, 1]] = True
+
+        return Action(remove_candidates=removed_candidates)
+
+    @staticmethod
+    def _hash(technique):
+        cells = technique["cells"]
+        cell1 = cells[0].tobytes()
+        cell2 = cells[1].tobytes()
+        num_pair = technique["num_pair"]
+        num1 = num_pair[0].tobytes()
+        num2 = num_pair[1].tobytes()
+
+        return hash(cell1) ^ hash(cell2) ^ hash(num1) ^ hash(num2)
+
+    def _find(self):
         """
         Search for Hidden Pairs based on candidates
         Yields:
@@ -435,33 +533,11 @@ class HiddenPairs(_HumanTechniques):
                 if len(adjacent_by) == 0:
                     continue
 
-                removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-
-                cells = np.array([cell1, cell2])
-
-                num_pair_mask = np.full((9), False, dtype=np.bool)
-
-                num_pair_mask[num_pair] = True
-
-                other_nums = np.argwhere(~num_pair_mask)
-
-                # Remove any other candidates from the 2 cells that are part of the hidden pair
-                removed_candidates[other_nums, cells[:, 0], cells[:, 1]] = True
-
-                yield Technique(
-                    "Hidden Pair",
-                    [
-                        MessageCoords(cells),
-                        MessageText(" are the only cells that can be "),
-                        MessageNums(num_pair),
-                        MessageText(
-                            " in their "
-                            + ", ".join(adjacent_by)
-                            + " so we can remove all other candidates from them"
-                        ),
-                    ],
-                    Action(remove_candidates=removed_candidates),
-                )
+                yield {
+                    "cells": np.array([cell1, cell2]),
+                    "num_pair": num_pair,
+                    "adjacent_by": adjacent_by,
+                }
 
 
 class LockedCandidates(_HumanTechniques):
@@ -478,20 +554,43 @@ class LockedCandidates(_HumanTechniques):
         return "Locked Candidates"
 
     @staticmethod
-    def _generate_message():
-        pass
+    def _generate_message(technique):
+        coords = technique["coords"]
+        num = technique["num"]
+        adjacency = technique["adjacency"]
+
+        return [
+            MessageCoords(coords),
+            MessageText(" are the only cells that can be "),
+            MessageNum(num),
+            MessageText(f" in their {adjacency} so we can remove "),
+            MessageNum(num),
+            MessageText(" from the other cells in their house."),
+        ]
 
     @staticmethod
-    def _generate_action():
-        pass
+    def _generate_action(technique):
+        num = technique["num"]
+        adjacency_occurences = technique["adjacency_occurences"]
+        adjacency_box_occurences = technique["adjacency_box_occurences"]
 
-    def find(self):
+        removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+        removed_candidates[num] = adjacency_box_occurences & ~adjacency_occurences
+
+        return Action(remove_candidates=removed_candidates)
+
+    @staticmethod
+    def _hash(technique) -> int:
+        coords = technique["coords"].tobytes()
+
+        return hash(coords)
+
+    def _find(self):
         """
         Search for Locked Candidates based on candidates
         Yields:
             Technique
         """
-        seen = []
         types = {"column": npc.adjacent_column, "row": npc.adjacent_row}
         for coord in np.argwhere(self.candidates):
             num, row, column = coord
@@ -520,29 +619,37 @@ class LockedCandidates(_HumanTechniques):
                 ):
                     continue
 
-                removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-                removed_candidates[num] = (
-                    adjacency_box_occurences & ~adjacency_occurences
-                )
+                yield {
+                    "num": num,
+                    "adjacency_occurences": adjacency_occurences,
+                    "adjacency_box_occurences": adjacency_box_occurences,
+                    "coords": np.argwhere(adjacency_combined_occurences),
+                    "adjacency": adjacency,
+                }
 
-                coords = np.argwhere(adjacency_combined_occurences)
-
-                if coords.tobytes() in seen:
-                    continue
-                seen.append(coords.tobytes())
-
-                yield Technique(
-                    "Locked Candidate",
-                    [
-                        MessageCoords(coords),
-                        MessageText(" are the only cells that can be "),
-                        MessageNum(num),
-                        MessageText(f" in their {adjacency} so we can remove "),
-                        MessageNum(num),
-                        MessageText(" from the other cells in their house."),
-                    ],
-                    Action(remove_candidates=removed_candidates),
-                )
+                # removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+                # removed_candidates[num] = (
+                #     adjacency_box_occurences & ~adjacency_occurences
+                # )
+                #
+                # coords = np.argwhere(adjacency_combined_occurences)
+                #
+                # if coords.tobytes() in seen:
+                #     continue
+                # seen.append(coords.tobytes())
+                #
+                # yield Technique(
+                #     "Locked Candidate",
+                #     [
+                #         MessageCoords(coords),
+                #         MessageText(" are the only cells that can be "),
+                #         MessageNum(num),
+                #         MessageText(f" in their {adjacency} so we can remove "),
+                #         MessageNum(num),
+                #         MessageText(" from the other cells in their house."),
+                #     ],
+                #     Action(remove_candidates=removed_candidates),
+                # )
 
 
 class _PointingTuples(_HumanTechniques):
@@ -731,14 +838,67 @@ class Skyscrapers(_HumanTechniques):
         return "Skyscraper"
 
     @staticmethod
-    def _generate_message():
-        pass
+    def _generate_message(technique):
+        cell1 = technique["cell1"]
+        cell2 = technique["cell2"]
+        cell3 = technique["cell3"]
+        cell4 = technique["cell4"]
+        num = technique["num"]
+        adjacency = technique["adjacency"]
+        other_adjacency = technique["other_adjacency"]
+
+        return [
+            MessageText("At least one of"),
+            MessageCoords(np.array([cell1, cell2])),
+            MessageText("must be"),
+            MessageNum(num),
+            MessageText(
+                f" because they are the only {num+1} in their {adjacency} except these "
+            ),
+            MessageCoords(np.array([cell3, cell4])),
+            MessageText(f" which share a {other_adjacency}. That means"),
+            # MessageCandidates(removed_candidates),
+            MessageText(
+                f" which see both the cells that do not share a {other_adjacency} can't be {num+1}"
+            ),
+        ]
 
     @staticmethod
-    def _generate_action():
-        pass
+    def _generate_action(technique):
+        num = technique["num"]
+        cell1 = technique["cell1"]
+        cell2 = technique["cell2"]
+        candidates = technique["candidates"]
 
-    def find(self):
+        removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+
+        # Remove candidates that can see both cell1 and cell2
+        removed_candidates[num] = (
+            candidates[num]
+            & sudoku.Board.adjacent((cell1[0], cell1[1]))
+            & sudoku.Board.adjacent((cell2[0], cell2[1]))
+        )
+
+        # If nothing actually gets removed then the Technique is kinda useless
+        if np.count_nonzero(removed_candidates) == 0:
+            return Action()
+
+        return Action(remove_candidates=removed_candidates)
+
+    @staticmethod
+    def _hash(technique):
+        num = technique["num"]
+        cell1 = technique["cell1"].tobytes()
+        cell2 = technique["cell2"].tobytes()
+        cell3 = technique["cell3"].tobytes()
+        cell4 = technique["cell4"].tobytes()
+
+        pair1 = hash(cell1) ^ hash(cell2)
+        pair2 = hash(cell3) ^ hash(cell4)
+
+        return hash((num, pair1, pair2))
+
+    def _find(self):
         """
         Search for skyscrapers based on candidates
         Yields:
@@ -800,15 +960,15 @@ class Skyscrapers(_HumanTechniques):
                         cell1_row = np.argwhere(row1)[0][0]
                         cell2_row = np.argwhere(row2)[0][0]
 
-                        cell1_coord = np.array([cell1_row, pairing[0][0]])
-                        cell2_coord = np.array([cell2_row, pairing[1][0]])
+                        cell1 = np.array([cell1_row, pairing[0][0]])
+                        cell2 = np.array([cell2_row, pairing[1][0]])
 
                         # Will be the same for the other 2 because they have to share a row
                         shared_row = self.candidates[num, :, pairing] & ~non_shared
                         shared_row = np.argwhere(shared_row[0][0])[0][0]
 
-                        cell3_coord = np.array([shared_row, pairing[0][0]])
-                        cell4_coord = np.array([shared_row, pairing[1][0]])
+                        cell3 = np.array([shared_row, pairing[0][0]])
+                        cell4 = np.array([shared_row, pairing[1][0]])
 
                         # cell3 and cell4 must be the only cells in the column
                         if np.count_nonzero(self.candidates[num, shared_row, :]) != 2:
@@ -821,16 +981,16 @@ class Skyscrapers(_HumanTechniques):
                         cell1_col = np.argwhere(col1)[0][0]
                         cell2_col = np.argwhere(col2)[0][0]
 
-                        cell1_coord = np.array([pairing[0][0], cell1_col])
-                        cell2_coord = np.array([pairing[1][0], cell2_col])
+                        cell1 = np.array([pairing[0][0], cell1_col])
+                        cell2 = np.array([pairing[1][0], cell2_col])
 
                         # Will be the same for the other 2 because they have to share a column
                         other_col = np.argwhere(
                             (self.candidates[num, pairing, :] & ~(non_shared))[0][0]
                         )[0][0]
 
-                        cell3_coord = np.array([pairing[0][0], other_col])
-                        cell4_coord = np.array([pairing[1][0], other_col])
+                        cell3 = np.array([pairing[0][0], other_col])
+                        cell4 = np.array([pairing[1][0], other_col])
 
                         # cell3 and cell4 must be the only cells in the column
                         if np.count_nonzero(self.candidates[num, :, other_col]) != 2:
@@ -838,42 +998,18 @@ class Skyscrapers(_HumanTechniques):
                     else:
                         assert False, "types has invalid key"
 
-                    removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-
-                    # Remove candidates that can see both cell1 and cell2
-                    removed_candidates[num] = (
-                        self.candidates[num]
-                        & sudoku.Board.adjacent((cell1_coord[0], cell1_coord[1]))
-                        & sudoku.Board.adjacent((cell2_coord[0], cell2_coord[1]))
-                    )
-
-                    # If nothing actually gets removed then the Technique is kinda useless
-                    if np.count_nonzero(removed_candidates) == 0:
-                        continue
-
                     other_adjacency = "row" if adjacency == "column" else "column"
 
-                    yield Technique(
-                        "Skyscraper",
-                        [
-                            MessageText("At least one of"),
-                            MessageCoords(np.array([cell1_coord, cell2_coord])),
-                            MessageText("must be"),
-                            MessageNum(num),
-                            MessageText(
-                                f" because they are the only {num+1} in their {adjacency} except these "
-                            ),
-                            MessageCoords(np.array([cell3_coord, cell4_coord])),
-                            MessageText(
-                                f" which share a {other_adjacency}. That means"
-                            ),
-                            # MessageCandidates(removed_candidates),
-                            MessageText(
-                                f" which see both the cells that do not share a {other_adjacency} can't be {num+1}"
-                            ),
-                        ],
-                        Action(remove_candidates=removed_candidates),
-                    )
+                    yield {
+                        "cell1": cell1,
+                        "cell2": cell2,
+                        "cell3": cell3,
+                        "cell4": cell4,
+                        "num": num,
+                        "adjacency": adjacency,
+                        "other_adjacency": other_adjacency,
+                        "candidates": self.candidates,
+                    }
 
 
 if __name__ == "__main__":
