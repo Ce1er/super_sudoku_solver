@@ -119,8 +119,10 @@ class _HumanTechniques(abc.ABC):
     @abc.abstractmethod
     def _hash(technique: dict) -> int:
         """
+        Used to detect duplicate techniques. Practically identical techniques with different specifics are not duplicates.
+        e.g. A hidden single found by box and found by column are different.
         Returns:
-            int which should be unique to every possible occurence of the technique
+            int which should be unique to every possible occurence of the technique.
         """
 
     def find(self):
@@ -128,6 +130,7 @@ class _HumanTechniques(abc.ABC):
         for technique in self._find():
             hashed = self._hash(technique)
             if hashed in seen:
+                logging.warning("Duplicate technique generated")
                 continue
 
             seen.append(hashed)
