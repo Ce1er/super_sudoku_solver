@@ -2,7 +2,7 @@
 # TODO: think about how is actually best to hide the long techniques arrays, maybe importing from a different file.
 from collections.abc import Generator, Callable
 import pytest
-from human_solver import HumanSolver, Technique
+from human_solver import Technique
 from sudoku import Board
 import tests.data.test_techniques_data as test_techniques_data
 import re

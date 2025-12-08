@@ -20,7 +20,7 @@ import np_candidates as npc
 import abc
 from typing import Any, Type, TypedDict
 import logging
-from human_solver import HumanSolver
+# from human_solver import HumanSolver
 
 
 class _HumanTechniques(abc.ABC):
