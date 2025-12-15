@@ -273,7 +273,13 @@ class Board(QGraphicsScene):
                 )
                 yield from x.find()
 
+        # FIXME:the hint system can't see guesses. Only initial clues. I think the candidates also aren't being updated properly for guesses.
+
+        # TODO: check action is non-null
+
+        # TODO: a way of getting other ones
         technique = get_first(get_techniques())
+        print(technique.get_message())
 
         hint = HintBox(
             technique,
