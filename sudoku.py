@@ -10,8 +10,11 @@ from typing import Optional, Generator
 import numpy as np
 import numpy.typing as npt
 import dlx_solver as dlx
+import techniques
+from human_solver import Action
 
 
+# TODO: deprecate this class. Merge with Board.
 class Cells:
     """
     Attributes:
@@ -53,6 +56,10 @@ class Cells:
         Adds cells with the most annoying non-numpy input possible. Will deprecate soon.
         """
         self.cells[*coordinate] = value
+
+    def add_cells(self, cells: npt.NDArray[np.int8]):
+        for coord in np.argwhere(cells != -1):
+            self.cells[coord[0], coord[1]] = cells[*coord]
 
     def get_cells(self, include_empty=False) -> list[tuple[int, int, int]]:
         """
@@ -164,12 +171,32 @@ class Board:
     Represents board as a whole
     """
 
-    # TECHNIQUES = [techniques.NakedSingles]
+    # TODO: Use this instead
+    # def __init__(
+    #     self,
+    #     clues: npt.NDArray[np.int8],
+    #     guesses: Optional[npt.NDArray[np.int8]] = None,
+    #     hints: Optional[dict[str, Hints]] = None, # Maybe take the data to create hints object instead
+    # ):
+    #     self.clues = clues
+    #
+    #     if guesses:
+    #         self.guesses = guesses
+    #     else:
+    #         self.guesses = np.full((9, 9), -1, dtype=np.int8)
+    #
+    #     if hints:
+    #         self.hints = hints
+    #     else:
+    #         self.hints = {
+    #             "normal": Hints((146, 153, 166, 255)),
+    #             "highlighted": Hints((66, 197, 212, 255)),
+    #             "strikethrough": Hints((146, 153, 166, 255), (214, 41, 32, 255), False),
+    #         }  # TODO: Store this information in a settings file
 
     def __init__(
         self,
-        cells: str,  # TODO: maybe change this to different type
-        # also needs to take more data like guesses and candidates optionally
+        cells: str,
     ) -> None:
         r"""
         Args:
@@ -237,12 +264,12 @@ class Board:
         """
         return self.cells.get_guesses()
 
-    def add_cell(self, coord: npt.NDArray[np.int8]):
+    def add_cells(self, cells: npt.NDArray[np.int8]):
         """
         Args:
-            coord: (row, col, value) all between 1-8 inclusive.
+            cells: 9x9 array where each element is between 0 and 8 inclusive. -1 to not add anything.
         """
-        self.cells.add_cell((coord[0], coord[1]), coord[2])  # + 1)
+        self.cells.add_cells(cells)
 
     def add_hint_type(
         self,
@@ -438,12 +465,23 @@ class Board:
             #     break
 
     def hint(self):  # -> Generator[human_solver.Technique]:
-        raise NotImplementedError
-        for technique in Board.TECHNIQUES:
+        for technique in techniques.TECHNIQUES:
             technique = technique(
                 self.get_candidates(), self.get_clues(), self.get_guesses()
             )
             yield from technique.find()
+
+    def apply_action(self, action: Action) -> None:
+        """
+        Modify cells and candidates in place based on Action
+        Args:
+            action: the Action to apply
+        """
+        if (x := action.get_cells()) is not None:
+            self.add_cells(x)
+
+        if (x := action.get_candidates()) is not None:
+            self.remove_candidates(x)
 
     def auto_solve(self):
         """

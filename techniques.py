@@ -20,6 +20,7 @@ import np_candidates as npc
 import abc
 from typing import Any, Type, TypedDict
 import logging
+
 # from human_solver import HumanSolver
 
 
@@ -1015,13 +1016,11 @@ class Skyscrapers(_HumanTechniques):
                     }
 
 
-if __name__ == "__main__":
-    pass
-    # print("going")
-    # x = NakedSingles(np.array([True]), np.array([1, 2]), np.array([1, 2]))
-    #
-    # for y in x.find():
-    #     print(y)
-    # foo = PointingPairs(np.array([]), np.array([]), np.array([]))
-    # print(PointingPairs.__mro__)
-    # print(foo.__mro__)
+TECHNIQUES = [
+    NakedSingles,
+    HiddenSingles,
+    NakedPairs,
+    HiddenPairs,
+    LockedCandidates,
+    Skyscrapers,
+]
