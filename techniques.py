@@ -1,7 +1,12 @@
 from collections.abc import Generator
+import utils
+import itertools
+from os import remove
 
 # from sudoku import Board
 import sudoku
+import copy
+from functools import wraps
 import numpy as np
 import numpy.typing as npt
 from human_solver import (
@@ -18,7 +23,7 @@ from human_solver import (
 from itertools import combinations
 import np_candidates as npc
 import abc
-from typing import Any, Type, TypedDict
+from typing import Any, Type, TypedDict, Self, Callable
 import logging
 
 # from human_solver import HumanSolver
@@ -116,31 +121,76 @@ class _HumanTechniques(abc.ABC):
     @abc.abstractmethod
     def _find(self) -> Generator[dict]: ...
 
-    @staticmethod
-    @abc.abstractmethod
-    def _hash(technique: dict) -> int:
+    def _action_is_null(self, action: Action) -> bool:
         """
-        Used to detect duplicate techniques. Practically identical techniques with different specifics are not duplicates.
-        e.g. A hidden single found by box and found by column are different.
+        To determine if an action will have any impact on the candidates
         Returns:
-            int which should be unique to every possible occurence of the technique.
+            True if action will have no effect. False if it will have an effect.
+        """
+        remove_candidates = action.get_candidates()
+        add_cells = action.get_cells()
+
+        if remove_candidates is not None:
+            new_candidates = (~remove_candidates) & self.candidates
+        else:
+            new_candidates = np.copy(self.candidates)
+
+        cells = np.copy(self.cells)
+        if add_cells is not None:
+            for coord in np.argwhere(add_cells != -1):
+                cells[coord[0], coord[1]] = add_cells[*coord]
+
+        return np.array_equal(self.candidates, new_candidates) and np.array_equal(
+            self.cells, cells
+        )
+
+    def _non_null_actions(func: Callable[[Self], Generator[Technique]]) -> Callable[[Self], Generator[Technique]]:  # type: ignore[misc]
+        """
+        Decorator to filter Techniques to only include ones where the action has an effect on candidates and/or cells.
+        Slightly simplifies technique detection as those functions are not responsible for checking if it has an effect or not.
         """
 
+        # @wraps preserves dunder attributes of decorated functions
+        # without it those attributes would refer to wrapper instead
+        @wraps(func)
+        def wrapper(self: Self) -> Generator[Technique]:
+            for technique in func(self):
+                if not self._action_is_null(technique.get_action()):
+                    yield technique
+
+        return wrapper
+
+    def _non_duplicate_actions(func: Callable[[Self], Generator[Technique]]) -> Callable[[Self], Generator[Technique]]:  # type: ignore[misc]
+        """
+        Decorator to filter out duplicate techniques.
+        Duplicates are techniques of the same type with an identical action.
+        """
+
+        @wraps(func)
+        def wrapper(self: Self) -> Generator[Technique]:
+            seen = []
+            for technique in func(self):
+                action = technique.get_action()
+                name = technique.get_technique()
+
+                hashed = hash((action, name))
+
+                if hashed in seen:
+                    continue
+
+                seen.append(hashed)
+                yield technique
+
+        return wrapper
+
+    @_non_duplicate_actions
+    @_non_null_actions
     def find(self):
-        seen = []
         for technique in self._find():
-            hashed = self._hash(technique)
-            if hashed in seen:
-                logging.warning("Duplicate technique generated")
-                continue
-
-            seen.append(hashed)
-
             yield self._generate_techniques(technique)
 
 
 class NakedSingles(_HumanTechniques):
-
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -174,13 +224,6 @@ class NakedSingles(_HumanTechniques):
             MessageNum(num),
             MessageText("because it is the only candidate for the cell."),
         ]
-
-    @staticmethod
-    def _hash(technique):
-        coord = technique["coord"].tobytes()
-        num = technique["num"].tobytes()
-
-        return hash((coord, num))
 
     def _find(self):
         """
@@ -232,7 +275,7 @@ class HiddenSingles(_HumanTechniques):
         if adjacency not in ("row", "column", "box"):
             raise ValueError("Invalid adjacency value")
 
-        print(coord)
+        # print(coord)
 
         return [
             MessageCoord(coord[1:], highlight=1),
@@ -259,13 +302,6 @@ class HiddenSingles(_HumanTechniques):
         new_cells[*coord[1:]] = coord[0]
 
         return Action(new_cells)
-
-    @staticmethod
-    def _hash(technique):
-        coord = technique["coord"].tobytes()
-        adjacency = technique["adjacency"]
-
-        return hash((coord, adjacency))
 
     def _find(self):
         """
@@ -364,16 +400,6 @@ class NakedPairs(_HumanTechniques):
 
         return Action(remove_candidates=removed_candidates)
 
-    @staticmethod
-    def _hash(technique):
-        cell1 = technique["cell1"].tobytes()
-        cell2 = technique["cell2"].tobytes()
-        nums = technique["nums"]
-        num1 = nums[0].tobytes()
-        num2 = nums[1].tobytes()
-
-        return hash(cell1) ^ hash(cell2) ^ hash(num1) ^ hash(num2)
-
     def _find(self):
         """
         Search for Naked Pairs based on candidates.
@@ -414,6 +440,7 @@ class NakedPairs(_HumanTechniques):
             }
 
 
+# TODO: Maybe make generic base class for pairs, triples and quadruples that these can inherit from. Since those techniques are similar.
 class HiddenPairs(_HumanTechniques):
     def __init__(
         self,
@@ -461,17 +488,6 @@ class HiddenPairs(_HumanTechniques):
         removed_candidates[other_nums, cells[:, 0], cells[:, 1]] = True
 
         return Action(remove_candidates=removed_candidates)
-
-    @staticmethod
-    def _hash(technique):
-        cells = technique["cells"]
-        cell1 = cells[0].tobytes()
-        cell2 = cells[1].tobytes()
-        num_pair = technique["num_pair"]
-        num1 = num_pair[0].tobytes()
-        num2 = num_pair[1].tobytes()
-
-        return hash(cell1) ^ hash(cell2) ^ hash(num1) ^ hash(num2)
 
     def _find(self):
         """
@@ -582,12 +598,6 @@ class LockedCandidates(_HumanTechniques):
         removed_candidates[num] = adjacency_box_occurences & ~adjacency_occurences
 
         return Action(remove_candidates=removed_candidates)
-
-    @staticmethod
-    def _hash(technique) -> int:
-        coords = technique["coords"].tobytes()
-
-        return hash(coords)
 
     def _find(self):
         """
@@ -889,19 +899,6 @@ class Skyscrapers(_HumanTechniques):
 
         return Action(remove_candidates=removed_candidates)
 
-    @staticmethod
-    def _hash(technique):
-        num = technique["num"]
-        cell1 = technique["cell1"].tobytes()
-        cell2 = technique["cell2"].tobytes()
-        cell3 = technique["cell3"].tobytes()
-        cell4 = technique["cell4"].tobytes()
-
-        pair1 = hash(cell1) ^ hash(cell2)
-        pair2 = hash(cell3) ^ hash(cell4)
-
-        return hash((num, pair1, pair2))
-
     def _find(self):
         """
         Search for skyscrapers based on candidates
@@ -1016,6 +1013,147 @@ class Skyscrapers(_HumanTechniques):
                     }
 
 
+class XWing(_HumanTechniques):
+    def __init__(
+        self,
+        candidates: npt.NDArray[np.bool],
+        clues: npt.NDArray[np.int8],
+        guesses: npt.NDArray[np.int8],
+    ):
+        super().__init__(candidates, clues, guesses)
+
+    @staticmethod
+    def get_name():
+        return "X-Wing"
+
+    @staticmethod
+    def _generate_action(technique):
+        pairing = np.array(technique["pairing"]).flatten()
+        adjacency = technique["adjacency"]
+        num = technique["num"]
+        arr = technique["arr"]
+        indices = np.array(np.argwhere(arr).flatten(), dtype=np.int8)
+
+        remove_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+
+        # Candidates will be removed in opposite direction to adjacency
+        if adjacency == "column":
+            remove_candidates[num, indices, :] = True
+
+            coords = itertools.product(indices, pairing)
+            for coord in coords:
+                # Don't remove candidates for the cells that are part of the X-Wing
+                remove_candidates[num, coord[0], coord[1]] = False
+
+        elif adjacency == "row":
+            remove_candidates[num, :, indices] = True
+
+            coords = itertools.product(pairing, indices)
+            for coord in coords:
+                # Don't remove candidates for the cells that are part of the X-Wing
+                remove_candidates[num, coord[0], coord[1]] = False
+
+        return Action(remove_candidates=remove_candidates)
+
+    @staticmethod
+    def _generate_message(technique):
+        # pairing = technique["pairing"]
+        # adjacency = technique["adjacency"]
+        # num = technique["num"]
+        pairing = np.array(technique["pairing"]).flatten()
+        adjacency = technique["adjacency"]
+        num = technique["num"]
+        arr = technique["arr"]
+        indices = np.array(np.argwhere(arr).flatten(), dtype=np.int8)
+
+        if adjacency == "row":
+            coords = np.array(
+                list(
+                    map(
+                        lambda x: np.array(list(map(np.int8, x))),
+                        itertools.product(pairing, indices),
+                    )
+                )
+            )
+            print(coords)
+            message = [
+                MessageCoords(coords),
+                MessageText("are the only "),
+                MessageNum(num),
+                MessageText(f"s in their {adjacency} so we can remove "),
+                MessageNum(num),
+                MessageText("from all other cells in their columns."),
+            ]
+        elif adjacency == "column":
+            coords = np.array(
+                list(
+                    map(
+                        lambda x: np.array(list(map(np.int8, x))),
+                        itertools.product(indices, pairing),
+                    )
+                )
+            )
+            print(coords)
+            message = [
+                MessageCoords(coords),
+                MessageText("are the only "),
+                MessageNum(num),
+                MessageText(f"s in their {adjacency} so we can remove "),
+                MessageNum(num),
+                MessageText("from all other cells in their rows."),
+            ]
+
+        return message
+
+    def _find(self):
+        """
+        Iterator of all X-Wings based on self.candidates.
+        Yields:
+            Technique
+        """
+        # only two possible cells for a value in each of two different rows,
+        # and these candidates lie also in the same columns,
+        # then all other candidates for this value in the columns can be eliminated.
+        types = {
+            "column": sudoku.Board.adjacent_column,
+            "row": sudoku.Board.adjacent_row,
+        }
+
+        for adjacency, func in types.items():
+            for num in range(9):
+                # Find rows or columns with 2 occurences of num. Will give 1d arr with ints representing index of row/column.
+                if adjacency == "column":
+                    rows = np.add.reduce(self.candidates[num], axis=0, dtype=np.int8)
+                    potential = np.argwhere(rows == 2)
+                elif adjacency == "row":
+                    columns = np.add.reduce(self.candidates[num], axis=1, dtype=np.int8)
+                    potential = np.argwhere(columns == 2)
+                else:
+                    assert False, "types has invalid key"
+
+                if len(potential) < 2:
+                    continue
+
+                for pairing in combinations(potential, r=2):
+                    # print(adjacency, pairing)
+                    if adjacency == "column":
+                        arr = self.candidates[num, :, pairing]
+                    if adjacency == "row":
+                        arr = self.candidates[num, pairing, :]
+
+                    if not np.array_equal(arr[0], arr[1]):
+                        continue
+
+                    # print(2, adjacency, pairing)
+
+                    yield {
+                        "adjacency": adjacency,
+                        "pairing": pairing,
+                        "num": num,
+                        "arr": arr[0].flatten(),
+                    }
+
+
 TECHNIQUES = [
     NakedSingles,
     HiddenSingles,
@@ -1023,4 +1161,32 @@ TECHNIQUES = [
     HiddenPairs,
     LockedCandidates,
     Skyscrapers,
+    XWing,
 ]
+
+# TODO: consider finding more general techniques
+# For example finding turbot fishes instead of skyscrapers
+# Then skyscrapers can use that and check it is a special turbot fish that is also a skyscraper
+
+
+# TODO:
+# Pointing Tuples
+# Naked Triple
+# X-Wing - I think it is done. Needs testing.
+# Hidden Triple
+# Naked Quadruple
+# Y-Wing
+# Avoidable Rectangle
+# XYZ Wing
+# Hidden Quadruple
+# Unique Rectangle
+# Hidden Rectangle
+# Pointing Rectangle
+# Swordfish
+# Jellyfish
+# 2-String Kite
+# Empty Rectangle
+# Color Chain
+# Finned X-Wing
+# Finned Swordfish
+# Finned Jellyfish
