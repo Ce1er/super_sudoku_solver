@@ -2,7 +2,8 @@
 # import copy
 # import pytest
 # from sudoku import Board
-# from human_solver import HumanSolver
+# # from human_solver import HumanSolver
+# from techniques import TECHNIQUES
 #
 #
 # @pytest.fixture
@@ -66,4 +67,4 @@
 #         )
 #     )
 #
-# # TODO: some sort of check which makes sure all varients of each technique are used. e.g. if a technique could be based on row, col or box make sure all 3 are used.
+# # TODO: some sort of check which

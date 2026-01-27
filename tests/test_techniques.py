@@ -29,6 +29,8 @@ class TestTechnique:
         """
         PyTest requires all test functions inside parametrized class to use all params.
         This fixture can be used for tests which do not use all params to supress errors.
+        Args:
+            message_has: each sublist has regex to match message against
         """
         return
 
@@ -92,6 +94,7 @@ class TestTechnique:
                 ), "Invalid removed_candidates"
 
     def test_technique_message(self, technique_fixt, message_has, null):
+        # TODO: this is bad. Make message_has specific to each application of a technique instead of checking whole list.
         correct = False
         for technique in technique_fixt:
             for message in message_has:
