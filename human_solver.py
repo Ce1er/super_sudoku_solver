@@ -173,6 +173,26 @@ class Action:
     def get_candidates(self) -> Optional[npt.NDArray[np.bool]]:
         return self.remove_candidates
 
+    def __eq__(self, other):
+        return (
+            other
+            and self.add_cells == other.add_cells
+            and self.remove_candidates == other.remove_candidates
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        cells = self.add_cells if self.add_cells is None else self.add_cells.tobytes()
+        candidates = (
+            self.remove_candidates
+            if self.remove_candidates is None
+            else self.remove_candidates.tobytes()
+        )
+
+        return hash((cells, candidates))
+
 
 class Technique:
     """
@@ -209,6 +229,7 @@ class Technique:
 
     def get_technique(self) -> str:
         return self.technique
+
 
 #
 # class HumanSolver:
