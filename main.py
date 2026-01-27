@@ -266,6 +266,7 @@ class Board(QGraphicsScene):
         #     return
         def get_techniques():
             for technique in techniques.TECHNIQUES:
+                print(technique)
                 x = technique(
                     self.data.get_candidates(),
                     self.data.get_clues(),
@@ -280,6 +281,9 @@ class Board(QGraphicsScene):
         # TODO: a way of getting other ones
         technique = get_first(get_techniques())
         print(technique.get_message())
+        action = technique.get_action()
+        print(action.get_cells())
+        print(action.get_candidates())
 
         hint = HintBox(
             technique,
@@ -334,7 +338,7 @@ def main():
             # "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
             # "123456789..............................................................1........."
             # ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
-"1.....569492.561.8.561.924...964.8.1.64.1....218.356.4.4.5...169.5.614.2621.....5"
+            "1.....569492.561.8.561.924...964.8.1.64.1....218.356.4.4.5...169.5.614.2621.....5"
         ),
         settings.highlight_colours,
         settings.border_colour,

@@ -395,6 +395,11 @@ class NakedPairs(_HumanTechniques):
 
         removed_candidates &= candidates
 
+        # FIXME: Pretty sure the problem is it is removing candidates from cell1 and cell2.
+        # This should fix it but will break tests :(
+        removed_candidates[:, cell1[0], cell1[1]] = False
+        removed_candidates[:, cell2[0], cell2[1]] = False
+
         if np.count_nonzero(removed_candidates) == 0:
             return Action()
 
