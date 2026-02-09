@@ -13,16 +13,14 @@ if __name__ == "__main__":
             print(repr(e))
     print(text_board(board.cells.cells))  # TODO: access with getters instead
     while True:
-        print(
-            """
+        print("""
         Choose an option:
         s: solve
         a: show all hints
         n: show candidate notes
         g: enter a number
         c: clear
-        """
-        )
+        """)
         choice = input("")
         match choice.lower().strip():
             case "s":
