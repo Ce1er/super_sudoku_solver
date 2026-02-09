@@ -437,7 +437,7 @@ class Board:
         # Convert DLX matrix representation to 9x9 2D list[list[int]]
         count = 0
         for row in solution:
-            row.sort()
+            row.sort() # Probably unnecessary
             # Coordinates
             x = row[0] % 9
             y = row[0] // 9
