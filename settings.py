@@ -12,6 +12,7 @@ rejected_candidate_colour = QColor(255, 0, 0, 255)
 border_colour: QColor = QColor(0, 0, 0, 255)
 big_border_colour: QColor = QColor(0, 0, 0, 255)
 background_colour: QColor = QColor(255, 255, 255, 255)
+text_colour: QColor = QColor(0, 0, 0, 255)
 
 
 border_size: int = 1
