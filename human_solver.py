@@ -2,7 +2,7 @@
 from __future__ import annotations
 import copy
 from collections.abc import Generator
-from typing import Callable, Optional, Protocol, Self, Type, TypeVar, Union
+from typing import Callable, Optional, Protocol, Self, SupportsInt, Type, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
 import sudoku
@@ -28,6 +28,8 @@ class MessagePart(Protocol):
 
     @text.setter
     def text(self, new: str) -> None:
+        if not isinstance(new, str):
+            raise TypeError("Message text cannot be set to non-str type")
         self._text = new
 
     @property
@@ -35,8 +37,14 @@ class MessagePart(Protocol):
         return self._highlight
 
     @highlight.setter
-    def highlight(self, new: Optional[int]) -> None:
-        self._highlight = new
+    def highlight(self, new: Optional[SupportsInt]) -> None:
+        if new is None or isinstance(new, int):
+            self._highlight = new
+        else:
+            try:
+                self._highlight = int(new)
+            except ValueError:
+                raise TypeError("Message highlight could not be interpreted as int")
 
 
 class MessageText(MessagePart):
