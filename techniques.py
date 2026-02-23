@@ -33,6 +33,9 @@ class _HumanTechniques(abc.ABC):
     """
     Base class for all human techniques
     """
+
+    NAME = ""
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -83,14 +86,9 @@ class _HumanTechniques(abc.ABC):
         self.guesses = guesses
         self.cells = cells
 
-    @staticmethod
-    @abc.abstractmethod
-    def get_name() -> str:
-        """
-        Returns:
-            Name of the technique
-        """
-        ...
+    @property
+    def name(self):
+        return self.NAME
 
     @staticmethod
     @abc.abstractmethod
@@ -116,7 +114,7 @@ class _HumanTechniques(abc.ABC):
         Returns:
             The technique which contains the name, message and action
         """
-        name = self.get_name()
+        name = self.name
         message = self._generate_message(technique)
         action = self._generate_action(technique)
         return Technique(name, message, action)
@@ -194,6 +192,8 @@ class _HumanTechniques(abc.ABC):
 
 
 class NakedSingles(_HumanTechniques):
+    NAME = "Naked Singles"
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -201,10 +201,6 @@ class NakedSingles(_HumanTechniques):
         guesses: npt.NDArray[np.int8],
     ):
         super().__init__(candidates, clues, guesses)
-
-    @staticmethod
-    def get_name():
-        return "Naked Singles"
 
     @staticmethod
     def _generate_action(technique):
@@ -243,6 +239,8 @@ class NakedSingles(_HumanTechniques):
 
 
 class HiddenSingles(_HumanTechniques):
+    NAME = "Hidden Singles"
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -250,10 +248,6 @@ class HiddenSingles(_HumanTechniques):
         guesses: npt.NDArray[np.int8],
     ):
         super().__init__(candidates, clues, guesses)
-
-    @staticmethod
-    def get_name():
-        return "Hidden Singles"
 
     @staticmethod
     # def _generate_message(coord: npt.NDArray[np.int8], adjacency: str):
@@ -334,6 +328,8 @@ class HiddenSingles(_HumanTechniques):
 
 
 class NakedPairs(_HumanTechniques):
+    NAME = "Naked Pairs"
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -341,10 +337,6 @@ class NakedPairs(_HumanTechniques):
         guesses: npt.NDArray[np.int8],
     ):
         super().__init__(candidates, clues, guesses)
-
-    @staticmethod
-    def get_name():
-        return "Naked Pair"
 
     @staticmethod
     def remove_from(types, cell1, cell2):
@@ -374,9 +366,7 @@ class NakedPairs(_HumanTechniques):
             adjacencies += item
 
         return [
-            MessageCoords(
-                np.array([*pair]),highlight=1
-            ),
+            MessageCoords(np.array([*pair]), highlight=1),
             MessageText(" are "),
             MessageNums(np.argwhere(nums)),
             MessageText(f" because they are adjacent by {adjacencies}."),
@@ -450,6 +440,8 @@ class NakedPairs(_HumanTechniques):
 
 # TODO: Maybe make generic base class for pairs, triples and quadruples that these can inherit from. Since those techniques are similar.
 class HiddenPairs(_HumanTechniques):
+    NAME = "Hidden Pairs"
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -457,10 +449,6 @@ class HiddenPairs(_HumanTechniques):
         guesses: npt.NDArray[np.int8],
     ):
         super().__init__(candidates, clues, guesses)
-
-    @staticmethod
-    def get_name():
-        return "Hidden Pairs"
 
     @staticmethod
     def _generate_message(technique):
@@ -569,6 +557,8 @@ class HiddenPairs(_HumanTechniques):
 
 
 class LockedCandidates(_HumanTechniques):
+    NAME = "Locked Candidates"
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -576,10 +566,6 @@ class LockedCandidates(_HumanTechniques):
         guesses: npt.NDArray[np.int8],
     ):
         super().__init__(candidates, clues, guesses)
-
-    @staticmethod
-    def get_name():
-        return "Locked Candidates"
 
     @staticmethod
     def _generate_message(technique):
@@ -720,6 +706,8 @@ class _PointingTuples(_HumanTechniques):
 
 
 class PointingPairs(_PointingTuples):
+    NAME = "Pointing Pairs"
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -728,10 +716,6 @@ class PointingPairs(_PointingTuples):
     ):
         _HumanTechniques.__init__(self, candidates, clues, guesses)
         _PointingTuples.__init__(self, candidates, clues, guesses, 2)
-
-    @staticmethod
-    def get_name():
-        return "Pointing Pairs"
 
     @staticmethod
     def _generate_message(coords, num, direction):
@@ -761,7 +745,7 @@ class PointingPairs(_PointingTuples):
             num = pair["num"]
             direction = pair["direction"]
             yield Technique(
-                self.get_name(),
+                self.name,
                 self._generate_message(coords, num, direction),
                 self._generate_action(coords, num, direction),
             )
@@ -847,6 +831,8 @@ class PointingPairs(_PointingTuples):
 
 
 class Skyscrapers(_HumanTechniques):
+    NAME = "Skyscraper"
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -854,10 +840,6 @@ class Skyscrapers(_HumanTechniques):
         guesses: npt.NDArray[np.int8],
     ):
         super().__init__(candidates, clues, guesses)
-
-    @staticmethod
-    def get_name():
-        return "Skyscraper"
 
     @staticmethod
     def _generate_message(technique):
@@ -871,13 +853,13 @@ class Skyscrapers(_HumanTechniques):
 
         return [
             MessageText("At least one of"),
-            MessageCoords(np.array([cell1, cell2]),highlight=1),
+            MessageCoords(np.array([cell1, cell2]), highlight=1),
             MessageText("must be"),
             MessageNum(num),
             MessageText(
                 f" because they are the only {num+1} in their {adjacency} except these "
             ),
-            MessageCoords(np.array([cell3, cell4]),highlight=1),
+            MessageCoords(np.array([cell3, cell4]), highlight=1),
             MessageText(f" which share a {other_adjacency}. That means"),
             # MessageCandidates(removed_candidates),
             MessageText(
@@ -1022,6 +1004,8 @@ class Skyscrapers(_HumanTechniques):
 
 
 class XWing(_HumanTechniques):
+    NAME = "X-Wing"
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -1029,10 +1013,6 @@ class XWing(_HumanTechniques):
         guesses: npt.NDArray[np.int8],
     ):
         super().__init__(candidates, clues, guesses)
-
-    @staticmethod
-    def get_name():
-        return "X-Wing"
 
     @staticmethod
     def _generate_action(technique):
@@ -1085,7 +1065,7 @@ class XWing(_HumanTechniques):
             )
             print(coords)
             message = [
-                MessageCoords(coords,highlight=1),
+                MessageCoords(coords, highlight=1),
                 MessageText("are the only "),
                 MessageNum(num),
                 MessageText(f"s in their {adjacency} so we can remove "),
@@ -1103,7 +1083,7 @@ class XWing(_HumanTechniques):
             )
             print(coords)
             message = [
-                MessageCoords(coords,highlight=1),
+                MessageCoords(coords, highlight=1),
                 MessageText("are the only "),
                 MessageNum(num),
                 MessageText(f"s in their {adjacency} so we can remove "),
