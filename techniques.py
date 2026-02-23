@@ -39,8 +39,8 @@ class _HumanTechniques(abc.ABC):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
-        clues: npt.NDArray[np.int8],
-        guesses: npt.NDArray[np.int8],
+        clues: npt.NDArray[np.integer],
+        guesses: npt.NDArray[np.integer],
         # board: HumanSolver
     ):
         # candidates = board.get_candidates()
@@ -56,35 +56,48 @@ class _HumanTechniques(abc.ABC):
 
         if clues.shape != (9, 9):
             raise ValueError("Clues has invalid shape")
-        if not np.issubdtype(clues.dtype, np.integer):
-            raise ValueError("Clues has invalid dtype")
         if clues.dtype != np.int8:
-            logging.warning(
-                f"{__name__} instantiated with clues as dtype {clues.dtype}"
-            )  # Not a real error just a small waste of memory
+            try:
+                clues.astype(np.int8, casting="same_value")
+            except ValueError:
+                raise ValueError("clues values could not be interpreted as np.int8")
 
         if guesses.shape != (9, 9):
             raise ValueError("Guesses has invalid shape")
-        if not np.issubdtype(guesses.dtype, np.signedinteger):
-            raise ValueError("Guesses has invalid dtype")
         if guesses.dtype != np.int8:
-            logging.warning(
-                f"{__name__} instantiated with guesses as dtype {guesses.dtype}"
-            )  # Not a real error just a small waste of memory
+            try:
+                guesses.astype(np.int8, casting="same_value")
+            except ValueError:
+                raise ValueError("guesses values could not be interpreted as np.int8")
 
         if cells.shape != (9, 9):
             raise ValueError("Cells has invalid shape")
-        if not np.issubdtype(cells.dtype, np.integer):
-            raise ValueError("Cells has invalid dtype")
         if cells.dtype != np.int8:
-            logging.warning(
-                f"{__name__} instantiated with clues as dtype {cells.dtype}"
-            )  # Not a real error just a small waste of memory
+            try:
+                cells.astype(np.int8, casting="same_value")
+            except ValueError:
+                raise ValueError("cells values could not be interpreted as np.int8")
 
-        self.candidates = candidates
-        self.clues = clues
-        self.guesses = guesses
-        self.cells = cells
+        self._candidates = candidates
+        self._clues = clues
+        self._guesses = guesses
+        self._cells = cells
+
+    @property
+    def candidates(self):
+        return self._candidates
+
+    @property
+    def clues(self):
+        return self._clues
+
+    @property
+    def guesses(self):
+        return self._guesses
+
+    @property
+    def cells(self):
+        return self._cells
 
     @property
     def name(self):
