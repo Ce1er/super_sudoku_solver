@@ -372,7 +372,7 @@ class NakedPairs(_HumanTechniques):
 
         return [
             MessageCoords(
-                np.array([*pair]),
+                np.array([*pair]),highlight=1
             ),
             MessageText(" are "),
             MessageNums(np.argwhere(nums)),
@@ -466,7 +466,7 @@ class HiddenPairs(_HumanTechniques):
         adjacent_by = technique["adjacent_by"]
 
         return [
-            MessageCoords(cells),
+            MessageCoords(cells, highlight=1),
             MessageText(" are the only cells that can be "),
             MessageNums(num_pair),
             MessageText(
@@ -585,7 +585,7 @@ class LockedCandidates(_HumanTechniques):
         adjacency = technique["adjacency"]
 
         return [
-            MessageCoords(coords),
+            MessageCoords(coords, highlight=1),
             MessageText(" are the only cells that can be "),
             MessageNum(num),
             MessageText(f" in their {adjacency} so we can remove "),
@@ -733,7 +733,7 @@ class PointingPairs(_PointingTuples):
     @staticmethod
     def _generate_message(coords, num, direction):
         return [
-            MessageCoords(coords),
+            MessageCoords(coords, highlight=1),
             MessageText(" are the only cells that can be "),
             MessageNum(num),
             MessageText(
@@ -868,13 +868,13 @@ class Skyscrapers(_HumanTechniques):
 
         return [
             MessageText("At least one of"),
-            MessageCoords(np.array([cell1, cell2])),
+            MessageCoords(np.array([cell1, cell2]),highlight=1),
             MessageText("must be"),
             MessageNum(num),
             MessageText(
                 f" because they are the only {num+1} in their {adjacency} except these "
             ),
-            MessageCoords(np.array([cell3, cell4])),
+            MessageCoords(np.array([cell3, cell4]),highlight=1),
             MessageText(f" which share a {other_adjacency}. That means"),
             # MessageCandidates(removed_candidates),
             MessageText(
@@ -1082,7 +1082,7 @@ class XWing(_HumanTechniques):
             )
             print(coords)
             message = [
-                MessageCoords(coords),
+                MessageCoords(coords,highlight=1),
                 MessageText("are the only "),
                 MessageNum(num),
                 MessageText(f"s in their {adjacency} so we can remove "),
@@ -1100,7 +1100,7 @@ class XWing(_HumanTechniques):
             )
             print(coords)
             message = [
-                MessageCoords(coords),
+                MessageCoords(coords,highlight=1),
                 MessageText("are the only "),
                 MessageNum(num),
                 MessageText(f"s in their {adjacency} so we can remove "),

@@ -1,0 +1,22 @@
+[colours]
+
+[colours.cells]
+number_colour = [0, 0, 0, 255]
+candidate_colour = [30, 50, 78, 255]
+special_candidate_colour = [25, 1, 98, 255]
+rejected_candidate_colour = [255, 0, 0, 255]
+
+[colours.board]
+border_colour = [0, 0, 0, 255]
+big_border_colour = [0, 0, 0, 255]
+background_colour = [255, 255, 255, 255]
+text_colour = [0, 0, 0, 255]
+
+[sizes]
+border_size = 1
+big_border_size = 3
+cell_size = 60
+
+[keybindings]
+# Hard to do well
+

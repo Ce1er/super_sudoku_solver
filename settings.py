@@ -1,5 +1,6 @@
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt
+# TODO:: I feel like this would be better as .toml
 
 # Each highlight group's corresponding rgba colour. These are for hints.
 highlight_colours: dict[int, QColor] = {1: QColor(248, 252, 3, 255)}
