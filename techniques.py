@@ -58,7 +58,7 @@ class _HumanTechniques(abc.ABC):
             raise ValueError("Clues has invalid shape")
         if clues.dtype != np.int8:
             try:
-                clues.astype(np.int8, casting="same_value")
+                clues=clues.astype(np.int8, casting="same_value")
             except ValueError:
                 raise ValueError("clues values could not be interpreted as np.int8")
 
@@ -66,7 +66,7 @@ class _HumanTechniques(abc.ABC):
             raise ValueError("Guesses has invalid shape")
         if guesses.dtype != np.int8:
             try:
-                guesses.astype(np.int8, casting="same_value")
+                guesses=guesses.astype(np.int8, casting="same_value")
             except ValueError:
                 raise ValueError("guesses values could not be interpreted as np.int8")
 
@@ -74,7 +74,7 @@ class _HumanTechniques(abc.ABC):
             raise ValueError("Cells has invalid shape")
         if cells.dtype != np.int8:
             try:
-                cells.astype(np.int8, casting="same_value")
+                cells=cells.astype(np.int8, casting="same_value")
             except ValueError:
                 raise ValueError("cells values could not be interpreted as np.int8")
 

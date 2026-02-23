@@ -5,7 +5,7 @@ import numpy.typing as npt
 
 
 def _validate_adjacent(coords):
-    coords.astype(np.int8, casting="same_value")
+    coords=coords.astype(np.int8, casting="same_value")
     if coords.shape[0] > 256:
         raise ValueError("Too many coords given")
 
