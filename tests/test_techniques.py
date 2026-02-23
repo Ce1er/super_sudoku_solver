@@ -77,14 +77,14 @@ class TestTechnique:
 
     def test_add_cells(self, add_cells, action_fixt, null):
         for action in action_fixt:
-            if (cells := action.get_cells()) is None:
+            if (cells := action.cells) is None:
                 assert None in add_cells
             else:
                 assert cells.tolist() in add_cells, f"Invalid add_cells:\n{cells}"
 
     def test_removed_candidates(self, removed_candidates, action_fixt, null):
         for action in action_fixt:
-            if (candidates := action.get_candidates()) is None:
+            if (candidates := action.candidates) is None:
                 assert (
                     None in removed_candidates
                 ), "Technique did not find any candidates to remove"

@@ -312,8 +312,8 @@ class Board(QGraphicsScene):
         technique = get_first(get_techniques())
         print(technique.message)
         action = technique.action
-        print(action.get_cells())
-        print(action.get_candidates())
+        print(action.cells)
+        print(action.candidates)
 
         hint = HintBox(
             technique,
@@ -327,7 +327,7 @@ class Board(QGraphicsScene):
         self.addItem(hint)
 
         action: Action = technique.action
-        cells = action.get_cells()
+        cells = action.cells
         candidates = action.get_candidates()
 
         for cell in np.argwhere(cells):

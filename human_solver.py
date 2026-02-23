@@ -173,32 +173,42 @@ class Action:
             add_cells: 9x9 0-based. -1 for no change.
             remove_candidates: 9x9x9 0-based. True means remove.
         """
-        self.add_cells = add_cells
-        self.remove_candidates = remove_candidates
+        self._add_cells = add_cells
+        self._remove_candidates = remove_candidates
+
+    @property
+    def cells(self):
+        return self._add_cells
+
+    @property
+    def candidates(self):
+        return self._remove_candidates
 
     # Board highlighting will be based off action if a full hint is used. And it will fully represent the candidates that can be removed / cells that can be added.
-    def get_cells(self) -> Optional[npt.NDArray[np.int8]]:
-        return self.add_cells
-
-    def get_candidates(self) -> Optional[npt.NDArray[np.bool]]:
-        return self.remove_candidates
+    # def get_cells(self) -> Optional[npt.NDArray[np.int8]]:
+    #     return self._add_cells
+    #
+    # def get_candidates(self) -> Optional[npt.NDArray[np.bool]]:
+    #     return self._remove_candidates
 
     def __eq__(self, other):
         return (
             other
-            and self.add_cells == other.add_cells
-            and self.remove_candidates == other.remove_candidates
+            and self._add_cells == other.add_cells
+            and self._remove_candidates == other.remove_candidates
         )
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        cells = self.add_cells if self.add_cells is None else self.add_cells.tobytes()
+        cells = (
+            self._add_cells if self._add_cells is None else self._add_cells.tobytes()
+        )
         candidates = (
-            self.remove_candidates
-            if self.remove_candidates is None
-            else self.remove_candidates.tobytes()
+            self._remove_candidates
+            if self._remove_candidates is None
+            else self._remove_candidates.tobytes()
         )
 
         return hash((cells, candidates))

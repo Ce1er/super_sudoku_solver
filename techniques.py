@@ -128,8 +128,8 @@ class _HumanTechniques(abc.ABC):
         Returns:
             True if action will have no effect. False if it will have an effect.
         """
-        remove_candidates = action.get_candidates()
-        add_cells = action.get_cells()
+        remove_candidates = action.candidates
+        add_cells = action.cells
 
         if remove_candidates is not None:
             new_candidates = (~remove_candidates) & self.candidates

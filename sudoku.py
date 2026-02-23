@@ -477,10 +477,10 @@ class Board:
         Args:
             action: the Action to apply
         """
-        if (x := action.get_cells()) is not None:
+        if (x := action.cells) is not None:
             self.add_cells(x)
 
-        if (x := action.get_candidates()) is not None:
+        if (x := action.candidates) is not None:
             self.remove_candidates(x)
 
     def auto_solve(self):
