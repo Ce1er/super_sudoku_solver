@@ -224,16 +224,16 @@ class Board(QGraphicsScene):
                 x = row
                 self.cells.append([])
             # for coord in self.data.get_cells():
-            for coord in np.argwhere(self.data.get_all_cells() != -1):
+            for coord in np.argwhere(self.data.cells != -1):
                 if coord[0] == row and coord[1] == col:
-                    value = self.data.get_all_cells()[row, col]
+                    value = self.data.cells[row, col]
                     break
             else:
                 value = -1
 
             cell = Cell(
                 np.array([row, col, value]),
-                self.data.get_candidates()[row, col],
+                self.data.candidates[row, col],
                 [self.text_colour] * 9,
                 self.highlight_colours,
                 self.border_colour,
@@ -274,10 +274,8 @@ class Board(QGraphicsScene):
         Updates candidates and cells
         """
         for row, col in product(range(9), repeat=2):
-            self.cells[row][col].set_candidates(
-                (self.data.get_candidates()[:, row, col])
-            )
-            self.cells[row][col].set_value(self.data.get_all_cells()[row, col])
+            self.cells[row][col].set_candidates((self.data.candidates[:, row, col]))
+            self.cells[row][col].set_value(self.data.cells[row, col])
 
     def cell_clicked(self, cell: Cell):
         if self.selected_cell:
@@ -298,9 +296,9 @@ class Board(QGraphicsScene):
             for technique in techniques.TECHNIQUES:
                 print(technique)
                 x = technique(
-                    self.data.get_candidates(),
-                    self.data.get_clues(),
-                    self.data.get_guesses(),
+                    self.data.candidates,
+                    self.data.clues,
+                    self.data.guesses,
                 )
                 yield from x.find()
 
@@ -310,6 +308,8 @@ class Board(QGraphicsScene):
 
         # TODO: a way of getting other ones
         technique = get_first(get_techniques())
+        if technique is None:
+            return -1
         print(technique.message)
         action = technique.action
         print(action.cells)
@@ -328,7 +328,7 @@ class Board(QGraphicsScene):
 
         action: Action = technique.action
         cells = action.cells
-        candidates = action.get_candidates()
+        candidates = action.candidates
 
         for cell in np.argwhere(cells):
             print(cell)
