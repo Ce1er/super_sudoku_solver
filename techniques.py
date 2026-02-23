@@ -30,6 +30,9 @@ import logging
 
 
 class _HumanTechniques(abc.ABC):
+    """
+    Base class for all human techniques
+    """
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -1172,6 +1175,9 @@ TECHNIQUES = [
 # TODO: consider finding more general techniques
 # For example finding turbot fishes instead of skyscrapers
 # Then skyscrapers can use that and check it is a special turbot fish that is also a skyscraper
+
+# TODO:define clearly what the dictionaries used by the techniques should consist of
+# probably worth making classes for them instead of using dictionaries
 
 
 # TODO:
