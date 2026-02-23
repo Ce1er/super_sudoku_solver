@@ -204,6 +204,20 @@ class _HumanTechniques(abc.ABC):
             yield self._generate_techniques(technique)
 
 
+class _NakedSinglesInstance:
+    def __init__(self, coord, num):
+        self._coord = coord
+        self._num = num
+
+    @property
+    def coord(self):
+        return self._coord
+
+    @property
+    def num(self):
+        return self._num
+
+
 class NakedSingles(_HumanTechniques):
     NAME = "Naked Singles"
 
@@ -217,23 +231,23 @@ class NakedSingles(_HumanTechniques):
 
     @staticmethod
     def _generate_action(technique):
-        coord = technique["coord"]
-        num = technique["num"]
+        # coord = technique["coord"]
+        # num = technique["num"]
 
         new_cells = np.full((9, 9), -1, dtype=np.int8)
-        new_cells[*coord] = num[0][0]
+        new_cells[*technique.coord] = technique.num[0][0]
         return Action(new_cells)
 
     @staticmethod
     # def _generate_message(coord: npt.NDArray[np.int8], num: npt.NDArray[np.int8]):
     def _generate_message(technique):
-        coord = technique["coord"]
-        num = technique["num"]
+        # coord = technique["coord"]
+        # num = technique["num"]
 
         return [
-            MessageCoord(coord, highlight=1),
+            MessageCoord(technique.coord, highlight=1),
             MessageText("is"),
-            MessageNum(num),
+            MessageNum(technique.num),
             MessageText("because it is the only candidate for the cell."),
         ]
 
@@ -248,7 +262,8 @@ class NakedSingles(_HumanTechniques):
             row, column = coord
             num = np.argwhere(self.candidates[:, row, column])
 
-            yield {"coord": coord, "num": num}
+            # yield {"coord": coord, "num": num}
+            yield _NakedSinglesInstance(coord, num)
 
 
 class HiddenSingles(_HumanTechniques):
