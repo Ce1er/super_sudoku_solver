@@ -38,9 +38,6 @@ class Cells:
 
         self._cells = np.copy(self._clues)
 
-    # def __init__(self, clues: npt.NDArray[np.int8], guesses: npt.NDArray[np.int8]) -> None:
-    #     self._clues = clues
-    #     self._guesses = guesses
 
     def is_clue(self, coord: npt.NDArray[np.int8]) -> bool:
         """
@@ -72,34 +69,6 @@ class Cells:
     @property
     def guesses(self):
         return np.where(self._clues == -1, self.cells, -1)
-
-    # Naming things is hard
-    # Both methods above should prob be deprecated
-    # def get_all_cells(self) -> npt.NDArray[np.int8]:
-    #     """
-    #     Returns:
-    #         9x9 int arr of cells and clues
-    #     """
-    #     raise DeprecationWarning
-    #     return self.cells
-
-    # def get_clues(self) -> npt.NDArray[np.int8]:
-    #     """
-    #     Returns:
-    #         9x9 int arr of only clues
-    #     """
-    #     raise DeprecationWarning
-    #     return self._clues
-
-    # def get_guesses(self) -> npt.NDArray[np.int8]:
-    #     """
-    #     Returns:
-    #         9x9 int arr of only guesses
-    #     """
-    #     raise DeprecationWarning
-    #     return np.where(self._clues == -1, self.cells, -1)
-    #
-
 
 class Hints:
     """
@@ -162,15 +131,6 @@ class Hints:
             hints: 9x9x9 arr of cands to add
         """
         self._hints = (~hints) & self._hints
-
-    # def get_hints(self) -> npt.NDArray[np.bool]:
-    #     """
-    #     Returns:
-    #         9x9x9 bool arr of hints
-    #     """
-    #     raise DeprecationWarning
-    #     return self.hints
-    #
 
 
 class Board:
@@ -262,30 +222,6 @@ class Board:
                 candidates = candidates | hint_type.hints
         return candidates
 
-    # def get_all_cells(self):
-    #     """
-    #     Returns:
-    #         9x9 int arr of guesses and clues
-    #     """
-    #     raise DeprecationWarning
-    #     return self.cells.get_all_cells()
-    #
-    # def get_clues(self):
-    #     """
-    #     Returns:
-    #         9x9 int arr of clues
-    #     """
-    #     raise DeprecationWarning
-    #     return self.cells.get_clues()
-    #
-    # def get_guesses(self):
-    #     """
-    #     Returns:
-    #         9x9 int arr of guesses
-    #     """
-    #     raise DeprecationWarning
-    #     return self.cells.get_guesses()
-    #
     def add_cells(self, cells: npt.NDArray[np.int8]):
         """
         Args:
@@ -393,25 +329,13 @@ class Board:
 
         self._hints["normal"].remove_hints(mask)
 
-    # def get_candidates(self) -> npt.NDArray[np.bool]:
-    #     """
-    #     Returns:
-    #         candidates based on all hint types that are candidates
-    #     """
-    #     raise DeprecationWarning
-    #     candidates = np.full((9, 9, 9), False, dtype=bool)
-    #
-    #     for hint_type in self.hints.values():
-    #         if hint_type.candidate:
-    #             candidates = candidates | hint_type.get_hints()
-    #     return candidates
 
     @staticmethod
     def _row_add(column: int, row: int, value: int) -> list[int]:
         """
         Helper for create_matrix that creates a single row
         """
-        return [  # One value per constraint
+        return [  
             9 * row + column,  # Cell constraint
             81 + 9 * row + value,  # Row constraint
             162 + 9 * column + value,  # Column constraint
@@ -482,10 +406,6 @@ class Board:
         matrix = self.create_matrix()
         for solution in matrix.generate_solutions():
             yield self.extract_from_matrix(solution)
-            # if (
-            #     one_solution
-            # ):  # This is for performance but the solver is so quick I might just remove it
-            #     break
 
     def hint(self):  # -> Generator[human_solver.Technique]:
         for technique in techniques.TECHNIQUES:

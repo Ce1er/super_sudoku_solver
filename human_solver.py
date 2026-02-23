@@ -112,7 +112,9 @@ class MessageNum(MessagePart):
     """
 
     def __init__(
-        self, num: npt.NDArray[np.signedinteger] | int, highlight: Optional[int] = None
+        self,
+        num: npt.NDArray[np.integer] | SupportsInt,
+        highlight: Optional[int] = None,
     ) -> None:
         """
         Args:
@@ -122,9 +124,14 @@ class MessageNum(MessagePart):
         self.highlight = highlight
 
         if isinstance(num, np.ndarray):
-            self.text = "number " + str(num.reshape(1)[0] + 1)
-        else:
-            self.text = "number " + str(num + 1)
+            num.flatten()[0]
+
+        try:
+            num = int(num)
+        except ValueError:
+            raise ValueError("MessageNum num could not be interpreted as int")
+
+        self.text = str(num + 1)
 
 
 class MessageNums(MessagePart):
@@ -192,13 +199,6 @@ class Action:
     @property
     def candidates(self):
         return self._remove_candidates
-
-    # Board highlighting will be based off action if a full hint is used. And it will fully represent the candidates that can be removed / cells that can be added.
-    # def get_cells(self) -> Optional[npt.NDArray[np.int8]]:
-    #     return self._add_cells
-    #
-    # def get_candidates(self) -> Optional[npt.NDArray[np.bool]]:
-    #     return self._remove_candidates
 
     def __eq__(self, other):
         return (

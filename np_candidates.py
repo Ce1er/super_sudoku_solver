@@ -135,3 +135,9 @@ def adjacent(
             mask &= func(coords, to_n, strict)
 
     return mask
+
+def argwhere(*args, **kwargs):
+    """
+    Numpy's argwhere but with int8 dtype
+    """
+    return np.argwhere(*args, **kwargs).astype(np.int8,casting="same_value")
