@@ -61,33 +61,6 @@ class Cells:
         for coord in np.argwhere(cells != -1):
             self.cells[coord[0], coord[1]] = cells[*coord]
 
-    def get_cells(self, include_empty=False) -> list[tuple[int, int, int]]:
-        """
-        Returns:
-            list of (column, row, digit)
-            column, row are 0 based but digit is 1 based
-        """
-        raise DeprecationWarning
-        cells = []
-        for coord in np.argwhere(self.cells > (-2 if include_empty else 0)):
-            coord = list(map(int, coord))
-            cells.append((*coord, int(self.cells[coord[0], coord[1]])))
-        return cells
-
-    # TODO: deprecate above method and use this instead
-    def get_cells_np(self, include_empty=False) -> npt.NDArray[np.int8]:
-        """
-        Returns:
-            list of (column, row, digit)
-            column, row are 0 based but digit is 1 based
-        """
-        raise DeprecationWarning
-        cells = []
-        for coord in np.argwhere(self.cells > (-2 if include_empty else 0)):
-            coord = np.append(coord, self.cells[*coord])
-            cells.append(coord)
-        return np.array(cells)
-
     # Naming things is hard
     # Both methods above should prob be deprecated
     def get_all_cells(self) -> npt.NDArray[np.int8]:
@@ -233,15 +206,6 @@ class Board:
             If there is a clue at coord
         """
         return self.cells.is_clue(coord)
-
-    def get_cells(self, include_empty=False):
-        """
-        Returns:
-            list of (column, row, digit)
-            column, row are 0 based but digit is 1 based
-        """
-        raise DeprecationWarning
-        return self.cells.get_cells_np(include_empty)
 
     def get_all_cells(self):
         """
