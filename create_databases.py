@@ -3,18 +3,15 @@ import sqlite3
 with sqlite3.connect("data.db") as data:
     c = data.cursor()
 
-    c.execute(
-        """
+    c.execute("""
         CREATE TABLE IF NOT EXISTS Puzzles (
             puzzle_id INTEGER PRIMARY KEY,
             clues TEXT,
             difficulty INTEGER
         )
-        """
-    )
+        """)
 
-    c.execute(
-        """
+    c.execute("""
         CREATE TABLE IF NOT EXISTS PencilTypes (
             pencil_type_id INTEGER PRIMARY KEY,
             name TEXT,
@@ -28,11 +25,9 @@ with sqlite3.connect("data.db") as data:
             strikethrough_blue INTEGER NULL,
             strikethrough_alpha INTEGER NULL
         )
-        """
-    )
+        """)
 
-    c.execute(
-        """
+    c.execute("""
         CREATE TABLE IF NOT EXISTS ActionPencils (
             action_pencils_id INTEGER PRIMARY KEY,
             action_id INTEGER,
@@ -43,11 +38,9 @@ with sqlite3.connect("data.db") as data:
             FOREIGN KEY(action_id) REFERENCES Action(action_id)
 
         )
-        """
-    )
+        """)
 
-    c.execute(
-        """
+    c.execute("""
         CREATE TABLE IF NOT EXISTS Action (
             action_id INTEGER PRIMARY KEY,
             group_id INTEGER,
@@ -61,11 +54,9 @@ with sqlite3.connect("data.db") as data:
             technique_name TEXT,
             FOREIGN KEY(puzzle_id) REFERENCES Puzzles(puzzle_id)
         )
-        """
-    )
+        """)
 
-    c.execute(
-        """
+    c.execute("""
         CREATE TABLE IF NOT EXISTS Completion (
             completion_id INTEGER PRIMARY KEY,
             puzzle_id INTEGER,
@@ -74,5 +65,4 @@ with sqlite3.connect("data.db") as data:
             hints INTEGER,
             FOREIGN KEY(puzzle_id) REFERENCES Puzzles(puzzle_id)
         )
-        """
-    )
+        """)

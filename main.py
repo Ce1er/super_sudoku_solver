@@ -21,7 +21,7 @@ from sudoku import Board as BoardData
 from utils import get_first
 
 # from human_solver import HumanSolver, Technique
-from human_solver import Technique,Action
+from human_solver import Technique, Action
 import techniques
 
 
@@ -38,7 +38,8 @@ class Cell(QGraphicsItem):
         border_size: int,
         size: int,
         clue: bool,
-        clue_colour: QColor, guess_colour : QColor
+        clue_colour: QColor,
+        guess_colour: QColor,
     ) -> None:
         """
         Args:
@@ -62,8 +63,12 @@ class Cell(QGraphicsItem):
         self.border_colour = border_colour
         self.background_colour = background_colour
         self.highlight_colours = highlight_colours
-        self.clue_pen = QPen(clue_colour, )
-        self.guess_pen = QPen(guess_colour, )
+        self.clue_pen = QPen(
+            clue_colour,
+        )
+        self.guess_pen = QPen(
+            guess_colour,
+        )
         # TODO: improve how I set pen
 
         self.border_size = border_size
@@ -71,7 +76,7 @@ class Cell(QGraphicsItem):
         self.setAcceptedMouseButtons(Qt.LeftButton)
         self.highlighted = False
 
-    def highlight_candidates(self , candidates: list[int], colour : QColor) -> None:
+    def highlight_candidates(self, candidates: list[int], colour: QColor) -> None:
         for candidate in candidates:
             self.candidate_pens[candidate] = QPen(colour)
 
@@ -180,8 +185,6 @@ class HintBox(QGraphicsItem):
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
         # TODO: handle mouse press event to do smth.
         return super().mousePressEvent(event)
-    
-
 
 
 class Board(QGraphicsScene):
@@ -194,8 +197,8 @@ class Board(QGraphicsScene):
         border_size: int,
         big_border_colour: QColor,
         big_border_size: int,
-        cell_size: int ,
-        text_colour:QColor
+        cell_size: int,
+        text_colour: QColor,
     ):
         super().__init__()
         self.data = data
@@ -238,7 +241,8 @@ class Board(QGraphicsScene):
                 self.border_size,
                 self.cell_size,
                 self.data.is_clue(np.array([row, col])),
-                self.text_colour, self.text_colour, 
+                self.text_colour,
+                self.text_colour,
             )
             cell.setPos(col * self.cell_size, row * self.cell_size)
             self.addItem(cell)
@@ -322,7 +326,7 @@ class Board(QGraphicsScene):
         hint.setPos(self.cell_size * 9 + 5, 0)
         self.addItem(hint)
 
-        action : Action= technique.get_action()
+        action: Action = technique.get_action()
         cells = action.get_cells()
         candidates = action.get_candidates()
 
@@ -331,20 +335,12 @@ class Board(QGraphicsScene):
 
         print(self.cells)
         for candidate in np.argwhere(candidates):
-            num , row, col = candidate
-            print(num,row,col)
+            num, row, col = candidate
+            print(num, row, col)
             print(type(row))
 
             # TODO: maybe make self.cells a numpy array of objects. Got so confused here why np style indexing didn't work.
-            self.cells[(row)][(col)].highlight_candidates(
-                [num]
-                ,
-                "a50510"
-            )
-
-
-
-
+            self.cells[(row)][(col)].highlight_candidates([num], "a50510")
 
     def keyPressEvent(self, event) -> None:
         # TEMPORARY HARDCODED KEYBINDS
@@ -397,7 +393,7 @@ def main():
         settings.big_border_colour,
         settings.big_border_size,
         settings.cell_size,
-        settings.text_colour
+        settings.text_colour,
     )
     view = QGraphicsView(scene)
     view.setFocusPolicy(Qt.StrongFocus)

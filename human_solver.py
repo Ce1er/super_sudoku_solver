@@ -229,5 +229,3 @@ class Technique:
 
     def get_technique(self) -> str:
         return self.technique
-
-
