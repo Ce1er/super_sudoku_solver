@@ -215,17 +215,22 @@ class Technique:
             message: List of MessagePart subclasses. Message displayed to user.
             action: The action to perform. Which cells to add and which candidates to remove.
         """
-        self.technique = technique
+        self._technique: str = technique
 
         # TODO: highlights are ignored rewrite in a way that actually uses them.
-        self.message = reduce(lambda prev, next: prev + next.get_text(), message, "")
-        self.action = action
+        self._message: str = reduce(
+            lambda prev, next: prev + next.get_text(), message, ""
+        )
+        self._action: Action = action
 
-    def get_action(self) -> Action:
-        return self.action
+    @property
+    def action(self) -> Action:
+        return self._action
 
-    def get_message(self) -> str:
-        return self.message
+    @property
+    def message(self) -> str:
+        return self._message
 
-    def get_technique(self) -> str:
-        return self.technique
+    @property
+    def technique(self) -> str:
+        return self._technique

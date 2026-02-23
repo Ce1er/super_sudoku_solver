@@ -63,7 +63,7 @@ class TestTechnique:
     def action_fixt(self, technique_fixt):
         actions = []
         for technique_found in technique_fixt:
-            actions.append(technique_found.get_action())
+            actions.append(technique_found.action)
         return actions
 
     @pytest.fixture
@@ -99,7 +99,7 @@ class TestTechnique:
         for technique in technique_fixt:
             for message in message_has:
                 for part in message:
-                    if re.match(part, technique.get_message()) is not None:
+                    if re.match(part, technique.message) is not None:
                         break
                 else:
                     correct = True
@@ -111,7 +111,7 @@ class TestTechnique:
         seen: set[str] = set()
         count = 0
         for technique in technique_fixt:
-            seen.add(technique.get_message())
+            seen.add(technique.message)
             count += 1
 
         assert len(seen) == count, "Some messages are duplicates"

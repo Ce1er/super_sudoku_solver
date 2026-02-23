@@ -158,7 +158,7 @@ class HintBox(QGraphicsItem):
         super().__init__()
 
         # TODO: Width and height set based on text length.
-        self.width = len(technique.get_message()) * text_size
+        self.width = len(technique.message) * text_size
         self.height = height
 
         self.technique = technique
@@ -310,8 +310,8 @@ class Board(QGraphicsScene):
 
         # TODO: a way of getting other ones
         technique = get_first(get_techniques())
-        print(technique.get_message())
-        action = technique.get_action()
+        print(technique.message)
+        action = technique.action
         print(action.get_cells())
         print(action.get_candidates())
 
@@ -326,7 +326,7 @@ class Board(QGraphicsScene):
         hint.setPos(self.cell_size * 9 + 5, 0)
         self.addItem(hint)
 
-        action: Action = technique.get_action()
+        action: Action = technique.action
         cells = action.get_cells()
         candidates = action.get_candidates()
 

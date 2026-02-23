@@ -156,7 +156,7 @@ class _HumanTechniques(abc.ABC):
         @wraps(func)
         def wrapper(self: Self) -> Generator[Technique]:
             for technique in func(self):
-                if not self._action_is_null(technique.get_action()):
+                if not self._action_is_null(technique.action):
                     yield technique
 
         return wrapper
@@ -171,8 +171,8 @@ class _HumanTechniques(abc.ABC):
         def wrapper(self: Self) -> Generator[Technique]:
             seen = []
             for technique in func(self):
-                action = technique.get_action()
-                name = technique.get_technique()
+                action = technique.action
+                name = technique.technique
 
                 hashed = hash((action, name))
 
