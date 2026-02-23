@@ -19,14 +19,24 @@ class MessagePart(Protocol):
     This class should not be used directly
     """
 
-    text: str
-    highlight: Optional[int]
+    _text: str
+    _highlight: Optional[int]
 
-    def get_text(self) -> str:
-        return self.text
+    @property
+    def text(self) -> str:
+        return self._text
 
-    def get_highlight(self) -> int | None:
-        return self.highlight
+    @text.setter
+    def text(self, new: str) -> None:
+        self._text = new
+
+    @property
+    def highlight(self) -> Optional[int]:
+        return self._highlight
+
+    @highlight.setter
+    def highlight(self, new: Optional[int]) -> None:
+        self._highlight = new
 
 
 class MessageText(MessagePart):
@@ -40,8 +50,8 @@ class MessageText(MessagePart):
             text: raw text
             highlight: highlight group
         """
-        self.text = text
-        self.highlight = highlight
+        self._text = text
+        self._highlight = highlight
 
 
 class MessageCoord(MessagePart):
@@ -58,10 +68,10 @@ class MessageCoord(MessagePart):
             highlight: highlight group
         """
         coord = np.copy(coord)
-        self.highlight = highlight
+        self._highlight = highlight
         coord.reshape(2)
         coord += 1
-        self.text = "Cell ({}, {})".format(*coord)
+        self._text = "Cell ({}, {})".format(*coord)
 
 
 class MessageCoords(MessagePart):
@@ -79,12 +89,12 @@ class MessageCoords(MessagePart):
 
         """
         coords = np.copy(coords)
-        self.highlight = highlight
+        self._highlight = highlight
         tmp = "Cells"
         coords += 1
         for coord in coords:
             tmp += " ({}, {})".format(*coord.reshape(2))
-        self.text = tmp
+        self._text = tmp
 
 
 class MessageNum(MessagePart):
@@ -100,12 +110,12 @@ class MessageNum(MessagePart):
             num: np array size 1, any ndim. 0-based
             highlight: highlight group
         """
-        self.highlight = highlight
+        self._highlight = highlight
 
         if isinstance(num, np.ndarray):
-            self.text = "number " + str(num.reshape(1)[0] + 1)
+            self._text = "number " + str(num.reshape(1)[0] + 1)
         else:
-            self.text = "number " + str(num + 1)
+            self._text = "number " + str(num + 1)
 
 
 class MessageNums(MessagePart):
@@ -121,11 +131,11 @@ class MessageNums(MessagePart):
             nums: np array shape (..., 1). Num preceeding 1 can be anything. Anything preceeding that is optional and has to be 1.
             highlight: highlight group
         """
-        self.highlight = highlight
+        self._highlight = highlight
         tmp = "numbers"
         for num in nums:
             tmp += " " + str(num.reshape(1)[0] + 1)
-        self.text = tmp
+        self._text = tmp
 
 
 class MessageCandidates(MessagePart):
@@ -141,7 +151,7 @@ class MessageCandidates(MessagePart):
             candidates: np shape (9,9,9) (num, row, col) all 0-based
             highlight: highlight group
         """
-        self.highlight = highlight
+        self._highlight = highlight
         raise NotImplementedError
 
 
@@ -218,9 +228,7 @@ class Technique:
         self._technique: str = technique
 
         # TODO: highlights are ignored rewrite in a way that actually uses them.
-        self._message: str = reduce(
-            lambda prev, next: prev + next.get_text(), message, ""
-        )
+        self._message: str = reduce(lambda prev, next: prev + next._text, message, "")
         self._action: Action = action
 
     @property
