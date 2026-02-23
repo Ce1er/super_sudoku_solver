@@ -4,8 +4,25 @@ from numpy._typing import NDArray
 import numpy.typing as npt
 
 
+def _validate_adjacent(coords):
+    coords.astype(np.int8, casting="same_value")
+    if coords.shape[0] > 256:
+        raise ValueError("Too many coords given")
+
+    if coords.ndim == 1:
+        coords = coords.reshape((1, 2))
+    elif coords.ndim > 2:
+        coords = coords.reshape((coords.shape[-2], 2))
+
+    if coords.ndim != 2 or coords.shape[1] != 2:
+        raise ValueError("Coords could not be interpreted")
+
+    return coords
+
+
+# TODO: try SupportsInt and SupportsBool
 def adjacent_row(
-    coords: npt.NDArray[np.int8], to_n: int = 1, strict: bool = False
+    coords: npt.NDArray[np.integer], to_n: int = 1, strict: bool = False
 ) -> npt.NDArray[np.bool]:
     """
     Args:
@@ -15,18 +32,7 @@ def adjacent_row(
     Returns:
         9x9 Boolean array where True represents cells in rows from coords given
     """
-    if coords.shape[0] > 256:
-        raise ValueError("Too many coords given")
-
-    if coords.ndim == 1:
-        coords = coords.reshape((1, 2))
-    elif coords.ndim > 2:
-        coords = coords.reshape((coords.shape[-2], 2))
-    elif coords.ndim == 2:
-        pass
-
-    if coords.ndim != 2:
-        raise ValueError("Invalid coords")
+    coords = _validate_adjacent(coords)
 
     board = np.full((coords.shape[0], 9, 9), False, dtype=np.bool)
     for x in range(coords.shape[0]):
@@ -42,7 +48,7 @@ def adjacent_row(
 
 
 def adjacent_column(
-    coords: npt.NDArray[np.int8], to_n: int = 1, strict: bool = False
+    coords: npt.NDArray[np.integer], to_n: int = 1, strict: bool = False
 ) -> npt.NDArray[np.bool]:
     """
     Args:
@@ -52,17 +58,7 @@ def adjacent_column(
     Returns:
         9x9 Boolean array where True represents cells in columns from coords given
     """
-    if coords.shape[0] > 256:
-        raise ValueError("Too many coords given")
-    if coords.ndim == 1:
-        coords = coords.reshape((1, 2))
-    elif coords.ndim > 2:
-        coords = coords.reshape((coords.shape[-2], 2))
-    elif coords.ndim == 2:
-        pass
-
-    if coords.ndim != 2:
-        raise ValueError("Invalid coords")
+    coords = _validate_adjacent(coords)
 
     board = np.full((coords.shape[0], 9, 9), False, dtype=np.bool)
     for x in range(coords.shape[0]):
@@ -78,7 +74,7 @@ def adjacent_column(
 
 
 def adjacent_box(
-    coords: npt.NDArray[np.int8], to_n: int = 1, strict: bool = False
+    coords: npt.NDArray[np.integer], to_n: int = 1, strict: bool = False
 ) -> npt.NDArray[np.bool]:
     """
     Args:
@@ -88,18 +84,7 @@ def adjacent_box(
     Returns:
         9x9 Boolean array where True represents cells in boxes from coords given
     """
-    if coords.shape[0] > 256:
-        raise ValueError("Too many coords given")
-
-    if coords.ndim == 1:
-        coords = coords.reshape((1, 2))
-    elif coords.ndim > 2:
-        coords = coords.reshape((coords.shape[-2], 2))
-    elif coords.ndim == 2:
-        pass
-
-    if coords.ndim != 2:
-        raise ValueError("Invalid coords")
+    coords = _validate_adjacent(coords)
 
     board = np.full((coords.shape[0], 9, 9), False, dtype=np.bool)
     for x in range(coords.shape[0]):
@@ -119,7 +104,7 @@ def adjacent_box(
 
 
 def adjacent(
-    coords: npt.NDArray[np.int8],
+    coords: npt.NDArray[np.integer],
     to_n: int = 1,
     strict: bool = False,
     any_adjacency: bool = True,
@@ -133,19 +118,11 @@ def adjacent(
     Returns:
         9x9 Boolean array where True represents cells in boxes from coords given
     """
-    if coords.shape[0] > 256:
-        raise ValueError("Too many coords given")
-    if coords.ndim == 1:
-        coords = coords.reshape((1, 2))
-    elif coords.ndim > 2:
-        coords = coords.reshape((coords.shape[-2], 2))
-    elif coords.ndim == 2:
-        pass
+    coords = _validate_adjacent(coords)
 
-    if coords.ndim != 2:
-        raise ValueError("Invalid coords")
-
-    funcs: list[Callable[[npt.NDArray[np.int8], int, bool], npt.NDArray[np.bool]]] = [
+    funcs: list[
+        Callable[[npt.NDArray[np.integer], int, bool], npt.NDArray[np.bool]]
+    ] = [
         adjacent_row,
         adjacent_box,
         adjacent_column,
