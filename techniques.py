@@ -26,16 +26,9 @@ import np_candidates as npc
 import abc
 from typing import Any, SupportsInt, Type, TypedDict, Self, Callable, Literal
 import logging
+from types import Adjacency, Coord, Cells, CellCandidates, Candidates
 
 # from human_solver import HumanSolver
-
-_AdjacencyType = Literal["row", "column", "box"]
-_CoordType = np.ndarray[tuple[Literal[2]], np.dtype[np.int8]]
-_CellsType = np.ndarray[tuple[Literal[9], Literal[9]], np.dtype[np.int8]]
-_CellCandidatesType = np.ndarray[tuple[Literal[9]], np.dtype[np.bool]]
-_CandidatesType = np.ndarray[
-    tuple[Literal[9], Literal[9], Literal[9]], np.dtype[np.bool]
-]
 
 
 class _TechniqueInstance(abc.ABC):
@@ -69,9 +62,9 @@ class _TechniqueFinder(abc.ABC):
 
     def __init__(
         self,
-        candidates: _CandidatesType,
-        clues: _CellsType,
-        guesses: _CellsType,
+        candidates: Candidates,
+        clues: Cells,
+        guesses: Cells,
     ):
         cells = np.where(clues != -1, clues, guesses)
 
@@ -207,7 +200,7 @@ class _TechniqueFinder(abc.ABC):
 class _NakedSinglesInstance(_TechniqueInstance):
     NAME = "Naked Singles"
 
-    def __init__(self, coord: _CoordType, num: SupportsInt):
+    def __init__(self, coord: Coord, num: SupportsInt):
         self._coord = coord
         self._num = num
 
@@ -240,7 +233,7 @@ class NakedSingles(_TechniqueFinder):
         Yields:
             Technique
         """
-        naked_singles: _CellsType = (
+        naked_singles: Cells = (
             np.add.reduce(self._candidates, axis=0, dtype=np.int8) == 1
         )
         for coord in npc.argwhere(naked_singles).astype(np.int8, casting="same_value"):
@@ -253,7 +246,7 @@ class NakedSingles(_TechniqueFinder):
 class _HiddenSinglesInstance(_TechniqueInstance):
     NAME = "Hidden Singles"
 
-    def __init__(self, coord: npt.NDArray[np.int8], adjacency: _AdjacencyType):
+    def __init__(self, coord: npt.NDArray[np.int8], adjacency: Adjacency):
         self._coord = coord
         self._adjacency = adjacency
 
@@ -315,7 +308,7 @@ class HiddenSingles(_TechniqueFinder):
         Yields:
             Technique
         """
-        types: dict[Callable, _AdjacencyType] = {
+        types: dict[Callable, Adjacency] = {
             sudoku.Board.adjacent_row: "row",
             sudoku.Board.adjacent_column: "column",
             sudoku.Board.adjacent_box: "box",
@@ -324,9 +317,7 @@ class HiddenSingles(_TechniqueFinder):
             num, row, column = coord
             for func, adjacency in types.items():
                 adjacent = func((row, column)) & self._candidates[num]
-                candidates_at_cell: _CellCandidatesType = self._candidates[
-                    :, row, column
-                ]
+                candidates_at_cell: CellCandidates = self._candidates[:, row, column]
 
                 # TODO: deprecate and replace with non_null_actions
                 if not (

@@ -1,9 +1,12 @@
+from pathlib import Path
+from typing import Optional
 from paths import PUZZLE_DATA, PUZZLE_DIR
 import json
 from jsonschema import ValidationError, validate
 import numpy as np
 from uuid import uuid7, UUID
 import re
+from types import Candidates, Cells
 
 GUESSES_SUFFIX = "_guesses"
 CANDIDATES_SUFFIX = "_candidates"
@@ -13,19 +16,19 @@ DIFFICULTIES = ["easy", "medium", "hard"]
 # TODO: work out how this should interact with sudoku.Board
 # Right now I think that Board should get things from here
 class Puzzle:
-    def __init__(self, uuid, clues, difficulty):
-        self._guesses_file = PUZZLE_DIR / (uuid + "_guesses")
-        self._candidates_file = PUZZLE_DIR / (uuid + "_candidates")
-        self._uuid = UUID(uuid)
-        self._difficulty = difficulty
+    def __init__(self, uuid: str, clues: str, difficulty: str):
+        self._guesses_file: Path = PUZZLE_DIR / (uuid + "_guesses")
+        self._candidates_file: Path = PUZZLE_DIR / (uuid + "_candidates")
+        self._uuid: UUID = UUID(uuid)  # (uuid7)
+        self._difficulty: str = difficulty
 
         # PERF: lazy load numpy arrays
-        self._clues = clues
-        self._guesses = None
-        self._candidates = None
+        self._clues: str | Cells = clues
+        self._guesses: Optional[Cells] = None
+        self._candidates: Optional[Candidates] = None
 
     @property
-    def guesses(self):
+    def guesses(self) -> Cells:
         if self._guesses is not None:
             return self._guesses
 
@@ -36,7 +39,7 @@ class Puzzle:
         return np.load(self._guesses_file)
 
     @guesses.setter
-    def guesses(self, new):
+    def guesses(self, new: Cells) -> None:
         # TODO: consider using a copy instead.
         # If not warn against mutating array 
         self._guesses = new
@@ -44,7 +47,7 @@ class Puzzle:
         np.save(self._guesses_file, new)
 
     @property
-    def candidates(self):
+    def candidates(self) -> Candidates:
         if self._candidates is not None:
             return self._candidates
 
@@ -54,34 +57,34 @@ class Puzzle:
         return np.load(self._candidates_file)
 
     @candidates.setter
-    def candidates(self, new):
+    def candidates(self, new: Candidates) -> None:
         self._candidates = new
         np.save(self._candidates_file, new)
 
     @property
-    def clues(self):
+    def clues(self) -> Cells:
         if isinstance(self._clues, str):
             values = [-1 if clue == "." else int(clue) - 1 for clue in self._clues]
-            self._clues = np.array(values, dtype=np.int8).reshape((9, 9))
+            self._clues: Cells = np.array(values, dtype=np.int8).reshape((9, 9))
             self._clues.flags.writeable = False
 
         return self._clues
 
     @property
-    def difficulty(self):
+    def difficulty(self) -> str:
         return self._difficulty
 
     @property
-    def uuid(self):
+    def uuid(self) -> UUID:
         return self._uuid
 
-    def reset(self):
+    def reset(self) -> None:
         # Delete save files
         self._candidates_file.unlink()
         self._guesses_file.unlink()
 
     # To allow sorting
-    def __lt__(self, other):
+    def __lt__(self, other: "Puzzle") -> bool:
         # Sort first based on difficulty
         if DIFFICULTIES.index(self._difficulty) < DIFFICULTIES.index(other.difficulty):
             return True
