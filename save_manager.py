@@ -37,6 +37,8 @@ class Puzzle:
 
     @guesses.setter
     def guesses(self, new):
+        # TODO: consider using a copy instead.
+        # If not warn against mutating array 
         self._guesses = new
         # I don't mind waiting for IO here because
         np.save(self._guesses_file, new)
@@ -97,6 +99,7 @@ class Puzzles:
                 "items": {
                     "type": "object",
                     "properties": {
+                        # TODO: make puzzles an object with uuid as the key
                         "uuid": {
                             "type": "string",
                             "pattern": r"^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$",
