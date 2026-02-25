@@ -26,7 +26,7 @@ import np_candidates as npc
 import abc
 from typing import Any, SupportsInt, Type, TypedDict, Self, Callable, Literal
 import logging
-from types import Adjacency, Coord, Cells, CellCandidates, Candidates
+from custom_types import Adjacency, Coord, Cells, CellCandidates, Candidates
 
 # from human_solver import HumanSolver
 

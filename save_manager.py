@@ -6,7 +6,7 @@ from jsonschema import ValidationError, validate
 import numpy as np
 from uuid import uuid7, UUID
 import re
-from types import Candidates, Cells
+from custom_types import Candidates, Cells
 
 GUESSES_SUFFIX = "_guesses"
 CANDIDATES_SUFFIX = "_candidates"
