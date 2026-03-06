@@ -8,6 +8,7 @@ from uuid import uuid7, UUID
 import re
 from custom_types import Candidates, Cells
 import argparse
+from functools import total_ordering
 
 GUESSES_SUFFIX = "_guesses"
 CANDIDATES_SUFFIX = "_candidates"
@@ -16,6 +17,10 @@ DIFFICULTIES = ["easy", "medium", "hard"]
 
 # TODO: work out how this should interact with sudoku.Board
 # Right now I think that Board should get things from here
+
+
+# Define all equality operators based on < and =
+@total_ordering
 class Puzzle:
     def __init__(self, uuid: str, clues: str, difficulty: str):
         self._guesses_file: Path = PUZZLE_DIR / (uuid + "_guesses")
@@ -99,13 +104,20 @@ class Puzzle:
         self._guesses_file.unlink()
 
     # To allow sorting
-    def __lt__(self, other: "Puzzle") -> bool:
+    def __lt__(self, other) -> bool:
         # Sort first based on difficulty
         if DIFFICULTIES.index(self._difficulty) < DIFFICULTIES.index(other.difficulty):
             return True
 
         # Then on time of puzzle creation
         return self._uuid.time < other.uuid.time
+
+    # Other comparisons aren't strictly needed for sorting with python inbuild functions
+    # But since lt is defined I would rather them all be
+    def __eq__(self, other) -> bool:
+        return self._difficulty == other.difficulty and np.array_equal(
+            self._clues, other.clues
+        )
 
 
 class Puzzles:
