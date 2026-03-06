@@ -24,6 +24,8 @@ from utils import get_first
 from human_solver import Technique, Action
 import techniques
 
+import socket
+
 
 # TODO: pass in font so it is customisable
 class Cell(QGraphicsItem):
@@ -377,6 +379,24 @@ class Board(QGraphicsScene):
             self.show_hint()
 
 
+def ensure_single_instance():
+    """
+    Ensure only one instance of app is running
+    Returns:
+        sock: socket that the app app binds to. This must not be garbage collected.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        sock.bind(("127.0.0.1", settings.port))
+    except OSError:
+        print("Failed to launch. Another instance appears to be running.")
+        sys.exit()
+
+    return sock
+
+lock_socket = ensure_single_instance()
+
 def main():
     app = QApplication(sys.argv)
     scene = Board(
@@ -403,3 +423,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+     

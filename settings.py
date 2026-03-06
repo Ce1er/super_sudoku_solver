@@ -1,6 +1,8 @@
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt
 
+import tomllib
+from paths import SETTINGS
 # TODO:: I feel like this would be better as .toml
 
 # Each highlight group's corresponding rgba colour. These are for hints.
@@ -39,3 +41,13 @@ select_left: list[Qt.Key]
 select_right: list[Qt.Key]
 select_up: list[Qt.Key]
 select_down: list[Qt.Key]
+
+
+
+
+with SETTINGS.open("rb") as f:
+    toml=tomllib.load(f)
+
+port = toml["advanced"]["port"]
+
+

@@ -20,3 +20,8 @@ cell_size = 60
 [keybindings]
 # Hard to do well
 
+
+# Should not be touched by most users
+[advanced]
+port = 46215
+
