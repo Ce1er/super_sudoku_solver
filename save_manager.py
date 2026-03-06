@@ -17,6 +17,7 @@ GUESSES_SUFFIX = "_guesses"
 CANDIDATES_SUFFIX = "_candidates"
 DIFFICULTIES = ["easy", "medium", "hard"]
 
+
 def ensure_single_instance():
     """
     Ensure only one instance of app is running
@@ -32,6 +33,7 @@ def ensure_single_instance():
         sys.exit()
 
     return sock
+
 
 # Prevents save files from being accessed by multiple processes
 lock_socket = ensure_single_instance()
@@ -126,6 +128,9 @@ class Puzzle:
 
     # To allow sorting
     def __lt__(self, other) -> bool:
+        if not isinstance(other, Puzzle):
+            raise NotImplementedError
+
         # Sort first based on difficulty
         if DIFFICULTIES.index(self._difficulty) < DIFFICULTIES.index(other.difficulty):
             return True
@@ -136,6 +141,9 @@ class Puzzle:
     # Other comparisons aren't strictly needed for sorting with python inbuild functions
     # But since lt is defined I would rather them all be
     def __eq__(self, other) -> bool:
+        if not isinstance(other, Puzzle):
+            raise NotImplementedError
+
         return self._difficulty == other.difficulty and np.array_equal(
             self._clues, other.clues
         )
