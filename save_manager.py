@@ -42,7 +42,6 @@ lock_socket = ensure_single_instance()
 # Right now I think that Board should get things from here
 
 
-# Define all equality operators based on < and =
 @total_ordering
 class Puzzle:
     def __init__(self, uuid: str, clues: str, difficulty: str):
@@ -97,6 +96,8 @@ class Puzzle:
         self._candidates = new
         np.save(self._candidates_file, new)
 
+    # Could maybe use functools.singledispatchmethod instead but that may be less clear
+    # Worth trying though
     @property
     def clues(self) -> Cells:
         if isinstance(self._clues, str):
@@ -127,6 +128,8 @@ class Puzzle:
         self._guesses_file.unlink()
 
     # To allow sorting
+    # Maybe a sorting function is better than operator overloading?
+    # Consider https://docs.python.org/3/howto/sorting.html#sortinghowto
     def __lt__(self, other) -> bool:
         if not isinstance(other, Puzzle):
             raise NotImplementedError
@@ -139,7 +142,7 @@ class Puzzle:
         return self._uuid.time < other.uuid.time
 
     # Other comparisons aren't strictly needed for sorting with python inbuild functions
-    # But since lt is defined I would rather them all be
+    # But since lt is defined I would rather them all be (@total_ordering does the rest)
     def __eq__(self, other) -> bool:
         if not isinstance(other, Puzzle):
             raise NotImplementedError

@@ -28,6 +28,8 @@ import save_manager
 
 
 # TODO: pass in font so it is customisable
+# Also all these colours and sizes and stuff is getting excessive
+# Should be part of settings
 class Cell(QGraphicsItem):
     def __init__(
         self,

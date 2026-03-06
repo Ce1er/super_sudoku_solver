@@ -247,6 +247,7 @@ class Technique:
         self._technique: str = technique
 
         # TODO: highlights are ignored rewrite in a way that actually uses them.
+        # Will probably keep message as an attribute. The string version could probably be a functools.cached_property
         self._message: str = reduce(lambda prev, next: prev + next._text, message, "")
         self._action: Action = action
 
