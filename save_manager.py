@@ -9,11 +9,32 @@ import re
 from custom_types import Candidates, Cells
 import argparse
 from functools import total_ordering
+import socket
+import settings
+import sys
 
 GUESSES_SUFFIX = "_guesses"
 CANDIDATES_SUFFIX = "_candidates"
 DIFFICULTIES = ["easy", "medium", "hard"]
 
+def ensure_single_instance():
+    """
+    Ensure only one instance of app is running
+    Returns:
+        sock: socket that the app app binds to. This must not be garbage collected.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        sock.bind(("127.0.0.1", settings.port))
+    except OSError:
+        print("Failed to launch. Another instance appears to be running.")
+        sys.exit()
+
+    return sock
+
+# Prevents save files from being accessed by multiple processes
+lock_socket = ensure_single_instance()
 
 # TODO: work out how this should interact with sudoku.Board
 # Right now I think that Board should get things from here
