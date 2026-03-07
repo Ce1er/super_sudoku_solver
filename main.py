@@ -24,8 +24,12 @@ from utils import get_first
 from human_solver import Technique, Action
 import techniques
 
-import save_manager
+from save_manager import Puzzles
 
+from custom_types import Coord, Candidates, Cells , Candidates, CellCandidates
+from custom_types import Cell as CellT
+
+from utils import text_hints
 
 # TODO: pass in font so it is customisable
 # Also all these colours and sizes and stuff is getting excessive
@@ -33,8 +37,8 @@ import save_manager
 class Cell(QGraphicsItem):
     def __init__(
         self,
-        coord: npt.NDArray[np.int8],
-        candidates: npt.NDArray[np.bool],
+        coord: CellT,
+        candidates: Candidates,
         candidate_colours: list[QColor],
         highlight_colours: dict[int, QColor],
         border_colour: QColor,
@@ -222,6 +226,7 @@ class Board(QGraphicsScene):
         self.paint_board()
 
     def paint_board(self):
+        print("pb", text_hints(self.data.candidates))
         x = -1
         for row, col in product(range(9), repeat=2):
             if row > x:
@@ -237,7 +242,7 @@ class Board(QGraphicsScene):
 
             cell = Cell(
                 np.array([row, col, value]),
-                self.data.candidates[row, col],
+                self.data.candidates[:,row, col],
                 [self.text_colour] * 9,
                 self.highlight_colours,
                 self.border_colour,
@@ -277,6 +282,7 @@ class Board(QGraphicsScene):
         """
         Updates candidates and cells
         """
+        print("uc", text_hints(self.data.candidates))
         for row, col in product(range(9), repeat=2):
             self.cells[row][col].set_candidates((self.data.candidates[:, row, col]))
             self.cells[row][col].set_value(self.data.cells[row, col])
@@ -384,12 +390,18 @@ class Board(QGraphicsScene):
 
 def main():
     app = QApplication(sys.argv)
+    puzzles = Puzzles()
+    for name,puzzle in puzzles.puzzle_map.items():
+        print("a",name,puzzle)
+        p = puzzle
+    
     scene = Board(
         BoardData(
             # "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
             # "123456789..............................................................1........."
             # ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
-            "1.....569492.561.8.561.924...964.8.1.64.1....218.356.4.4.5...169.5.614.2621.....5"
+            # "1.....569492.561.8.561.924...964.8.1.64.1....218.356.4.4.5...169.5.614.2621.....5"
+            p
         ),
         settings.highlight_colours,
         settings.border_colour,

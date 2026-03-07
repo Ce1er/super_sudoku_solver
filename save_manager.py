@@ -45,8 +45,8 @@ lock_socket = ensure_single_instance()
 @total_ordering
 class Puzzle:
     def __init__(self, uuid: str, clues: str, difficulty: str):
-        self._guesses_file: Path = PUZZLE_DIR / (uuid + "_guesses")
-        self._candidates_file: Path = PUZZLE_DIR / (uuid + "_candidates")
+        self._guesses_file: Path = PUZZLE_DIR / (uuid + "_guesses.npy")
+        self._candidates_file: Path = PUZZLE_DIR / (uuid + "_candidates.npy")
         self._uuid: UUID = UUID(uuid)  # (uuid7)
         self._difficulty: str = difficulty
 
@@ -106,6 +106,11 @@ class Puzzle:
             self._clues.flags.writeable = False
 
         return self._clues
+
+    @property
+    def cells(self)-> Cells:
+        # TODO: check this works 
+        return np.where(self.clues != -1 , self.clues, self.guesses)
 
     @property
     def difficulty(self) -> str:
@@ -195,7 +200,6 @@ class Puzzles:
             with PUZZLE_DATA.open("w", encoding="utf-8") as f:
                 f.write(json.dumps({"puzzles": {}}))
 
-        print("j: ", self._json)
 
         try:
             validate(self._json, self.SCHEMA)
@@ -209,7 +213,6 @@ class Puzzles:
         # Sort puzzles based on difficulty and time created
         puzzles = dict(sorted(puzzles.items(), key=lambda x: x[1]))
         self._puzzles = puzzles
-        print(f"asdf {self._json}\n{self._puzzles}")
 
     def __init__(self):
         self.load()
@@ -219,8 +222,9 @@ class Puzzles:
         puzzle_map = {}
         last_difficulty = None
         n = 1
-        for puzzle in self._puzzles:
-            if puzzle["difficulty"] == last_difficulty:
+        for puzzle in self._puzzles.values():
+            print(puzzle)
+            if puzzle.difficulty == last_difficulty:
                 n += 1
             else:
                 n = 1
@@ -235,7 +239,6 @@ class Puzzles:
         # data = json.dumps(self._json)
 
         new = {"puzzles": {}}
-        print(self._puzzles)
         for puzzle in self._puzzles.values():
             new["puzzles"][str(puzzle.uuid)] = {
                 "difficulty": puzzle.difficulty,
@@ -264,14 +267,11 @@ class Puzzles:
         self.load()
 
     def delete_puzzle(self, id):
-        print("p", self._puzzles)
-        print("q", self._json)
         del self._puzzles[id]
         self.save()
         self.load()
 
     def update_puzzle_difficulty(self, id, difficulty):
-        print("i: ", self._puzzles)
         self._puzzles[id].difficulty = difficulty
         self.save()
         self.load()

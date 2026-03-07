@@ -1,4 +1,5 @@
 import re
+from custom_types import Candidates, Cells, Coord
 import human_solver
 from time import time
 
@@ -13,170 +14,21 @@ import dlx_solver as dlx
 import techniques
 from human_solver import Action
 
+from save_manager import Puzzle
 
-# TODO: deprecate this class. Merge with Board.
-class Cells:
-    """
-    Attributes:
-        _clues: the given numbers in a puzzle. e.g. 53..7....6..195... for first 2 rows of a puzzle.
-        cells: the union of the given cells and guesses.
-    """
-
-    _clues: npt.NDArray[np.int8]
-    _cells: npt.NDArray[np.int8]
-
-    def __init__(self, clues: str) -> None:
-        # TODO: take clues and guesses seperately
-        r"""
-        Args:
-            clues: given clues of puzzle. Matches regex ^[1-9\.]{81}$
-        """
-        assert re.match(r"^[1-9\.]{81}", clues), "Invalid clues given to Cells object"
-        values = [-1 if clue == "." else int(clue) - 1 for clue in clues]
-        self._clues = np.array(values, dtype=np.int8).reshape((9, 9))
-        self._clues.flags.writeable = False
-
-        self._cells = np.copy(self._clues)
-
-
-    def is_clue(self, coord: npt.NDArray[np.int8]) -> bool:
-        """
-        Args:
-            coord: shape (2,)
-        Returns:
-            If there is a clue at coord
-        """
-        return self._clues[*coord] != -1
-
-    def add_cell(self, coordinate: tuple[int, int], value: int) -> None:
-        """
-        Adds cells with the most annoying non-numpy input possible. Will deprecate soon.
-        """
-        self._cells[*coordinate] = value
-
-    def add_cells(self, cells: npt.NDArray[np.int8]):
-        for coord in np.argwhere(cells != -1):
-            self._cells[coord[0], coord[1]] = cells[*coord]
-
-    @property
-    def cells(self):
-        return self._cells
-
-    @property
-    def clues(self):
-        return self._clues
-
-    @property
-    def guesses(self):
-        return np.where(self._clues == -1, self.cells, -1)
-
-class Hints:
-    """
-    Attributes:
-        hints: 9x9x9 boolean array. First dimension is num, second is row, third is col
-    """
-
-    def __init__(
-        self,
-        rgba: tuple[int, int, int, int],
-        strikethrough: Optional[tuple[int, int, int, int]] = None,
-        candidate: bool = True,
-    ) -> None:
-        """
-        Args:
-            hints: a list of dictionaries with the keys "coordinate" and "values"
-                where the value of "coordinate" is a tuple containing the cartesian coordinate
-                and "values" is a list of the values at that coordinate
-            rgba: tuple with numbers from 0-255 representing red, green, blue and alpha
-            candidate: True if hint array represents possible candidates
-        """
-        self._hints: npt.NDArray[np.bool] = np.full((9, 9, 9), False, dtype=bool)
-        self._rgba: tuple[int, int, int, int] = rgba
-        self._candidate: bool = candidate
-        self._strikethrough: Optional[tuple[int, int, int, int]] = strikethrough
-
-    @property
-    def hints(self):
-        return self._hints
-
-    @property
-    def rgba(self):
-        return self._rgba
-
-    @property
-    def candidate(self):
-        return self._candidate
-
-    @property
-    def strikethrough(self):
-        return self._strikethrough
-
-    def is_candidate(self) -> bool:
-        """
-        Returns:
-            if this type of hint represents candidates or not
-        """
-        return self._candidate
-
-    def add_hints(self, hints: npt.NDArray[np.bool]) -> None:
-        """
-        Args:
-            hints: 9x9x9 arr of cands to add
-        """
-        self._hints = self._hints | hints
-
-    def remove_hints(self, hints: npt.NDArray[np.bool]) -> None:
-        """
-        Args:
-            hints: 9x9x9 arr of cands to add
-        """
-        self._hints = (~hints) & self._hints
-
+from utils import text_hints
 
 class Board:
     """
     Represents board as a whole
     """
 
-    # TODO: Use this instead
-    # def __init__(
-    #     self,
-    #     clues: npt.NDArray[np.int8],
-    #     guesses: Optional[npt.NDArray[np.int8]] = None,
-    #     hints: Optional[dict[str, Hints]] = None, # Maybe take the data to create hints object instead
-    # ):
-    #     self.clues = clues
-    #
-    #     if guesses:
-    #         self.guesses = guesses
-    #     else:
-    #         self.guesses = np.full((9, 9), -1, dtype=np.int8)
-    #
-    #     if hints:
-    #         self.hints = hints
-    #     else:
-    #         self.hints = {
-    #             "normal": Hints((146, 153, 166, 255)),
-    #             "highlighted": Hints((66, 197, 212, 255)),
-    #             "strikethrough": Hints((146, 153, 166, 255), (214, 41, 32, 255), False),
-    #         }  # TODO: Store this information in a settings file
-
-    def __init__(
-        self,
-        cells: str,
-    ) -> None:
+    def __init__(self, puzzle: Puzzle) -> None:
         r"""
         Args:
             cells: Represents starting clues. Matches regex ^[0-9\.]{81}$
         """
-        assert re.match(r"^[0-9\.]{81}", cells), "Invalid clues given to Cells object"
-        self._cells = Cells(cells)
-
-        self._hints: dict[str, Hints] = {
-            "normal": Hints((146, 153, 166, 255)),
-            "highlighted": Hints((66, 197, 212, 255)),
-            "strikethrough": Hints((146, 153, 166, 255), (214, 41, 32, 255), False),
-        }
+        self._puzzle = puzzle
 
         AUTONORMAL = True  # TODO: move this to somewhere else. Idealing reading from a settings.* file.
         if AUTONORMAL:
@@ -190,65 +42,35 @@ class Board:
             candidates: 9x9x9
             type: Refers to types in key of Board.hints. Default normal, highlight and strikethrough.
         """
-        self._hints[type].remove_hints(candidates)
-
-    def is_clue(self, coord: npt.NDArray[np.int8]) -> bool:
-        """
-        Args:
-            coord: shape (2,)
-        Returns:
-            If there is a clue at coord
-        """
-        return self._cells.is_clue(coord)
+        self._puzzle.candidates = (~candidates) & self._puzzle.candidates
 
     @property
     def cells(self):
-        return self._cells.cells
+        return self._puzzle.cells
 
     @property
     def clues(self):
-        return self._cells.clues
+        return self._puzzle.clues
+
+    def is_clue(self, coord: Coord) -> bool:
+        return self._puzzle.clues[*coord] != -1
 
     @property
     def guesses(self):
-        return self._cells.guesses
+        return self._puzzle.guesses
 
     @property
     def candidates(self):
-        candidates = np.full((9, 9, 9), False, dtype=bool)
+        return self._puzzle.candidates
 
-        for hint_type in self._hints.values():
-            if hint_type.candidate:
-                candidates = candidates | hint_type.hints
-        return candidates
-
-    def add_cells(self, cells: npt.NDArray[np.int8]):
+    def add_cells(self, cells: Cells):
         """
         Args:
             cells: 9x9 array where each element is between 0 and 8 inclusive. -1 to not add anything.
         """
-        self._cells.add_cells(cells)
-
-    def add_hint_type(
-        self,
-        name: str,
-        rgba: tuple[int, int, int, int],
-        strikethrough: Optional[tuple[int, int, int, int]],
-    ) -> None:
-        """
-        Adds a new type of hint to self.hints
-        Args:
-            name: name of new hint type
-            rgba: colour for highlighting
-            strikethrough: whether there should be strikethrough over uses of this hint type
-        """
-        self._hints.update({name: Hints(rgba, strikethrough)})
-
-    def remove_hint_type(self, name: str) -> None:
-        """
-        Removes a type of hint from self.hints
-        """
-        self._hints.pop(name)
+        self._puzzle.guesses = np.where(
+            self._puzzle.guesses != -1, self._puzzle.guesses, cells
+        )
 
     @staticmethod
     def adjacent_row(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
@@ -312,14 +134,19 @@ class Board:
         """
         Sets all normal hints to True
         """
-        self._hints["normal"].add_hints(np.full((9, 9, 9), True, dtype=bool))
+        new: Candidates = np.full((9, 9, 9), True, dtype=np.bool)
+        for coord in np.argwhere(self._puzzle.clues != -1):
+            new[:,*coord ] = False
+        self._puzzle.candidates = new
+        print(text_hints(self._puzzle.candidates))
 
     def auto_normal(self) -> None:
         """
         Remove candidates from cells if they have a number adjacent to them
         """
+        print(text_hints(self._puzzle.candidates))
         mask = np.full((9, 9, 9), False, dtype=bool)
-        cells = self._cells.cells
+        cells = self._puzzle.cells
         for cell in np.argwhere(cells != -1):
             num = cells[*cell]
             mask[num] = self.adjacent((cell[0], cell[1])) | mask[num]
@@ -327,15 +154,16 @@ class Board:
             # Remove all hints if a cell is there
             mask[:, cell[0], cell[1]] = True
 
-        self._hints["normal"].remove_hints(mask)
-
+        print(text_hints(mask))
+        # If candidates have already been removed keep them that way
+        self._puzzle.candidates = (~mask )& self._puzzle.candidates
 
     @staticmethod
     def _row_add(column: int, row: int, value: int) -> list[int]:
         """
         Helper for create_matrix that creates a single row
         """
-        return [  
+        return [
             9 * row + column,  # Cell constraint
             81 + 9 * row + value,  # Row constraint
             162 + 9 * column + value,  # Column constraint
@@ -356,7 +184,7 @@ class Board:
         y = 0
         # Number of rows = clues + 9 * (81-clues)
         # for column, row, value in self.cells.get_cells(include_empty=True):
-        cells = self._cells.cells
+        cells = self._puzzle.cells
         for column, row in np.argwhere(cells > -2):
             value = cells[column, row]
             if value != -1:
@@ -429,7 +257,9 @@ class Board:
         Set the cells to the values they should be when solved
         """
         for solution in self.solve():
-            self._cells._cells = solution
+            self._puzzle.guesses = np.where(
+                self._puzzle.clues != -1, self._puzzle.clues, solution
+            )
 
 
 # board = Board(
@@ -448,17 +278,17 @@ class Board:
 #     print(solution)
 
 if __name__ == "__main__":
-    board = Board(
-        ".................................................................................",
-    )
-    start = time()
-    i = 0
-    for solution in board.solve():
-        i += 1
-        if i > 100_000:
-            break
-        # print(solution)
-    print(time() - start)
+    # board = Board(
+    #     ".................................................................................",
+    # )
+    # start = time()
+    # i = 0
+    # for solution in board.solve():
+    #     i += 1
+    #     if i > 100_000:
+    #         break
+    #     # print(solution)
+    # print(time() - start)
 
     # print("1, 2")
     # print(board.adjacent((1, 2)))
@@ -470,5 +300,15 @@ if __name__ == "__main__":
     # print(board.adjacent((0, 0)))
     # print("5, 8")
     # print(board.adjacent((5, 8)))
+
+    from uuid import uuid7
+
+    puzzle = Puzzle(
+        str(uuid7()),
+        ".5..8.......3...9.21..9...862.7..1....5.2......3.....6.....47..89..3...1..6......",
+        "easy",
+    )
+    board = Board(puzzle)
+    board.solve()
 
 # TODO: just make literally everything 0-based.
