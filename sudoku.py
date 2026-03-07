@@ -15,8 +15,10 @@ import techniques
 from human_solver import Action
 
 from save_manager import Puzzle
+import np_candidates as npc
 
 from utils import text_hints
+
 
 class Board:
     """
@@ -72,71 +74,13 @@ class Board:
             self._puzzle.guesses != -1, self._puzzle.guesses, cells
         )
 
-    @staticmethod
-    def adjacent_row(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
-        """
-        Will be deprecated soon
-        Args:
-            coords: (row, column) with 0-based indexing
-        Returns:
-            Boolean array where True represents cells in same row to cell given
-        """
-        board = np.full((9, 9), False, dtype=bool)
-        board[coords[0], :] = True  # Row
-        return board
-
-    @staticmethod
-    def adjacent_column(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
-        """
-        Will be deprecated soon
-        Args:
-            coords: (row, column) with 0-based indexing
-        Returns:
-            Boolean array where True represents cells in same column to cell given
-        """
-        board = np.full((9, 9), False, dtype=bool)
-        board[:, coords[1]] = True  # Column
-        return board
-
-    @staticmethod
-    def adjacent_box(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
-        """
-        Will be deprecated soon
-        Args:
-            coords: (row, column) with 0-based indexing
-        Returns:
-            Boolean array where True represents cells in same box to cell given
-        """
-        board = np.full((9, 9), False, dtype=bool)
-        board[
-            3 * (coords[0] // 3) : 3 * (coords[0] // 3) + 3,
-            3 * (coords[1] // 3) : 3 * (coords[1] // 3) + 3,
-        ] = True  # Box
-        return board
-
-    @staticmethod
-    def adjacent(coords: tuple[int, int]) -> npt.NDArray[np.bool]:
-        """
-        Will be deprecated soon
-        Args:
-            coords: (row, column) with 0-based indexing
-        Returns:
-            Boolean array where True represents cells adjacent to cell given
-        """
-
-        return (
-            Board.adjacent_row(coords)
-            | Board.adjacent_column(coords)
-            | Board.adjacent_box(coords)
-        )
-
     def all_normal(self) -> None:
         """
         Sets all normal hints to True
         """
         new: Candidates = np.full((9, 9, 9), True, dtype=np.bool)
         for coord in np.argwhere(self._puzzle.clues != -1):
-            new[:,*coord ] = False
+            new[:, *coord] = False
         self._puzzle.candidates = new
         print(text_hints(self._puzzle.candidates))
 
@@ -149,14 +93,14 @@ class Board:
         cells = self._puzzle.cells
         for cell in np.argwhere(cells != -1):
             num = cells[*cell]
-            mask[num] = self.adjacent((cell[0], cell[1])) | mask[num]
+            mask[num] = npc.adjacent(cell) | mask[num]
 
             # Remove all hints if a cell is there
             mask[:, cell[0], cell[1]] = True
 
         print(text_hints(mask))
         # If candidates have already been removed keep them that way
-        self._puzzle.candidates = (~mask )& self._puzzle.candidates
+        self._puzzle.candidates = (~mask) & self._puzzle.candidates
 
     @staticmethod
     def _row_add(column: int, row: int, value: int) -> list[int]:

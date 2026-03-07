@@ -309,14 +309,14 @@ class HiddenSingles(_TechniqueFinder):
             Technique
         """
         types: dict[Callable, Adjacency] = {
-            sudoku.Board.adjacent_row: "row",
-            sudoku.Board.adjacent_column: "column",
-            sudoku.Board.adjacent_box: "box",
+            npc.adjacent_row: "row",
+            npc.adjacent_column: "column",
+            npc.adjacent_box: "box",
         }  # TODO: make this a class constant, and probably worth switching keys and values
         for coord in npc.argwhere(self._candidates):
             num, row, column = coord
             for func, adjacency in types.items():
-                adjacent = func((row, column)) & self._candidates[num]
+                adjacent = func(coord[1:3]) & self._candidates[num]
                 candidates_at_cell: CellCandidates = self._candidates[:, row, column]
 
                 # TODO: deprecate and replace with non_null_actions
@@ -344,7 +344,7 @@ class _NakedPairsInstance(_TechniqueInstance):
     def _remove_from(self):
         remove_from = []
         for adjacency, func in self._types.items():
-            if func((self._cell1[0], self._cell1[1]))[*self._cell2]:
+            if func(self._cell1[0:2])[*self._cell2]:
                 remove_from.append(adjacency)
         return remove_from
 
@@ -370,9 +370,7 @@ class _NakedPairsInstance(_TechniqueInstance):
         remove_adjacencies = self._remove_from
         removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
         for adjacency in remove_adjacencies:
-            removed_candidates[self._nums] |= self._types[adjacency](
-                (self._cell1[0], self._cell1[1])
-            )
+            removed_candidates[self._nums] |= self._types[adjacency](self._cell1[0:2])
 
         removed_candidates &= self._candidates
 
@@ -405,9 +403,9 @@ class NakedPairs(_TechniqueFinder):
             Technique
         """
         types = {
-            "row": sudoku.Board.adjacent_row,
-            "column": sudoku.Board.adjacent_column,
-            "box": sudoku.Board.adjacent_box,
+            "row": npc.adjacent_row,
+            "column": npc.adjacent_column,
+            "box": npc.adjacent_box,
         }
 
         # Get cells where there are 2 candidates
@@ -425,7 +423,7 @@ class NakedPairs(_TechniqueFinder):
             nums = nums1
 
             # If they aren't adjacent they aren't a pair.
-            if not sudoku.Board.adjacent((cell1[0], cell1[1]))[*cell2]:
+            if not npc.adjacent(cell1[0:2])[*cell2]:
                 continue
 
             yield _NakedPairsInstance(
@@ -489,9 +487,9 @@ class HiddenPairs(_TechniqueFinder):
             Technique
         """
         types = {
-            "row": sudoku.Board.adjacent_row,
-            "column": sudoku.Board.adjacent_column,
-            "box": sudoku.Board.adjacent_box,
+            "row": npc.adjacent_row,
+            "column": npc.adjacent_column,
+            "box": npc.adjacent_box,
         }
 
         # Not strictly more than 2 because if one of them is hidden it counts as a hidden pair
@@ -514,7 +512,7 @@ class HiddenPairs(_TechniqueFinder):
                 continue
 
             # Pairs must be adjacent
-            if not sudoku.Board.adjacent((cell1[0], cell1[1]))[*cell2]:
+            if not npc.adjacent(cell1[0:2])[*cell2]:
                 continue
 
             # Not super elegant or performant but the arrays are small enough that it really doesn't matter
@@ -524,7 +522,7 @@ class HiddenPairs(_TechniqueFinder):
                 adjacent_by = []
                 for adjacency, func in types.items():
                     # If they are adjacent by {adjacency} append adjacency to adjacent_by
-                    if func((cell1[0], cell1[1]))[*cell2]:
+                    if func(cell1[0:2])[*cell2]:
                         adjacent_by.append(adjacency)
 
                 temp = adjacent_by.copy()
@@ -535,10 +533,7 @@ class HiddenPairs(_TechniqueFinder):
                 for adjacency in adjacent_by:
                     func = types[adjacency]
                     # print(func((cell1[0],cell1[1])))
-                    if (
-                        np.count_nonzero(func((cell1[0], cell1[1])) & other_occurences)
-                        != 2
-                    ):
+                    if np.count_nonzero(func(cell1[0:2]) & other_occurences) != 2:
                         temp.remove(adjacency)
 
                 adjacent_by = temp
@@ -847,8 +842,9 @@ class _SkyscraperInstance(_TechniqueInstance):
         # Remove candidates that can see both cell1 and cell2
         removed_candidates[self._num] = (
             self._candidates[self._num]
-            & sudoku.Board.adjacent((self._cell1[0], self._cell1[1]))
-            & sudoku.Board.adjacent((self._cell2[0], self._cell2[1]))
+            # & npc.adjacent(self._cell1)
+            # & npc.adjacent(self._cell2)
+            & npc.adjacent(np.array([self._cell1, self._cell2]), -1)
         )
 
         # If nothing actually gets removed then the Technique is kinda useless
@@ -876,8 +872,8 @@ class Skyscrapers(_TechniqueFinder):
             Technique
         """
         types = {
-            "column": sudoku.Board.adjacent_column,
-            "row": sudoku.Board.adjacent_row,
+            "column": npc.adjacent_column,
+            "row": npc.adjacent_row,
         }
 
         for adjacency, func in types.items():
@@ -1085,8 +1081,8 @@ class XWing(_TechniqueFinder):
         # and these candidates lie also in the same columns,
         # then all other candidates for this value in the columns can be eliminated.
         types = {
-            "column": sudoku.Board.adjacent_column,
-            "row": sudoku.Board.adjacent_row,
+            "column": npc.adjacent_column,
+            "row": npc.adjacent_row,
         }
 
         for adjacency, func in types.items():

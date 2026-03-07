@@ -5,7 +5,7 @@ import numpy.typing as npt
 
 
 def _validate_adjacent(coords):
-    coords=coords.astype(np.int8, casting="same_value")
+    coords = coords.astype(np.int8, casting="same_value")
     if coords.shape[0] > 256:
         raise ValueError("Too many coords given")
 
@@ -33,6 +33,8 @@ def adjacent_row(
         9x9 Boolean array where True represents cells in rows from coords given
     """
     coords = _validate_adjacent(coords)
+    if to_n == -1:
+        to_n = coords.shape[0]
 
     board = np.full((coords.shape[0], 9, 9), False, dtype=np.bool)
     for x in range(coords.shape[0]):
@@ -59,6 +61,8 @@ def adjacent_column(
         9x9 Boolean array where True represents cells in columns from coords given
     """
     coords = _validate_adjacent(coords)
+    if to_n == -1:
+        to_n = coords.shape[0]
 
     board = np.full((coords.shape[0], 9, 9), False, dtype=np.bool)
     for x in range(coords.shape[0]):
@@ -85,6 +89,8 @@ def adjacent_box(
         9x9 Boolean array where True represents cells in boxes from coords given
     """
     coords = _validate_adjacent(coords)
+    if to_n == -1:
+        to_n = coords.shape[0]
 
     board = np.full((coords.shape[0], 9, 9), False, dtype=np.bool)
     for x in range(coords.shape[0]):
@@ -119,25 +125,38 @@ def adjacent(
         9x9 Boolean array where True represents cells in boxes from coords given
     """
     coords = _validate_adjacent(coords)
+    if to_n == -1:
+        to_n = coords.shape[0]
 
-    funcs: list[
-        Callable[[npt.NDArray[np.integer], int, bool], npt.NDArray[np.bool]]
-    ] = [
+    funcs: list[Callable[[npt.NDArray[np.integer]], npt.NDArray[np.bool]]] = [
         adjacent_row,
         adjacent_box,
         adjacent_column,
     ]
-    mask = np.full((9, 9), not any_adjacency, dtype=np.bool)
+    # mask = np.full((9, 9), not any_adjacency, dtype=np.bool)
+    board = np.full((coords.shape[0], 9, 9), False, dtype=np.bool)
     for func in funcs:
-        if any_adjacency:
-            mask |= func(coords, to_n, strict)
-        else:
-            mask &= func(coords, to_n, strict)
+        # coords done one at a time to allow to_n to work
+        # counts are needed, not just the boolean mask
+        for depth, coord in enumerate(coords):
+            if any_adjacency:
+                board[depth] |= func(coord)
+            else:
+                board[depth] &= func(coord)
 
+    counts = np.add.reduce(board, axis=0, dtype=np.uint8)
+    print(counts)
+    if strict:
+        mask = counts == to_n
+    else:
+        mask = counts >= to_n
+
+    print(mask)
     return mask
+
 
 def argwhere(*args, **kwargs):
     """
     Numpy's argwhere but with int8 dtype
     """
-    return np.argwhere(*args, **kwargs).astype(np.int8,casting="same_value")
+    return np.argwhere(*args, **kwargs).astype(np.int8, casting="same_value")
