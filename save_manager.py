@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Optional
-from paths import PUZZLE_DATA, PUZZLE_DIR
+from paths import PUZZLE_DATA, PUZZLE_DIR, PUZZLE_JSON, GUESSES_SUFFIX, CANDIDATES_SUFFIX
 import json
 from jsonschema import ValidationError, validate
 import numpy as np
@@ -13,8 +13,6 @@ import socket
 import settings
 import sys
 
-GUESSES_SUFFIX = "_guesses"
-CANDIDATES_SUFFIX = "_candidates"
 DIFFICULTIES = ["easy", "medium", "hard"]
 
 
@@ -45,8 +43,8 @@ lock_socket = ensure_single_instance()
 @total_ordering
 class Puzzle:
     def __init__(self, uuid: str, clues: str, difficulty: str):
-        self._guesses_file: Path = PUZZLE_DIR / (uuid + "_guesses.npy")
-        self._candidates_file: Path = PUZZLE_DIR / (uuid + "_candidates.npy")
+        self._guesses_file: Path = PUZZLE_DATA / (uuid + GUESSES_SUFFIX)
+        self._candidates_file: Path = PUZZLE_DATA / (uuid + CANDIDATES_SUFFIX)
         self._uuid: UUID = UUID(uuid)  # (uuid7)
         self._difficulty: str = difficulty
 
@@ -193,11 +191,11 @@ class Puzzles:
     }
 
     def load(self):
-        if PUZZLE_DATA.is_file():
-            with PUZZLE_DATA.open("r", encoding="utf-8") as f:
+        if PUZZLE_JSON.is_file():
+            with PUZZLE_JSON.open("r", encoding="utf-8") as f:
                 self._json = json.load(f)
         else:
-            with PUZZLE_DATA.open("w", encoding="utf-8") as f:
+            with PUZZLE_JSON.open("w", encoding="utf-8") as f:
                 f.write(json.dumps({"puzzles": {}}))
 
 
@@ -251,7 +249,7 @@ class Puzzles:
             raise e from ValueError("Failed to save")
 
         data = json.dumps(new)
-        with PUZZLE_DATA.open("w", encoding="utf-8") as f:
+        with PUZZLE_JSON.open("w", encoding="utf-8") as f:
             f.write(data)
 
     def add_puzzle(self, clues, difficulty):
