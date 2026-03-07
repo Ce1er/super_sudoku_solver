@@ -193,19 +193,20 @@ class Puzzles:
     def load(self):
         if PUZZLE_JSON.is_file():
             with PUZZLE_JSON.open("r", encoding="utf-8") as f:
-                self._json = json.load(f)
+                data = json.load(f)
         else:
             with PUZZLE_JSON.open("w", encoding="utf-8") as f:
-                f.write(json.dumps({"puzzles": {}}))
+                data = {"puzzles": {}}
+                f.write(json.dumps(data))
 
 
         try:
-            validate(self._json, self.SCHEMA)
+            validate(data, self.SCHEMA)
         except ValidationError as e:
             raise e from ValueError("Invalid puzzles.json file")
 
         puzzles = {}
-        for id, puzzle in self._json["puzzles"].items():
+        for id, puzzle in data["puzzles"].items():
             puzzles[id] = Puzzle(id, puzzle["clues"], puzzle["difficulty"])
 
         # Sort puzzles based on difficulty and time created
@@ -234,7 +235,6 @@ class Puzzles:
         return puzzle_map
 
     def save(self):
-        # data = json.dumps(self._json)
 
         new = {"puzzles": {}}
         for puzzle in self._puzzles.values():
