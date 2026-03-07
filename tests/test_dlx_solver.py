@@ -1,26 +1,37 @@
 import pytest
 from sudoku import Board
+from save_manager import Puzzle
+from uuid import uuid7
 
 
 @pytest.fixture
 def board():
-    return Board(
-        ".83..241.2.4..5....1..74.283..49.15...7.1...69..753.8.84....6..5...4..31136.2.5.."
+    puzzle = Puzzle(
+        str(uuid7()),
+        ".83..241.2.4..5....1..74.283..49.15...7.1...69..753.8.84....6..5...4..31136.2.5..",
+        "easy",
     )
+    return Board(puzzle)
 
 
 @pytest.fixture
 def invalid_board():
-    return Board(
-        "183..241.2.4..5....1..74.283..49.15...7.1...69..753.8.84....6..5...4..31136.2.5.."
+    puzzle = Puzzle(
+        str(uuid7()),
+        "183..241.2.4..5....1..74.283..49.15...7.1...69..753.8.84....6..5...4..31136.2.5..",
+        "medium",
     )
+    return Board(puzzle)
 
 
 @pytest.fixture
 def multiple_solutions_board():
-    return Board(
-        ".83...4..2.4..5....1..74..83.....15...7.1...69..753.8.84....6..5...4..31136.2.5.."
+    puzzle = Puzzle(
+        str(uuid7()),
+        ".83...4..2.4..5....1..74..83.....15...7.1...69..753.8.84....6..5...4..31136.2.5..",
+        "hard",
     )
+    return Board(puzzle)
 
 
 def test_dlx_board_solve(board):
