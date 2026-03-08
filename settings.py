@@ -25,29 +25,14 @@ class Keybinds:
     puzzle_menu: list[QKeySequence]
 
     def __post_init__(self):
-        keys = (
-            self.auto_note
-            + self.hint
-            + self.apply_hint
-            + self.solve
-            + self.remove
-            + self.up
-            + self.down
-            + self.left
-            + self.right
-            + self.puzzle_menu
-        )
-        for seqs in self.numbers.values():
-            keys += seqs
-
-        if len(keys) > len(set(keys)):
-            raise ValueError("Duplicate keybindings detected")
+        keys = []
 
         for name, val in self.__dict__.items():
             if name == "numbers":
                 if not isinstance(val, dict):
                     raise ValueError("Number keybinds must be under [keybinds.numbers]")
                 for k, v in val.items():
+                    keys += v
                     if not isinstance(k, int):
                         raise ValueError(
                             f"Key {k} is invalid. Keys for [keybinds.numbers] should be a number"
@@ -67,6 +52,7 @@ class Keybinds:
                             )
 
             else:
+                keys += val
                 if not isinstance(val, list):
                     raise ValueError(
                         f"Value for key {name} under [keybinds] is invalid. Must be a list."
@@ -76,6 +62,9 @@ class Keybinds:
                         raise ValueError(
                             f"Value for key {name} under [keybinds] is invalid. Must be a list."
                         )
+
+        if len(keys) > len(set(keys)):
+            raise ValueError("Duplicate keybindings detected")
 
 
 @dataclass
@@ -108,10 +97,14 @@ class Sizes:
     def __post_init__(self):
         for name, val in self.__dict__.items():
             if not isinstance(val, int):
-                raise ValueError(f"sizes.{name} must be an integer.")
+                raise ValueError(
+                    f"Value for key {name} under [sizes] is invalid. Must be an integer."
+                )
 
             if val <= 0:
-                raise ValueError(f"sizes.{name} must be more than 0.")
+                raise ValueError(
+                    f"Value for key {name} under [sizes] is invalid. Must be more than 0."
+                )
 
 
 @dataclass
@@ -120,12 +113,16 @@ class Developer:
 
     def __post_init__(self):
         if not isinstance(self.port, int):
-            raise TypeError("developer.port must be an integer")
+            raise TypeError(
+                "Value for key port under [developer] is invalid. Must be an integer"
+            )
 
         if not 0 <= self.port <= 65535:
             # Port number should also be unused by other processes
             # This is not checked here but error will be given on app launch
-            raise ValueError("Invalid port number")
+            raise ValueError(
+                "Value for key port under [developer] is invalid. Must be between 0 and 65535 (inclusive)."
+            )
 
 
 @dataclass
@@ -136,8 +133,8 @@ class Settings:
     developer: Developer
 
     def __post_init__(self):
-        # If the other dataclasses fail it's probably a user error
-        # With invalid .toml file. If this fails it's a developer error.
+        # If the other dataclasses fail it's probably a user error with an invalid .toml file.
+        # These should never fail even with an invalid .toml. If they do it is a developer error.
         if not isinstance(self.keybinds, Keybinds):
             raise ValueError("keybinds must be of type Keybinds")
         if not isinstance(self.colours, Colours):
@@ -148,9 +145,7 @@ class Settings:
             raise ValueError("developer must be of type Developer")
 
 
-# TODO: __post_init__ validation
-# or maybe it is better to handle earlier
-# and set some defaults
+# TODO: set some default values
 
 
 def parse_sequences(seq_list: list[str]) -> list[QKeySequence]:
