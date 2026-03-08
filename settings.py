@@ -59,7 +59,7 @@ class Keybinds:
     hint: list[QKeySequence]
     apply_hint: list[QKeySequence]
     solve: list[QKeySequence]
-    remove:list[QKeySequence]
+    remove: list[QKeySequence]
 
     up: list[QKeySequence]
     down: list[QKeySequence]
@@ -70,6 +70,25 @@ class Keybinds:
     numbers: dict[int, list[QKeySequence]]
 
     puzzle_menu: list[QKeySequence]
+
+    def __post_init__(self):
+        keys = (
+            self.auto_note
+            + self.hint
+            + self.apply_hint
+            + self.solve
+            + self.remove
+            + self.up
+            + self.down
+            + self.left
+            + self.right
+            + self.puzzle_menu
+        )
+        for seqs in self.numbers.values():
+            keys += seqs
+
+        if len(keys) > len(set(keys)):
+            raise ValueError("Duplicate keybindings detected")
 
 
 @dataclass

@@ -317,10 +317,6 @@ class Board(QGraphicsScene):
             self.cells[(row)][(col)].highlight_candidates([num], "a50510")
 
     def keyPressEvent(self, event) -> None:
-        # TEMPORARY HARDCODED KEYBINDS
-        # LMB - select cell
-        # 1-9 enter cell
-        # a - autonote
         if not self.selected_cell:
             return
 
