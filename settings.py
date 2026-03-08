@@ -1,56 +1,9 @@
-from typing import Any
 from PySide6.QtGui import QColor, QKeySequence
-from PySide6.QtCore import Qt
 
 from pathlib import Path
 import tomllib
 from paths import SETTINGS
 from dataclasses import dataclass
-
-# # TODO:: I feel like this would be better as .toml
-#
-# # Each highlight group's corresponding rgba colour. These are for hints.
-# highlight_colours: dict[int, QColor] = {1: QColor(248, 252, 3, 255)}
-#
-# number_colour: QColor = QColor(0, 0, 0, 255)
-# candidate_colour = QColor(30, 50, 78, 255)
-# special_candidate_colour = QColor(25, 1, 98, 255)
-# rejected_candidate_colour = QColor(255, 0, 0, 255)
-#
-# border_colour: QColor = QColor(0, 0, 0, 255)
-# big_border_colour: QColor = QColor(0, 0, 0, 255)
-# background_colour: QColor = QColor(255, 255, 255, 255)
-# text_colour: QColor = QColor(0, 0, 0, 255)
-#
-#
-# border_size: int = 1
-# big_border_size: int = 3
-# cell_size: int = 60
-#
-#
-# remove_cell: list[Qt.Key] = [Qt.Key_Backspace]
-# add_cell: dict[int, list[Qt.Key]] = {
-#     1: [Qt.Key_1],
-#     2: [Qt.Key_2],
-#     3: [Qt.Key_3],
-#     4: [Qt.Key_4],
-#     5: [Qt.Key_5],
-#     6: [Qt.Key_6],
-#     7: [Qt.Key_7],
-#     8: [Qt.Key_8],
-#     9: [Qt.Key_9],
-# }
-# auto_note: list[Qt.Key] = [Qt.Key_N]
-# select_left: list[Qt.Key]
-# select_right: list[Qt.Key]
-# select_up: list[Qt.Key]
-# select_down: list[Qt.Key]
-#
-#
-# with SETTINGS.open("rb") as f:
-#     toml = tomllib.load(f)
-#
-# port = toml["advanced"]["port"]
 
 
 @dataclass
@@ -90,6 +43,40 @@ class Keybinds:
         if len(keys) > len(set(keys)):
             raise ValueError("Duplicate keybindings detected")
 
+        for name, val in self.__dict__.items():
+            if name == "numbers":
+                if not isinstance(val, dict):
+                    raise ValueError("Number keybinds must be under [keybinds.numbers]")
+                for k, v in val.items():
+                    if not isinstance(k, int):
+                        raise ValueError(
+                            f"Key {k} is invalid. Keys for [keybinds.numbers] should be a number"
+                        )
+                    if not 1 <= k <= 9:
+                        raise ValueError(
+                            f"Key {k} is invalid. Keys for [keybinds.numbers] must be between 1 and 9 inclusive"
+                        )
+                    if not isinstance(v, list):
+                        raise ValueError(
+                            f"Value for key {k} is invalid. Values for [keybinds.numbers] should be a list"
+                        )
+                    for k in v:
+                        if not isinstance(k, QKeySequence):
+                            raise ValueError(
+                                f"Value for key {k} is invalid. [keybinds.numbers] keybind failed to be interpreted"
+                            )
+
+            else:
+                if not isinstance(val, list):
+                    raise ValueError(
+                        f"Value for key {name} under [keybinds] is invalid. Must be a list."
+                    )
+                for x in val:
+                    if not isinstance(x, QKeySequence):
+                        raise ValueError(
+                            f"Value for key {name} under [keybinds] is invalid. Must be a list."
+                        )
+
 
 @dataclass
 class Colours:
@@ -103,6 +90,13 @@ class Colours:
     background: QColor
     text: QColor
 
+    def __post_init__(self):
+        for name, val in self.__dict__.items():
+            if not isinstance(val, QColor):
+                raise ValueError(
+                    f"Value for key {name} under [colours] is invalid. Failed to convert to QColor."
+                )
+
 
 @dataclass
 class Sizes:
@@ -111,10 +105,27 @@ class Sizes:
     cell: int
     text: int
 
+    def __post_init__(self):
+        for name, val in self.__dict__.items():
+            if not isinstance(val, int):
+                raise ValueError(f"sizes.{name} must be an integer.")
+
+            if val <= 0:
+                raise ValueError(f"sizes.{name} must be more than 0.")
+
 
 @dataclass
 class Developer:
     port: int
+
+    def __post_init__(self):
+        if not isinstance(self.port, int):
+            raise TypeError("developer.port must be an integer")
+
+        if not 0 <= self.port <= 65535:
+            # Port number should also be unused by other processes
+            # This is not checked here but error will be given on app launch
+            raise ValueError("Invalid port number")
 
 
 @dataclass
@@ -123,6 +134,18 @@ class Settings:
     colours: Colours
     sizes: Sizes
     developer: Developer
+
+    def __post_init__(self):
+        # If the other dataclasses fail it's probably a user error
+        # With invalid .toml file. If this fails it's a developer error.
+        if not isinstance(self.keybinds, Keybinds):
+            raise ValueError("keybinds must be of type Keybinds")
+        if not isinstance(self.colours, Colours):
+            raise ValueError("colours must be of type Colours")
+        if not isinstance(self.sizes, Sizes):
+            raise ValueError("sizes must be of type Sizes")
+        if not isinstance(self.developer, Developer):
+            raise ValueError("developer must be of type Developer")
 
 
 # TODO: __post_init__ validation
