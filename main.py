@@ -384,3 +384,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# TODO: sudoku board needs buttons as alternatives to all key binds
+# Also needs a button to go to main menu
+# Main menu should have a way to select puzzle
