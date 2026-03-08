@@ -8,8 +8,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtGui import QPainter, QPen, QBrush, QFont, QColor
-from PySide6.QtCore import QRectF, Qt
+from PySide6.QtGui import QKeySequence, QPainter, QPen, QBrush, QFont, QColor
+from PySide6.QtCore import QKeyCombination, QRectF, Qt
 import sys
 import numpy as np
 import numpy.typing as npt
@@ -223,6 +223,7 @@ class Board(QGraphicsScene):
             )
             cell.setPos(col * self.settings.sizes.cell, row * self.settings.sizes.cell)
             self.addItem(cell)
+            # TODO: Use QGraphicsItemGroup instead?
             self.cells[-1].append(cell)
 
         pen = QPen(self.settings.colours.big_border, self.settings.sizes.big_border)
@@ -323,9 +324,25 @@ class Board(QGraphicsScene):
         if not self.selected_cell:
             return
 
-        key = event.key()
-        if Qt.Key_1 <= key <= Qt.Key_9:
-            value = key - Qt.Key_0 - 1
+        key = Qt.Key(event.key())
+        mods = event.modifiers()
+        seq = QKeySequence(QKeyCombination(mods, key))
+        binds = self.settings.keybinds
+
+        number_keys = [i for s in binds.numbers.values() for i in s]
+        # if Qt.Key_1 <= key <= Qt.Key_9:
+        if seq in number_keys:
+            # value = key - Qt.Key_0 - 1
+            value = None
+            print(binds.numbers)
+            for k, v in binds.numbers.items():
+                # TODO: check for repeat keybinds in settings.py
+                if key in v:
+                    value = k - 1
+                    break
+
+            assert value is not None
+
             self.selected_cell.set_value(value)
             new_cells = np.full((9, 9), -1, dtype=np.int8)
             new_cells[
@@ -337,16 +354,19 @@ class Board(QGraphicsScene):
 
             self.data.add_cells(new_cells)
         # TODO: keybindings in settings.py
-        elif key == Qt.Key_Backspace:
+        # elif key == Qt.Key_Backspace:
+
+        elif seq in binds.remove:
+            # FIXME: doesn't persist after auto normal
             self.selected_cell.set_value(-1)
-        elif key == Qt.Key_A:
+        elif seq in binds.auto_note:
             # FIXME: doesn't do anything when used after the user inputs a guess
             self.data.auto_normal()
             self.update_candidates()
-        elif key == Qt.Key_S:
+        elif seq in binds.solve:
             self.data.auto_solve()
             self.update_candidates()
-        elif key == Qt.Key_H:
+        elif seq in binds.hint:
             self.show_hint()
 
 

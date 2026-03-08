@@ -59,6 +59,7 @@ class Keybinds:
     hint: list[QKeySequence]
     apply_hint: list[QKeySequence]
     solve: list[QKeySequence]
+    remove:list[QKeySequence]
 
     up: list[QKeySequence]
     down: list[QKeySequence]
