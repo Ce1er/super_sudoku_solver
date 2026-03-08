@@ -1,27 +1,45 @@
 [colours]
 
-[colours.cells]
-number_colour = [0, 0, 0, 255]
-candidate_colour = [30, 50, 78, 255]
-special_candidate_colour = [25, 1, 98, 255]
-rejected_candidate_colour = [255, 0, 0, 255]
+clue = [0, 0, 0, 255]
+guess = [0,0,0,255]
+candidate = [30, 50, 78, 255]
+special_candidate = [25, 1, 98, 255]
+rejected_candidate = [255, 0, 0, 255]
 
-[colours.board]
-border_colour = [0, 0, 0, 255]
-big_border_colour = [0, 0, 0, 255]
-background_colour = [255, 255, 255, 255]
-text_colour = [0, 0, 0, 255]
+border = [0, 0, 0, 255]
+big_border = [0, 0, 0, 255]
+background = [255, 255, 255, 255]
+text = [0, 0, 0, 255]
 
 [sizes]
-border_size = 1
-big_border_size = 3
-cell_size = 60
+border = 1
+big_border = 3
+cell = 60
+text = 11
 
 [keybindings]
-# Hard to do well
+auto_note = ["Ctrl+A"]
+hint = ["Ctrl+H"]
+apply_hint = ["Ctrl+O"]
+solve = ["Ctrl+S"]
+puzzle_menu = ["Ctrl+P"]
 
+up = ["w", "k"]
+down = ["s", "j"]
+left = ["d", "l"]
+right = ["a", "h"]
+
+[keybindings.numbers]
+1 = ["1"]
+2 = ["2"]
+3 = ["3"]
+4 = ["4"]
+5 = ["5"]
+6 = ["6"]
+7 = ["7"]
+8 = ["8"]
+9 = ["9"]
 
 # Should not be touched by most users
-[advanced]
+[developer]
 port = 46215
-

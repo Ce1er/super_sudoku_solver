@@ -16,7 +16,9 @@ import numpy.typing as npt
 from typing import Optional
 from itertools import product
 
-import settings
+# The latter is for type hints. It should never be used directly and I should enforce this.
+from settings import settings, Settings
+
 from sudoku import Board as BoardData
 from utils import get_first
 
@@ -26,10 +28,11 @@ import techniques
 
 from save_manager import Puzzles
 
-from custom_types import Coord, Candidates, Cells , Candidates, CellCandidates
+from custom_types import Coord, Candidates, Cells, Candidates, CellCandidates
 from custom_types import Cell as CellT
 
 from utils import text_hints
+
 
 # TODO: pass in font so it is customisable
 # Also all these colours and sizes and stuff is getting excessive
@@ -39,15 +42,8 @@ class Cell(QGraphicsItem):
         self,
         coord: CellT,
         candidates: Candidates,
-        candidate_colours: list[QColor],
-        highlight_colours: dict[int, QColor],
-        border_colour: QColor,
-        background_colour: QColor,
-        border_size: int,
-        size: int,
         clue: bool,
-        clue_colour: QColor,
-        guess_colour: QColor,
+        settings: Settings,
     ) -> None:
         """
         Args:
@@ -59,27 +55,26 @@ class Cell(QGraphicsItem):
         self.col: int = coord[1]
         self.value: int = -1 if coord[2] == -1 else coord[2] + 1
         self.candidates: npt.NDArray[np.bool] = candidates
-        # self.candidate_colours = candidate_colours
         tmp = []
-        for colour in candidate_colours:
-            tmp.append(QPen(colour))
+        for colour in self.candidates:
+            tmp.append(QPen(settings.colours.candidate))
         self.candidate_pens = tmp
         self.highlight: Optional[int] = None
-        self.size: int = size
+        self.size: int = settings.sizes.cell
         self.clue: bool = clue
 
-        self.border_colour = border_colour
-        self.background_colour = background_colour
-        self.highlight_colours = highlight_colours
+        self.border_colour = settings.colours.border
+        self.background_colour = settings.colours.background
+        self.highlight_colour = settings.colours.special_candidate
         self.clue_pen = QPen(
-            clue_colour,
+            settings.colours.clue,
         )
         self.guess_pen = QPen(
-            guess_colour,
+            settings.colours.guess,
         )
         # TODO: improve how I set pen
 
-        self.border_size = border_size
+        self.border_size = settings.sizes.border
 
         self.setAcceptedMouseButtons(Qt.LeftButton)
         self.highlighted = False
@@ -97,10 +92,10 @@ class Cell(QGraphicsItem):
         if self.highlight:
             painter.fillRect(
                 self.boundingRect(),
-                QBrush(self.highlight_colours.get(self.highlight)),
+                QBrush(self.highlight_colour),
             )
         else:
-            painter.fillRect(self.boundingRect(), QBrush(self.background_colour))
+            painter.fillRect(self.boundingRect(), QBrush(settings.colours.background))
 
         pen = QPen(self.border_colour, self.border_size)
         painter.setPen(pen)
@@ -157,32 +152,26 @@ class HintBox(QGraphicsItem):
     def __init__(
         self,
         technique: Technique,
-        text_size,
-        border_colour,
-        border_size,
-        background_colour,
-        height,
+        settings: Settings,
     ):  # TODO: take colours and stuff as well. Probably should implement Action before trying to get cell highlighting working but the message box part can be done at any time.
         super().__init__()
 
         # TODO: Width and height set based on text length.
-        self.width = len(technique.message) * text_size
-        self.height = height
 
         self.technique = technique
-        self.text_size = text_size
-        self.border_colour = border_colour
-        self.border_size = border_size
-        self.background_colour = background_colour
 
-        pass
+        self.settings = settings
+
+        self.text_size = settings.sizes.text
+        self.width = len(technique.message) * settings.sizes.text
+        self.height = settings.sizes.text * 2
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
 
     def paint(self, painter, option, widget):
-        painter.fillRect(self.boundingRect(), QBrush(self.background_colour))
-        pen = QPen(self.border_colour, self.border_size)
+        painter.fillRect(self.boundingRect(), QBrush(settings.colours.background))
+        pen = QPen(self.settings.colours.border, self.settings.sizes.border)
         painter.setPen(pen)
         painter.drawRect(self.boundingRect())
 
@@ -199,30 +188,16 @@ class Board(QGraphicsScene):
     def __init__(
         self,
         data: BoardData,
-        highlight_colours: dict[int, QColor],
-        border_colour: QColor,
-        background_colour: QColor,
-        border_size: int,
-        big_border_colour: QColor,
-        big_border_size: int,
-        cell_size: int,
-        text_colour: QColor,
+        settings: Settings,
     ):
         super().__init__()
         self.data = data
-        self.cell_size = cell_size
 
         self.selected_cell = None
         self.cells: list[list[Cell]] = []
 
-        self.highlight_colours = highlight_colours
-        self.border_colour = border_colour
-        self.background_colour = background_colour
-        self.text_colour = text_colour
+        self.settings = settings
 
-        self.border_size = border_size
-        self.big_border_colour = big_border_colour
-        self.big_border_size = big_border_size
         self.paint_board()
 
     def paint_board(self):
@@ -242,40 +217,41 @@ class Board(QGraphicsScene):
 
             cell = Cell(
                 np.array([row, col, value]),
-                self.data.candidates[:,row, col],
-                [self.text_colour] * 9,
-                self.highlight_colours,
-                self.border_colour,
-                self.background_colour,
-                self.border_size,
-                self.cell_size,
+                self.data.candidates[:, row, col],
                 self.data.is_clue(np.array([row, col])),
-                self.text_colour,
-                self.text_colour,
+                self.settings,
             )
-            cell.setPos(col * self.cell_size, row * self.cell_size)
+            cell.setPos(col * self.settings.sizes.cell, row * self.settings.sizes.cell)
             self.addItem(cell)
             self.cells[-1].append(cell)
 
-        pen = QPen(self.big_border_colour, self.big_border_size)
+        pen = QPen(self.settings.colours.big_border, self.settings.sizes.big_border)
         for i in range(10):
-            width = self.cell_size * 9
-            x = i * self.cell_size
+            width = self.settings.sizes.cell * 9
+            x = i * self.settings.sizes.cell
             self.addLine(
                 x,
                 0,
                 x,
                 width,
-                pen if i % 3 == 0 else QPen(self.border_colour, self.border_size),
+                (
+                    pen
+                    if i % 3 == 0
+                    else QPen(self.settings.colours.border, self.settings.sizes.border)
+                ),
             )
 
-            y = i * self.cell_size
+            y = i * self.settings.sizes.cell
             self.addLine(
                 0,
                 y,
                 width,
                 y,
-                pen if i % 3 == 0 else QPen(self.border_colour, self.border_size),
+                (
+                    pen
+                    if i % 3 == 0
+                    else QPen(self.settings.colours.border, self.settings.sizes.border)
+                ),
             )
 
     def update_candidates(self):
@@ -294,17 +270,9 @@ class Board(QGraphicsScene):
         cell.set_highlighted(True)
 
     def show_hint(self):
-        # human = HumanSolver(self.data)
-        # print(type(human))
-        #
-        # # NOTE: finding a hint relies on candidates being set. It does not auto_normal automatically.
-        # technique = get_first(human.hint())
-        # if technique is None:
-        #     print("No technique found")
-        #     return
         def get_techniques():
             for technique in techniques.TECHNIQUES:
-                print(technique)
+                # print(technique)
                 x = technique(
                     self.data.candidates,
                     self.data.clues,
@@ -318,22 +286,17 @@ class Board(QGraphicsScene):
 
         # TODO: a way of getting other ones
         technique = get_first(get_techniques())
+        print(technique)
         if technique is None:
             return -1
+        print("hint")
         print(technique.message)
         action = technique.action
         print(action.cells)
         print(action.candidates)
 
-        hint = HintBox(
-            technique,
-            11,
-            self.border_colour,
-            self.border_size,
-            self.background_colour,
-            self.cell_size,
-        )
-        hint.setPos(self.cell_size * 9 + 5, 0)
+        hint = HintBox(technique, self.settings)
+        hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
         self.addItem(hint)
 
         action: Action = technique.action
@@ -387,14 +350,13 @@ class Board(QGraphicsScene):
             self.show_hint()
 
 
-
 def main():
     app = QApplication(sys.argv)
     puzzles = Puzzles()
-    for name,puzzle in puzzles.puzzle_map.items():
-        print("a",name,puzzle)
+    for name, puzzle in puzzles.puzzle_map.items():
+        print("a", name, puzzle)
         p = puzzle
-    
+
     scene = Board(
         BoardData(
             # "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
@@ -403,14 +365,7 @@ def main():
             # "1.....569492.561.8.561.924...964.8.1.64.1....218.356.4.4.5...169.5.614.2621.....5"
             p
         ),
-        settings.highlight_colours,
-        settings.border_colour,
-        settings.background_colour,
-        settings.border_size,
-        settings.big_border_colour,
-        settings.big_border_size,
-        settings.cell_size,
-        settings.text_colour,
+        settings,
     )
     view = QGraphicsView(scene)
     view.setFocusPolicy(Qt.StrongFocus)
@@ -420,4 +375,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-     

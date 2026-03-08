@@ -1127,7 +1127,7 @@ TECHNIQUES = [
     HiddenPairs,
     LockedCandidates,
     Skyscrapers,
-    XWing,
+    # XWing,
 ]
 
 # TODO: consider finding more general techniques

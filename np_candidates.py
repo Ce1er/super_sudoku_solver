@@ -145,13 +145,11 @@ def adjacent(
                 board[depth] &= func(coord)
 
     counts = np.add.reduce(board, axis=0, dtype=np.uint8)
-    print(counts)
     if strict:
         mask = counts == to_n
     else:
         mask = counts >= to_n
 
-    print(mask)
     return mask
 
 

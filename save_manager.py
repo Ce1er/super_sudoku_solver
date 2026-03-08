@@ -10,7 +10,7 @@ from custom_types import Candidates, Cells
 import argparse
 from functools import total_ordering
 import socket
-import settings
+from settings import settings
 import sys
 
 DIFFICULTIES = ["easy", "medium", "hard"]
@@ -25,7 +25,7 @@ def ensure_single_instance():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
-        sock.bind(("127.0.0.1", settings.port))
+        sock.bind(("127.0.0.1", settings.developer.port))
     except OSError:
         print("Failed to launch. Another instance appears to be running.")
         sys.exit()
