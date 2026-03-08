@@ -326,13 +326,9 @@ class Board(QGraphicsScene):
         binds = self.settings.keybinds
 
         number_keys = [i for s in binds.numbers.values() for i in s]
-        # if Qt.Key_1 <= key <= Qt.Key_9:
         if seq in number_keys:
-            # value = key - Qt.Key_0 - 1
             value = None
-            print(binds.numbers)
             for k, v in binds.numbers.items():
-                # TODO: check for repeat keybinds in settings.py
                 if key in v:
                     value = k - 1
                     break
@@ -349,9 +345,6 @@ class Board(QGraphicsScene):
             )
 
             self.data.add_cells(new_cells)
-        # TODO: keybindings in settings.py
-        # elif key == Qt.Key_Backspace:
-
         elif seq in binds.remove:
             # FIXME: doesn't persist after auto normal
             self.selected_cell.set_value(-1)
