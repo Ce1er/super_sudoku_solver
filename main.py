@@ -13,8 +13,9 @@ from PySide6.QtCore import QKeyCombination, QRectF, Qt
 import sys
 import numpy as np
 import numpy.typing as npt
-from typing import Optional
+from typing import Callable, Optional, Self
 from itertools import product
+from functools import wraps
 
 # The latter is for type hints. It should never be used directly and I should enforce this.
 from settings import settings, Settings
@@ -197,6 +198,10 @@ class Board(QGraphicsScene):
         self.cells: list[list[Cell]] = []
 
         self.settings = settings
+        self.do_auto_note = settings.gameplay.auto_note
+
+        if settings.gameplay.start_full:
+            self.data.all_normal()
 
         self.paint_board()
 
@@ -316,6 +321,20 @@ class Board(QGraphicsScene):
             # TODO: maybe make self.cells a numpy array of objects. Got so confused here why np style indexing didn't work.
             self.cells[(row)][(col)].highlight_candidates([num], "a50510")
 
+    def _auto_note(func: Callable[[Self], None]) -> Callable[[Self], None]:
+        """
+        Decorator to run self.auto_note() after execution if desired
+        """
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            print(args, kwargs)
+            func(self, *args, **kwargs)
+            if self.do_auto_note:
+                self.auto_note()
+
+        return wrapper
+
     def remove_cell(self):
         """
         Remove the value for the currently selected cell.
@@ -323,6 +342,7 @@ class Board(QGraphicsScene):
         # TODO: make only work on guesses
         self.selected_cell.set_value(-1)
 
+    @_auto_note
     def add_cell(self, value: int):
         """
         Sets the value at the currently selected cell

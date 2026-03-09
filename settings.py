@@ -108,6 +108,19 @@ class Sizes:
 
 
 @dataclass
+class Gameplay:
+    auto_note: bool
+    start_full: bool
+
+    def __post_init__(self):
+        for key, value in self.__dict__.items():
+            if not isinstance(value, bool):
+                raise ValueError(
+                    f"Value for key {key} under [gameplay] is invalid. Must be bool."
+                )
+
+
+@dataclass
 class Developer:
     port: int
 
@@ -130,6 +143,7 @@ class Settings:
     keybinds: Keybinds
     colours: Colours
     sizes: Sizes
+    gameplay: Gameplay
     developer: Developer
 
     def __post_init__(self):
@@ -141,6 +155,8 @@ class Settings:
             raise ValueError("colours must be of type Colours")
         if not isinstance(self.sizes, Sizes):
             raise ValueError("sizes must be of type Sizes")
+        if not isinstance(self.gameplay, Gameplay):
+            raise ValueError("gameplay must be of type Gameplay")
         if not isinstance(self.developer, Developer):
             raise ValueError("developer must be of type Developer")
 
@@ -195,6 +211,7 @@ def load_settings(path: Path = SETTINGS) -> Settings:
             ),
             colours=Colours(**parse_colours(data["colours"])),
             sizes=Sizes(**data["sizes"]),
+            gameplay=Gameplay(**data["gameplay"]),
             developer=Developer(**data["developer"]),
         )
     except Exception as e:

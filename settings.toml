@@ -41,6 +41,11 @@ right = ["a", "h"]
 8 = ["8", "Num+8"]
 9 = ["9", "Num+9"]
 
+# Gameplay settings to use by default
+[gameplay]
+auto_note = true
+start_full = true
+
 # Should not be touched by most users
 [developer]
 port = 46215
