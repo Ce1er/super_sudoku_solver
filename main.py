@@ -186,6 +186,21 @@ class HintBox(QGraphicsItem):
 
 
 class Board(QGraphicsScene):
+    def _auto_note(func: Callable[[Self], None]) -> Callable[[Self], None]:
+        """
+        Decorator to run self.auto_note() after execution if desired
+        """
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            print(args, kwargs)
+            func(self, *args, **kwargs)
+            if self.do_auto_note:
+                self.auto_note()
+
+        return wrapper
+
+    @_auto_note
     def __init__(
         self,
         data: BoardData,
@@ -321,19 +336,6 @@ class Board(QGraphicsScene):
             # TODO: maybe make self.cells a numpy array of objects. Got so confused here why np style indexing didn't work.
             self.cells[(row)][(col)].highlight_candidates([num], "a50510")
 
-    def _auto_note(func: Callable[[Self], None]) -> Callable[[Self], None]:
-        """
-        Decorator to run self.auto_note() after execution if desired
-        """
-
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            print(args, kwargs)
-            func(self, *args, **kwargs)
-            if self.do_auto_note:
-                self.auto_note()
-
-        return wrapper
 
     def remove_cell(self):
         """
