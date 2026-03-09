@@ -185,7 +185,9 @@ class HintBox(QGraphicsItem):
         """
         # TODO: somehow this action needs to be passed back up to Board
         # and it should handle it by applying the action
-        pass
+        scene = self.scene()
+        scene.apply_action(self.technique.action)
+        event.accept()
 
 
 class Board(QGraphicsScene):
@@ -237,6 +239,8 @@ class Board(QGraphicsScene):
         # This button will apply the hint
         # The hint should be cleared when it is applied or when the user applies it themselves
         # Also needs proper highlighting
+        # I can either keep a hintbox at all times and toggle its visibility based on if there is a hint
+        # Or I can delete it when there isn't and make a new one.
 
         self.paint_board()
 
@@ -336,6 +340,9 @@ class Board(QGraphicsScene):
         print(action.cells)
         print(action.candidates)
 
+        if self.hint is not None:
+            self.removeItem(self.hint)
+
         hint = HintBox(technique, self.settings)
         hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
         self.hint = hint
@@ -397,18 +404,22 @@ class Board(QGraphicsScene):
         self.data.auto_normal()
         self.update_candidates()
 
-    def apply_hint(self):
+    def apply_action(self, action: Action):
         """
         Apply the current hint to the board
         """
-        if self.hint is None:
-            return
-        print("apply")
-
-        action = self.hint.technique.action
+        # TODO: somewhere I need to check if the action is actually valid
+        # This should always be the case but a failsafe is worth adding
         self.data.apply_action(action)
+        self.removeItem(self.hint)
         self.hint = None
         self.paint_board()
+
+    def apply_hint(self):
+        if self.hint is None:
+            return
+
+        self.apply_action(self.hint.technique.action)
 
     def solve(self):
         """
