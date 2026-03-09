@@ -218,6 +218,16 @@ class Board(QGraphicsScene):
         if settings.gameplay.start_full:
             self.data.all_normal()
 
+        solution = None
+        for n, value in enumerate(self.data.solve()):
+            if n > 1:
+                raise ValueError("Board has multiple solutions")
+
+            solution = value
+        if solution is None:
+            raise ValueError("Board has no solution")
+        self.solution = solution
+
         self.paint_board()
 
     def paint_board(self):
@@ -336,7 +346,6 @@ class Board(QGraphicsScene):
             # TODO: maybe make self.cells a numpy array of objects. Got so confused here why np style indexing didn't work.
             self.cells[(row)][(col)].highlight_candidates([num], "a50510")
 
-
     def remove_cell(self):
         """
         Remove the value for the currently selected cell.
@@ -354,6 +363,11 @@ class Board(QGraphicsScene):
         Args:
             value: value to set the cell. Between 0 and 8 inclusive.
         """
+        if self.solution[self.selected_cell.row, self.selected_cell.col] != value:
+            # TODO: dialog to show this
+            print("Incorrect")
+            return
+
         self.selected_cell.set_value(value)
         new_cells = np.full((9, 9), -1, dtype=np.int8)
         new_cells[
@@ -417,6 +431,8 @@ def main():
     for name, puzzle in puzzles.puzzle_map.items():
         print("a", name, puzzle)
         p = puzzle
+        if name == "medium_1":
+            break
 
     scene = Board(
         BoardData(
