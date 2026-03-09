@@ -148,7 +148,6 @@ class Cell(QGraphicsItem):
         self.update()
 
 
-# NOTE: Use QLabel instead? Doing things manually does increase flexibility but maybe QLabel is enough.
 class HintBox(QGraphicsItem):
     def __init__(
         self,
@@ -181,8 +180,12 @@ class HintBox(QGraphicsItem):
         painter.drawText(self.boundingRect(), Qt.AlignCenter, self.technique.message)
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
-        # TODO: handle mouse press event to do smth.
-        return super().mousePressEvent(event)
+        """
+        On LMB apply action
+        """
+        # TODO: somehow this action needs to be passed back up to Board
+        # and it should handle it by applying the action
+        pass
 
 
 class Board(QGraphicsScene):
@@ -193,7 +196,6 @@ class Board(QGraphicsScene):
 
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            print(args, kwargs)
             func(self, *args, **kwargs)
             if self.do_auto_note:
                 self.auto_note()
@@ -227,6 +229,14 @@ class Board(QGraphicsScene):
         if solution is None:
             raise ValueError("Board has no solution")
         self.solution = solution
+
+        self.hint = None
+        # TODO: hint should be tracked so it can be handled better
+        # hint should be printed in paint_board instead. I think?
+        # There should be a button somewhere that appears only when a hint is active
+        # This button will apply the hint
+        # The hint should be cleared when it is applied or when the user applies it themselves
+        # Also needs proper highlighting
 
         self.paint_board()
 
@@ -328,6 +338,7 @@ class Board(QGraphicsScene):
 
         hint = HintBox(technique, self.settings)
         hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
+        self.hint = hint
         self.addItem(hint)
 
         action: Action = technique.action
@@ -386,6 +397,19 @@ class Board(QGraphicsScene):
         self.data.auto_normal()
         self.update_candidates()
 
+    def apply_hint(self):
+        """
+        Apply the current hint to the board
+        """
+        if self.hint is None:
+            return
+        print("apply")
+
+        action = self.hint.technique.action
+        self.data.apply_action(action)
+        self.hint = None
+        self.paint_board()
+
     def solve(self):
         """
         Solve the puzzle automatically
@@ -423,6 +447,8 @@ class Board(QGraphicsScene):
             self.solve()
         elif seq in binds.hint:
             self.show_hint()
+        elif seq in binds.apply_hint:
+            self.apply_hint()
 
 
 def main():
