@@ -316,6 +316,44 @@ class Board(QGraphicsScene):
             # TODO: maybe make self.cells a numpy array of objects. Got so confused here why np style indexing didn't work.
             self.cells[(row)][(col)].highlight_candidates([num], "a50510")
 
+    def remove_cell(self):
+        """
+        Remove the value for the currently selected cell.
+        """
+        # TODO: make only work on guesses
+        self.selected_cell.set_value(-1)
+
+    def add_cell(self, value: int):
+        """
+        Sets the value at the currently selected cell
+        Args:
+            value: value to set the cell. Between 0 and 8 inclusive.
+        """
+        self.selected_cell.set_value(value)
+        new_cells = np.full((9, 9), -1, dtype=np.int8)
+        new_cells[
+            self.selected_cell.row,
+            self.selected_cell.col,
+        ] = (
+            self.selected_cell.value - 1
+        )
+
+        self.data.add_cells(new_cells)
+
+    def auto_note(self):
+        """
+        Remove candidates if they are adjacent to a cell with their value.
+        """
+        self.data.auto_normal()
+        self.update_candidates()
+
+    def solve(self):
+        """
+        Solve the puzzle automatically
+        """
+        self.data.auto_solve()
+        self.update_candidates()
+
     def keyPressEvent(self, event) -> None:
         if not self.selected_cell:
             return
@@ -334,27 +372,16 @@ class Board(QGraphicsScene):
                     break
 
             assert value is not None
+            self.add_cell(value)
 
-            self.selected_cell.set_value(value)
-            new_cells = np.full((9, 9), -1, dtype=np.int8)
-            new_cells[
-                self.selected_cell.row,
-                self.selected_cell.col,
-            ] = (
-                self.selected_cell.value - 1
-            )
-
-            self.data.add_cells(new_cells)
         elif seq in binds.remove:
             # FIXME: doesn't persist after auto normal
-            self.selected_cell.set_value(-1)
+            self.remove_cell()
         elif seq in binds.auto_note:
             # FIXME: doesn't do anything when used after the user inputs a guess
-            self.data.auto_normal()
-            self.update_candidates()
+            self.auto_note()
         elif seq in binds.solve:
-            self.data.auto_solve()
-            self.update_candidates()
+            self.solve()
         elif seq in binds.hint:
             self.show_hint()
 

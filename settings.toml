@@ -23,7 +23,7 @@ hint = ["Ctrl+H"]
 apply_hint = ["Ctrl+O"]
 solve = ["Ctrl+S"]
 puzzle_menu = ["Ctrl+P"]
-remove = ["backspace"]
+remove = ["backspace", "ctrl+backspace"]
 
 up = ["w", "k"]
 down = ["s", "j"]
