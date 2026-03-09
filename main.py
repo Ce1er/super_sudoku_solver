@@ -339,7 +339,10 @@ class Board(QGraphicsScene):
         """
         Remove the value for the currently selected cell.
         """
-        # TODO: make only work on guesses
+        # Do not let user remove clues
+        if self.selected_cell.clue:
+            return
+
         self.selected_cell.set_value(-1)
 
     @_auto_note
