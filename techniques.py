@@ -273,7 +273,7 @@ class _HiddenSinglesInstance(_TechniqueInstance):
         return [
             MessageCoord(self._coord[1:], highlight=1),
             MessageText(" is "),
-            MessageNum(self._coord[2]),
+            MessageNum(self._coord[0]),
             MessageText(f" because there are no others in the {self._adjacency}."),
         ]
 

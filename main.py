@@ -431,7 +431,7 @@ def main():
     for name, puzzle in puzzles.puzzle_map.items():
         print("a", name, puzzle)
         p = puzzle
-        if name == "medium_1":
+        if name == "hard_1":
             break
 
     scene = Board(
