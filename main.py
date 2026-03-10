@@ -10,6 +10,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QKeySequence, QPainter, QPen, QBrush, QFont, QColor
 from PySide6.QtCore import QKeyCombination, QRectF, Qt
+from PySide6.QtQuickControls2 import QQuickStyle
+from PySide6.QtQuick import (
+    QQuickItem,
+)  # Presets should inherit from this. Like buttons and switches and stuff but idk how to use those.
 import sys
 import numpy as np
 import numpy.typing as npt
@@ -483,6 +487,15 @@ def main():
     )
     view = QGraphicsView(scene)
     view.setFocusPolicy(Qt.StrongFocus)
+
+    # This does nothing right now.
+    # Because everything I'm using is kinda custom
+    # But I'll keep this here in case I use something that does benefit from it
+    # Such as buttons
+    # I think I also need to start an engine
+    # https://gist.github.com/itarozzi/9de52df93fa7e19f21fba21c28f51bb2 like that kinda
+    QQuickStyle.setStyle("Material")
+
     view.show()
     sys.exit(app.exec())
 
