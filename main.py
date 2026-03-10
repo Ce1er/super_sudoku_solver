@@ -234,6 +234,16 @@ class Board(QGraphicsScene):
 
         return wrapper
 
+    def paint_menu(self):
+        self.puzzle_menu = PuzzleSelector(self.settings)
+        self.proxy = QGraphicsProxyWidget()
+        self.proxy.setWidget(self.puzzle_menu)
+        self.addItem(self.proxy)
+        # TODO: chose this position based on sizes
+        self.proxy.setPos(-300, -50)
+        self.puzzle_menu.data.connect(self.set_puzzle)
+
+
     def __init__(
         self,
         # data: BoardData,
@@ -241,16 +251,10 @@ class Board(QGraphicsScene):
     ):
         super().__init__()
 
-        self.puzzle_menu = PuzzleSelector(settings)
-        self.proxy = QGraphicsProxyWidget()
-        self.proxy.setWidget(self.puzzle_menu)
-        self.addItem(self.proxy)
-        # TODO: chose this position based on sizes
-        self.proxy.setPos(-300, -50)
-
-        self.puzzle_menu.data.connect(self.set_puzzle)
         self.data = None
         self.settings = settings
+
+        self.paint_menu()
         # TODO: hint should be tracked so it can be handled better
         # hint should be printed in paint_board instead. I think?
         # There should be a button somewhere that appears only when a hint is active
@@ -480,6 +484,9 @@ class Board(QGraphicsScene):
         # Delete everything currently being rendered and redraw it
         self.clear()
         self.set_puzzle(self.puzzle)
+
+        # Menu not painted with set_puzzle
+        self.paint_menu()
 
     def keyPressEvent(self, event) -> None:
         if self.data is None:

@@ -139,10 +139,8 @@ class Puzzle:
         self._candidates_file.unlink(missing_ok=True)
         self._guesses_file.unlink(missing_ok=True)
 
-        # HACK:
-        # This is maybe a little hacky
-        # Works fine though
-        self.__init__(str(self._uuid), self._str_clues, self._difficulty)
+        self._guesses=None
+        self._candidates=None
 
     # To allow sorting
     # Maybe a sorting function is better than operator overloading?
