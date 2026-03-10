@@ -1,15 +1,17 @@
 from PySide6.QtWidgets import (
     QApplication,
+    QGraphicsProxyWidget,
     QGraphicsView,
     QGraphicsScene,
     QGraphicsItem,
     QGraphicsSceneMouseEvent,
     QLabel,
+    QListWidget,
     QVBoxLayout,
     QWidget,
 )
 from PySide6.QtGui import QKeySequence, QPainter, QPen, QBrush, QFont, QColor
-from PySide6.QtCore import QKeyCombination, QRectF, Qt
+from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtQuick import (
     QQuickItem,
@@ -194,6 +196,30 @@ class HintBox(QGraphicsItem):
         event.accept()
 
 
+class PuzzleSelector(QListWidget):
+    data = Signal(BoardData)
+
+    def __init__(self, settings: Settings):
+        super().__init__()
+        self.settings = settings
+
+        self.puzzles = Puzzles().puzzle_map
+        names = self.puzzles.keys()
+        print(list(names))
+        self.addItems(list(self.puzzles.keys()))
+
+        self.itemClicked.connect(self.puzzle_selected)
+
+        # self.data = Signal(BoardData)
+
+    def puzzle_selected(self, item):
+        print("Selected:", item.text())
+        # scene = self.scene()
+        # scene.set_puzzle(self.puzzles[item.text()])
+        self.data.emit(BoardData(self.puzzles[item.text()]))
+        # TODO: use signals in the other classes
+
+
 class Board(QGraphicsScene):
     def _auto_note(func: Callable[[Self], None]) -> Callable[[Self], None]:
         """
@@ -208,22 +234,43 @@ class Board(QGraphicsScene):
 
         return wrapper
 
-    @_auto_note
     def __init__(
         self,
-        data: BoardData,
+        # data: BoardData,
         settings: Settings,
     ):
         super().__init__()
-        self.data = data
+
+        self.puzzle_menu = PuzzleSelector(settings)
+        self.proxy = QGraphicsProxyWidget()
+        self.proxy.setWidget(self.puzzle_menu)
+        self.addItem(self.proxy)
+        # TODO: chose this position based on sizes
+        self.proxy.setPos(-300, -50)
+
+        self.puzzle_menu.data.connect(self.set_puzzle)
+        self.data = None
+        self.settings = settings
+        # TODO: hint should be tracked so it can be handled better
+        # hint should be printed in paint_board instead. I think?
+        # There should be a button somewhere that appears only when a hint is active
+        # This button will apply the hint
+        # The hint should be cleared when it is applied or when the user applies it themselves
+        # Also needs proper highlighting
+        # I can either keep a hintbox at all times and toggle its visibility based on if there is a hint
+        # Or I can delete it when there isn't and make a new one.
+
+    @_auto_note
+    def set_puzzle(self, puzzle: BoardData):
+        print(type(puzzle))
+        self.data = puzzle
 
         self.selected_cell = None
         self.cells: list[list[Cell]] = []
 
-        self.settings = settings
-        self.do_auto_note = settings.gameplay.auto_note
+        self.do_auto_note = self.settings.gameplay.auto_note
 
-        if settings.gameplay.start_full:
+        if self.settings.gameplay.start_full:
             self.data.all_normal()
 
         solution = None
@@ -237,15 +284,6 @@ class Board(QGraphicsScene):
         self.solution = solution
 
         self.hint = None
-        # TODO: hint should be tracked so it can be handled better
-        # hint should be printed in paint_board instead. I think?
-        # There should be a button somewhere that appears only when a hint is active
-        # This button will apply the hint
-        # The hint should be cleared when it is applied or when the user applies it themselves
-        # Also needs proper highlighting
-        # I can either keep a hintbox at all times and toggle its visibility based on if there is a hint
-        # Or I can delete it when there isn't and make a new one.
-
         self.paint_board()
 
     def paint_board(self):
@@ -468,21 +506,21 @@ class Board(QGraphicsScene):
 
 def main():
     app = QApplication(sys.argv)
-    puzzles = Puzzles()
-    for name, puzzle in puzzles.puzzle_map.items():
-        print("a", name, puzzle)
-        p = puzzle
-        if name == "hard_1":
-            break
+    # puzzles = Puzzles()
+    # for name, puzzle in puzzles.puzzle_map.items():
+    #     print("a", name, puzzle)
+    #     p = puzzle
+    #     if name == "hard_1":
+    #         break
 
     scene = Board(
-        BoardData(
-            # "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
-            # "123456789..............................................................1........."
-            # ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
-            # "1.....569492.561.8.561.924...964.8.1.64.1....218.356.4.4.5...169.5.614.2621.....5"
-            p
-        ),
+        # BoardData(
+        #     # "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
+        #     # "123456789..............................................................1........."
+        #     # ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
+        #     # "1.....569492.561.8.561.924...964.8.1.64.1....218.356.4.4.5...169.5.614.2621.....5"
+        #     p
+        # ),
         settings,
     )
     view = QGraphicsView(scene)
