@@ -24,6 +24,7 @@ apply_hint = ["Ctrl+O"]
 solve = ["Ctrl+S"]
 puzzle_menu = ["Ctrl+P"]
 remove = ["backspace", "ctrl+backspace"]
+reset=["Ctrl+R"]
 
 up = ["w", "k"]
 down = ["s", "j"]

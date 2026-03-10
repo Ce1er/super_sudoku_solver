@@ -1,6 +1,12 @@
 from pathlib import Path
 from typing import Optional
-from paths import PUZZLE_DATA, PUZZLE_DIR, PUZZLE_JSON, GUESSES_SUFFIX, CANDIDATES_SUFFIX
+from paths import (
+    PUZZLE_DATA,
+    PUZZLE_DIR,
+    PUZZLE_JSON,
+    GUESSES_SUFFIX,
+    CANDIDATES_SUFFIX,
+)
 import json
 from jsonschema import ValidationError, validate
 import numpy as np
@@ -28,7 +34,9 @@ def ensure_single_instance():
         sock.bind(("127.0.0.1", settings.developer.port))
     except OSError:
         print("Failed to launch. Another instance appears to be running.")
-        print(f"If there is no other instance running it could be a result of another app running on port {settings.developer.port}.")
+        print(
+            f"If there is no other instance running it could be a result of another app running on port {settings.developer.port}."
+        )
         sys.exit()
 
     return sock
@@ -107,9 +115,9 @@ class Puzzle:
         return self._clues
 
     @property
-    def cells(self)-> Cells:
-        # TODO: check this works 
-        return np.where(self.clues != -1 , self.clues, self.guesses)
+    def cells(self) -> Cells:
+        # TODO: check this works
+        return np.where(self.clues != -1, self.clues, self.guesses)
 
     @property
     def difficulty(self) -> str:
@@ -128,8 +136,13 @@ class Puzzle:
 
     def reset(self) -> None:
         # Delete save files
-        self._candidates_file.unlink()
-        self._guesses_file.unlink()
+        self._candidates_file.unlink(missing_ok=True)
+        self._guesses_file.unlink(missing_ok=True)
+
+        # HACK:
+        # This is maybe a little hacky
+        # Works fine though
+        self.__init__(str(self._uuid), self._str_clues, self._difficulty)
 
     # To allow sorting
     # Maybe a sorting function is better than operator overloading?
@@ -199,7 +212,6 @@ class Puzzles:
             with PUZZLE_JSON.open("w", encoding="utf-8") as f:
                 data = {"puzzles": {}}
                 f.write(json.dumps(data))
-
 
         try:
             validate(data, self.SCHEMA)

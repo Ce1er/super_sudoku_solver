@@ -13,6 +13,7 @@ class Keybinds:
     apply_hint: list[QKeySequence]
     solve: list[QKeySequence]
     remove: list[QKeySequence]
+    reset: list[QKeySequence]
 
     up: list[QKeySequence]
     down: list[QKeySequence]

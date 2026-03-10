@@ -216,7 +216,7 @@ class PuzzleSelector(QListWidget):
         print("Selected:", item.text())
         # scene = self.scene()
         # scene.set_puzzle(self.puzzles[item.text()])
-        self.data.emit(BoardData(self.puzzles[item.text()]))
+        self.data.emit((self.puzzles[item.text()]))
         # TODO: use signals in the other classes
 
 
@@ -261,9 +261,10 @@ class Board(QGraphicsScene):
         # Or I can delete it when there isn't and make a new one.
 
     @_auto_note
-    def set_puzzle(self, puzzle: BoardData):
+    def set_puzzle(self, puzzle: Puzzle):
         print(type(puzzle))
-        self.data = puzzle
+        self.puzzle = puzzle
+        self.data = BoardData(puzzle)
 
         self.selected_cell = None
         self.cells: list[list[Cell]] = []
@@ -287,7 +288,7 @@ class Board(QGraphicsScene):
         self.paint_board()
 
     def paint_board(self):
-        print("pb", text_hints(self.data.candidates))
+        # print("pb", text_hints(self.data.candidates))
         x = -1
         for row, col in product(range(9), repeat=2):
             if row > x:
@@ -345,7 +346,7 @@ class Board(QGraphicsScene):
         """
         Updates candidates and cells
         """
-        print("uc", text_hints(self.data.candidates))
+        # print("uc", text_hints(self.data.candidates))
         for row, col in product(range(9), repeat=2):
             self.cells[row][col].set_candidates((self.data.candidates[:, row, col]))
             self.cells[row][col].set_value(self.data.cells[row, col])
@@ -470,7 +471,20 @@ class Board(QGraphicsScene):
         self.data.auto_solve()
         self.update_candidates()
 
+    def reset(self):
+        """
+        Resets the puzzle to its initial state
+        """
+        self.puzzle.reset()
+
+        # Delete everything currently being rendered and redraw it
+        self.clear()
+        self.set_puzzle(self.puzzle)
+
     def keyPressEvent(self, event) -> None:
+        if self.data is None:
+            return
+
         if not self.selected_cell:
             return
 
@@ -502,6 +516,8 @@ class Board(QGraphicsScene):
             self.show_hint()
         elif seq in binds.apply_hint:
             self.apply_hint()
+        elif seq in binds.reset:
+            self.reset()
 
 
 def main():
