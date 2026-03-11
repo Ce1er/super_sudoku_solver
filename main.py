@@ -22,6 +22,7 @@ import numpy.typing as npt
 from typing import Callable, Optional, Self
 from itertools import product
 from functools import wraps
+import re
 
 # The latter is for type hints. It should never be used directly and I should enforce this.
 from settings import settings, Settings
@@ -155,6 +156,59 @@ class Cell(QGraphicsItem):
 
 
 class HintBox(QGraphicsItem):
+    @staticmethod
+    def split_text(
+        text: str,
+        line_length: int,
+        delimiters: tuple[str, ...] = ("\n", r"\.", r"\)"),
+        truncation_symbol: str = "-",
+    ) -> str:
+        """
+        Split text into multiple lines. Keeping line length below line_length.
+
+        Try to avoid text containing words longer than line_length (where a word is a substring split by any delimiter)
+        as this will lead to that word being forced to be split over multiple lines.
+        Args:
+            text: the text to be split
+            line_length: the maximum line length. This is a hard limit and will not be surpassed.
+                "\n" is not counted for line length.
+            delimiters: a list of acceptable regex for delimiters to split text on. In order of priority.
+                Delimiter will be kept at the line it is on originally.
+            truncation_symbol: the symbol to use at the end of the line if it cannot be split by a delimiter
+        Returns:
+            text with no lines longer than line_length
+        """
+        if line_length < 2:
+            raise ValueError("line_length must be at least 2")
+
+        patterns = [re.compile(p) for p in delimiters]
+        remaining = text
+        lines = []
+
+        while remaining:
+            if len(remaining) <= line_length:
+                lines.append(remaining)
+                break
+
+            segment = remaining[:line_length]
+            split_pos = None
+
+            for pattern in patterns:
+                last = None
+                for m in pattern.finditer(segment):
+                    last = m.end()
+                if last:
+                    split_pos = last
+                    break
+            if split_pos is None:
+                split_pos = line_length
+
+            lines.append(remaining[:split_pos])
+            remaining = remaining[split_pos:].lstrip()
+
+        return "\n".join(lines)
+
+
     def __init__(
         self,
         technique: Technique,
@@ -163,14 +217,20 @@ class HintBox(QGraphicsItem):
         super().__init__()
 
         # TODO: Width and height set based on text length.
+        # Also need to handle multiline text.
+        # Split into lines based on the width.
+        # Maybe look at redbot formatting pagify
 
         self.technique = technique
+        self.text = self.split_text(technique.message, 30)
 
         self.settings = settings
 
         self.text_size = settings.sizes.text
-        self.width = len(technique.message) * settings.sizes.text
-        self.height = settings.sizes.text * 2
+        self.width = max(map(len, self.text.split("\n"))) * settings.sizes.text
+        self.height = settings.sizes.text * 2 * (1 + self.text.count("\n"))
+
+        print(self, self.text, self.width, self.height)
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -183,7 +243,7 @@ class HintBox(QGraphicsItem):
 
         painter.setFont(QFont("Arial", self.text_size))
         # TODO: handle special text highlighting and stuff.
-        painter.drawText(self.boundingRect(), Qt.AlignCenter, self.technique.message)
+        painter.drawText(self.boundingRect(), Qt.AlignCenter, self.text)
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
         """
@@ -242,7 +302,6 @@ class Board(QGraphicsScene):
         # TODO: chose this position based on sizes
         self.proxy.setPos(-300, -50)
         self.puzzle_menu.data.connect(self.set_puzzle)
-
 
     def __init__(
         self,
