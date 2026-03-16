@@ -1,5 +1,5 @@
 import re
-from custom_types import Candidates, Cells, Coord
+from custom_types import Candidates, CellCandidates, Cells, Coord
 import human_solver
 from time import time
 
@@ -7,7 +7,7 @@ from time import time
 # could have some circular import problems so avoid relying on sudoku.py too much in techniques.py
 # import techniques
 
-from typing import Optional, Generator
+from typing import Literal, Optional, Generator
 import numpy as np
 import numpy.typing as npt
 import dlx_solver as dlx
@@ -53,11 +53,73 @@ class Board:
             type: Refers to types in key of Board.hints. Default normal, highlight and strikethrough.
         """
         new = (~candidates) & self._puzzle.candidates
-        coords = np.argwhere(self.solution)
-        # TODO: find a way to do this without iteration, using np stuff instead.
-        for coord in coords:
-            if not new[self.solution[coord], *coord]:
-                raise InvalidBoard("Removed candidate which is solution for cell")
+        # coords = np.argwhere(self.solution)
+        # # TODO: find a way to do this without iteration, using np stuff instead.
+        # for coord in coords:
+        #     if not new[self.solution[coord], *coord]:
+        #         raise InvalidBoard("Removed candidate which is solution for cell")
+
+        print(text_hints(candidates))
+        # print(text_hints(candidates))
+
+        # TODO: this works but is slow as shit
+        if not self.allow_mistakes:
+            if self.one_solution:
+
+                def int_to_bool_arr(
+                    x: Literal[0, 1, 2, 3, 4, 5, 6, 7, 8],
+                ) -> CellCandidates:
+                    """
+                    Args:
+                        x: integer between 0 and 8 inclusive
+                    Returns:
+                        (9,) np.bool array where arr[x] = True and False everywhere else
+                    Example:
+                        int_arr_to_bool_arr(7) -> np.array([False,False,False,False,False,False,False,True,False])
+                    """
+                    value = np.full((9,), False, dtype=np.bool)
+                    value[x] = True
+                    return value
+
+                # Take a 1d int array and apply int_to_bool_arr on each element
+                # Resulting in an array of CellCandidates arrays.
+                int_arr_to_bool_arr = np.vectorize(int_to_bool_arr, signature="()->(n)")
+
+                # Take solution (2d array) and apply int_arr_to_bool_arr on each sub-array
+                # This effectively applies int_to_bool on each int in the solution, replacing it with CellCandidates arrays
+                # This results in a 3d array where axis are [row, column, value]
+                solution_candidates = (int_arr_to_bool_arr)(self.solution)
+
+                # Standard form for Candidates arrays is [value, row, column] so move axis to match
+                solution_candidates = np.moveaxis(solution_candidates, 2, 0)
+
+                # Now solution_candidates is in standard Candidates form
+                # There is exactly one candidate in each cell (the correct one)
+
+                # Candidates are correct if any of these are true:
+                # 1. There is a guess at coord
+                # 2. There is a clue at coord
+                # 3. Candidates at coord contain solution value
+                x = np.logical_or.reduce(
+                    np.array(
+                        [
+                            self._puzzle.guesses != -1,
+                            self._puzzle.clues != -1,
+                            np.add.reduce(
+                                solution_candidates & new, axis=0, dtype=np.int8
+                            )
+                            == 1,
+                        ]
+                    )
+                )
+                if not x.all():
+                    raise InvalidBoard(
+                        "Candidates could not be removed because it would make board unsolvable."
+                    )
+
+            else:
+                raise NotImplementedError
+
         self._puzzle.candidates = new
 
     @property
