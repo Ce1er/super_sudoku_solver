@@ -44,25 +44,15 @@ class Board:
         if AUTONORMAL:
             self.all_normal()
 
-    def remove_candidates(
-        self, candidates: npt.NDArray[np.bool], type: str = "normal"
-    ) -> None:
+    def remove_candidates(self, candidates: Candidates) -> None:
         """
         Args:
-            candidates: 9x9x9
-            type: Refers to types in key of Board.hints. Default normal, highlight and strikethrough.
+            candidates: candidates to remove (True means remove)
         """
+        # Remove candidates
         new = (~candidates) & self._puzzle.candidates
-        # coords = np.argwhere(self.solution)
-        # # TODO: find a way to do this without iteration, using np stuff instead.
-        # for coord in coords:
-        #     if not new[self.solution[coord], *coord]:
-        #         raise InvalidBoard("Removed candidate which is solution for cell")
 
-        print(text_hints(candidates))
-        # print(text_hints(candidates))
-
-        # TODO: this works but is slow as shit
+        # Check if removing those candidates is a mistake
         if not self.allow_mistakes:
             if self.one_solution:
 
@@ -90,7 +80,7 @@ class Board:
                 # This results in a 3d array where axis are [row, column, value]
                 solution_candidates = (int_arr_to_bool_arr)(self.solution)
 
-                # Standard form for Candidates arrays is [value, row, column] so move axis to match
+                # Standard form for Candidates arrays is [value, row, column] so move axes to match
                 solution_candidates = np.moveaxis(solution_candidates, 2, 0)
 
                 # Now solution_candidates is in standard Candidates form
@@ -100,22 +90,28 @@ class Board:
                 # 1. There is a guess at coord
                 # 2. There is a clue at coord
                 # 3. Candidates at coord contain solution value
-                x = np.logical_or.reduce(
-                    np.array(
-                        [
-                            self._puzzle.guesses != -1,
-                            self._puzzle.clues != -1,
-                            np.add.reduce(
-                                solution_candidates & new, axis=0, dtype=np.int8
-                            )
-                            == 1,
-                        ]
+                # TODO: technically only one of these should be true
+                # Maybe np.add.reduce(...)==1?
+                x: np.ndarray[tuple[Literal[9], Literal[9]], np.dtype[np.bool]] = (
+                    np.logical_or.reduce(
+                        np.array(
+                            [
+                                self._puzzle.guesses != -1,
+                                self._puzzle.clues != -1,
+                                np.add.reduce(
+                                    solution_candidates & new, axis=0, dtype=np.int8
+                                )
+                                == 1,
+                            ]
+                        )
                     )
                 )
                 if not x.all():
                     raise InvalidBoard(
                         "Candidates could not be removed because it would make board unsolvable."
                     )
+                    # Removed candidates may still be logically incorrect but this will ensure that
+                    # Candidates cannot be removed if they are part of the solution
 
             else:
                 raise NotImplementedError
@@ -270,8 +266,9 @@ class Board:
 
     @property
     def solution(self):
-        # Could store solution as an attribute but this takes at most like 10ms so idc=
-        # solution = get_first(self.solve())
+        # PERF:
+        # Could store solution as an attribute but this takes at most like 10ms
+        # Might still be worth it, need to check
         first = True
         solution = None
         for s in self.solve():
