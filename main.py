@@ -28,6 +28,7 @@ import re
 from settings import settings, Settings
 
 from sudoku import Board as BoardData
+from sudoku import InvalidBoard
 from utils import get_first
 
 # from human_solver import HumanSolver, Technique
@@ -178,8 +179,13 @@ class HintBox(QGraphicsItem):
         Returns:
             text with no lines longer than line_length
         """
-        if line_length < 2:
-            raise ValueError("line_length must be at least 2")
+        # TODO: support truncation properly
+        # add tests
+        if line_length < 1 + len(truncation_symbol):
+            raise ValueError(
+                "line_length must be at least 1 longer than the length of truncation_symbol"
+            )
+            # Otherwise lines would not be able to contain any actual content
 
         patterns = [re.compile(p) for p in delimiters]
         remaining = text
@@ -207,7 +213,6 @@ class HintBox(QGraphicsItem):
             remaining = remaining[split_pos:].lstrip()
 
         return "\n".join(lines)
-
 
     def __init__(
         self,
@@ -487,12 +492,11 @@ class Board(QGraphicsScene):
         Args:
             value: value to set the cell. Between 0 and 8 inclusive.
         """
-        if self.solution[self.selected_cell.row, self.selected_cell.col] != value:
-            # TODO: dialog to show this
-            print("Incorrect")
-            return
+        # if self.solution[self.selected_cell.row, self.selected_cell.col] != value:
+        #     # TODO: dialog to show this
+        #     print("Incorrect")
+        #     return
 
-        self.selected_cell.set_value(value)
         new_cells = np.full((9, 9), -1, dtype=np.int8)
         new_cells[
             self.selected_cell.row,
@@ -501,7 +505,13 @@ class Board(QGraphicsScene):
             self.selected_cell.value - 1
         )
 
-        self.data.add_cells(new_cells)
+        try:
+            self.data.add_cells(new_cells)
+        except InvalidBoard:
+            # TODO: some kind of dialog message to show this
+            return
+
+        self.selected_cell.set_value(value)
 
     def auto_note(self):
         """

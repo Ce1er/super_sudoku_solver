@@ -17,7 +17,11 @@ from human_solver import Action
 from save_manager import Puzzle
 import np_candidates as npc
 
-from utils import text_hints
+from utils import get_first, text_hints
+
+
+class InvalidBoard(Exception):
+    pass
 
 
 class Board:
@@ -25,12 +29,16 @@ class Board:
     Represents board as a whole
     """
 
-    def __init__(self, puzzle: Puzzle) -> None:
+    def __init__(
+        self, puzzle: Puzzle, allow_mistakes: bool = False, one_solution: bool = True
+    ) -> None:
         r"""
         Args:
             cells: Represents starting clues. Matches regex ^[0-9\.]{81}$
         """
         self._puzzle = puzzle
+        self.allow_mistakes = allow_mistakes
+        self.one_solution = one_solution
 
         AUTONORMAL = True  # TODO: move this to somewhere else. Idealing reading from a settings.* file.
         if AUTONORMAL:
@@ -44,7 +52,13 @@ class Board:
             candidates: 9x9x9
             type: Refers to types in key of Board.hints. Default normal, highlight and strikethrough.
         """
-        self._puzzle.candidates = (~candidates) & self._puzzle.candidates
+        new = (~candidates) & self._puzzle.candidates
+        coords = np.argwhere(self.solution)
+        # TODO: find a way to do this without iteration, using np stuff instead.
+        for coord in coords:
+            if not new[self.solution[coord], *coord]:
+                raise InvalidBoard("Removed candidate which is solution for cell")
+        self._puzzle.candidates = new
 
     @property
     def cells(self):
@@ -70,9 +84,18 @@ class Board:
         Args:
             cells: 9x9 array where each element is between 0 and 8 inclusive. -1 to not add anything.
         """
-        self._puzzle.guesses = np.where(
-            self._puzzle.guesses != -1, self._puzzle.guesses, cells
-        )
+        new = np.where(self._puzzle.guesses != -1, self._puzzle.guesses, cells)
+        if not self.allow_mistakes:
+            if self.one_solution:
+                guesses = np.argwhere(new != -1)
+
+                # self.solution call could raise error but I'd just raise it again anyway so no need to catch it
+                if not np.array_equal(new[guesses] ,self.solution[guesses]):
+                    raise InvalidBoard("Added cells leads to unsolvable board state.")
+            else:
+                # Do I even want multiple solution support?
+                raise NotImplementedError
+        self._puzzle.guesses = new
 
     def all_normal(self) -> None:
         """
@@ -178,6 +201,26 @@ class Board:
         matrix = self.create_matrix()
         for solution in matrix.generate_solutions():
             yield self.extract_from_matrix(solution)
+
+    @property
+    def solution(self):
+        # Could store solution as an attribute but this takes at most like 10ms so idc=
+        # solution = get_first(self.solve())
+        first = True
+        solution = None
+        for s in self.solve():
+            if not first:
+                if self.one_solution:
+                    raise InvalidBoard("Board has multiple solutions")
+                else:
+                    # Return the first solution if there are several.
+                    # If you want them all call solve() directly.
+                    break
+            solution = s
+            first = False
+        if solution is None:
+            raise InvalidBoard("Board has no solutions")
+        return solution
 
     def hint(self):  # -> Generator[human_solver.Technique]:
         for technique in techniques.TECHNIQUES:
