@@ -84,16 +84,20 @@ class Board:
         Args:
             cells: 9x9 array where each element is between 0 and 8 inclusive. -1 to not add anything.
         """
+        # Keep current guesses and add new ones
         new = np.where(self._puzzle.guesses != -1, self._puzzle.guesses, cells)
+
         if not self.allow_mistakes:
             if self.one_solution:
-                guesses = np.argwhere(new != -1)
-
-                # self.solution call could raise error but I'd just raise it again anyway so no need to catch it
-                if not np.array_equal(new[guesses] ,self.solution[guesses]):
+                # Any coord where new != -1 must be eq to self.solution
+                # When new == -1 it isn't a guess so that coord is always valid
+                x = np.logical_or.reduce(
+                    np.array([new == -1, new == self.solution]), axis=0, dtype=np.bool
+                )
+                if not x.all():
                     raise InvalidBoard("Added cells leads to unsolvable board state.")
             else:
-                # Do I even want multiple solution support?
+                # TODO: Do I even want multiple solution support?
                 raise NotImplementedError
         self._puzzle.guesses = new
 

@@ -42,6 +42,11 @@ from custom_types import Cell as CellT
 
 from utils import text_hints
 
+import time
+import asyncio
+import threading
+import logging
+
 
 # TODO: pass in font so it is customisable
 # Also all these colours and sizes and stuff is getting excessive
@@ -285,6 +290,20 @@ class PuzzleSelector(QListWidget):
         # TODO: use signals in the other classes
 
 
+class ErrorBox(QLabel):
+    """
+    To show the user warning messages
+    These warnings aren't fatal but are useful for the user
+    """
+
+    # TODO: I prefer HintBox
+    # Make a base class for that and have both HintBox and ErrorBox inherit from it
+
+    def __init__(self, settings: Settings):
+        super().__init__()
+        self.settings = settings
+
+
 class Board(QGraphicsScene):
     def _auto_note(func: Callable[[Self], None]) -> Callable[[Self], None]:
         """
@@ -301,12 +320,20 @@ class Board(QGraphicsScene):
 
     def paint_menu(self):
         self.puzzle_menu = PuzzleSelector(self.settings)
-        self.proxy = QGraphicsProxyWidget()
-        self.proxy.setWidget(self.puzzle_menu)
-        self.addItem(self.proxy)
+        self.menu_proxy = QGraphicsProxyWidget()
+        self.menu_proxy.setWidget(self.puzzle_menu)
+        self.addItem(self.menu_proxy)
         # TODO: chose this position based on sizes
-        self.proxy.setPos(-300, -50)
+        self.menu_proxy.setPos(-300, -50)
         self.puzzle_menu.data.connect(self.set_puzzle)
+
+    def paint_message_box(self):
+        self.puzzle_message_box = ErrorBox(self.settings)
+        self.message_proxy = QGraphicsProxyWidget()
+        self.message_proxy.setWidget(self.puzzle_message_box)
+        self.addItem(self.message_proxy)
+        # TODO: chose this position based on sizes
+        self.message_proxy.setPos(-300, 150)
 
     def __init__(
         self,
@@ -318,6 +345,7 @@ class Board(QGraphicsScene):
         self.data = None
         self.settings = settings
 
+        self.paint_message_box()
         self.paint_menu()
         # TODO: hint should be tracked so it can be handled better
         # hint should be printed in paint_board instead. I think?
@@ -327,6 +355,19 @@ class Board(QGraphicsScene):
         # Also needs proper highlighting
         # I can either keep a hintbox at all times and toggle its visibility based on if there is a hint
         # Or I can delete it when there isn't and make a new one.
+
+    def send_message(self, text: str, timeout: float):
+        """
+        Show a message in the error box
+        """
+        print(text)
+        self.puzzle_message_box.setText(text)
+        # await asyncio.sleep(timeout)
+        # time.sleep(timeout)
+        # self.puzzle_message_box.clear()
+        # TODO: steal some of the code I wrote to interact with imageboard APIs.
+        # downloader_api.py rate limiter
+        # that might be a good way to clear after certain time
 
     @_auto_note
     def set_puzzle(self, puzzle: Puzzle):
@@ -501,14 +542,15 @@ class Board(QGraphicsScene):
         new_cells[
             self.selected_cell.row,
             self.selected_cell.col,
-        ] = (
-            self.selected_cell.value - 1
-        )
+        ] = value
 
         try:
             self.data.add_cells(new_cells)
         except InvalidBoard:
             # TODO: some kind of dialog message to show this
+            self.send_message(
+                "Cannot add cell as it would make puzzle unsolvable.", 10.0
+            )
             return
 
         self.selected_cell.set_value(value)
@@ -526,7 +568,14 @@ class Board(QGraphicsScene):
         """
         # TODO: somewhere I need to check if the action is actually valid
         # This should always be the case but a failsafe is worth adding
-        self.data.apply_action(action)
+        try:
+            self.data.apply_action(action)
+        except InvalidBoard:
+            # Very bad
+            # Means technique is broken
+            logging.error("Illegal action generated")
+            return
+
         self.removeItem(self.hint)
         self.hint = None
         self.paint_board()
