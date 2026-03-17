@@ -580,6 +580,7 @@ class Board(QGraphicsScene):
         self.hint = None
         self.paint_board()
 
+    @_auto_note
     def apply_hint(self):
         if self.hint is None:
             return
