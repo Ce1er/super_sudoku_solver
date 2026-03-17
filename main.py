@@ -686,3 +686,4 @@ if __name__ == "__main__":
 # TODO: sudoku board needs buttons as alternatives to all key binds
 # Also needs a button to go to main menu
 # Main menu should have a way to select puzzle
+# Hint box should also go away if user does it themselves

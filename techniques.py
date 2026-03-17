@@ -1127,6 +1127,7 @@ TECHNIQUES = [
     HiddenPairs,
     LockedCandidates,
     Skyscrapers,
+    # PointingPairs,
     # XWing,
 ]
 
