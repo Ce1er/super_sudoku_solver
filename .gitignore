@@ -7,3 +7,4 @@ dev*.py
 .coverage
 puzzles/.data/
 profile*
+*.lprof
