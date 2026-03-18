@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 from paths import (
     PUZZLE_DATA,
     PUZZLE_DIR,
@@ -20,6 +20,7 @@ from settings import settings
 import sys
 
 DIFFICULTIES = ["easy", "medium", "hard"]
+DIFFICULTIES_T = Literal["easy", "medium", "hard"]
 
 
 def ensure_single_instance():
@@ -139,8 +140,8 @@ class Puzzle:
         self._candidates_file.unlink(missing_ok=True)
         self._guesses_file.unlink(missing_ok=True)
 
-        self._guesses=None
-        self._candidates=None
+        self._guesses = None
+        self._candidates = None
 
     # To allow sorting
     # Maybe a sorting function is better than operator overloading?
@@ -188,7 +189,7 @@ class Puzzles:
                             "clues": {
                                 "description": "The cells initially set",
                                 "type": "string",
-                                "pattern": r"^[1-9\.]{81}",
+                                "pattern": r"^[1-9\.]{81}$",
                             },
                         },
                         "additionalProperties": False,
@@ -220,7 +221,7 @@ class Puzzles:
         for id, puzzle in data["puzzles"].items():
             puzzles[id] = Puzzle(id, puzzle["clues"], puzzle["difficulty"])
 
-        # Sort puzzles based on difficulty and time created
+        # Sort puzzles based on Puzzle.__lt__
         puzzles = dict(sorted(puzzles.items(), key=lambda x: x[1]))
         self._puzzles = puzzles
 
@@ -228,25 +229,31 @@ class Puzzles:
         self.load()
 
     @property
-    def puzzle_map(self):
+    def puzzle_map(self) -> dict[str, Puzzle]:
+        """
+        Returns:
+            dict that maps puzzle names to Puzzle objects
+        """
         puzzle_map = {}
         last_difficulty = None
         n = 1
+        # Can safely assume difficulty is non-decreasing
         for puzzle in self._puzzles.values():
-            print(puzzle)
             if puzzle.difficulty == last_difficulty:
                 n += 1
             else:
                 n = 1
 
             last_difficulty = puzzle.difficulty
-            name = puzzle.difficulty + "_" + str(n)
+            name = puzzle.difficulty + " " + str(n)
             puzzle_map[name] = puzzle
 
         return puzzle_map
 
     def save(self):
-
+        """
+        Save any changes to puzzles persistently
+        """
         new = {"puzzles": {}}
         for puzzle in self._puzzles.values():
             new["puzzles"][str(puzzle.uuid)] = {
@@ -263,7 +270,13 @@ class Puzzles:
         with PUZZLE_JSON.open("w", encoding="utf-8") as f:
             f.write(data)
 
-    def add_puzzle(self, clues, difficulty):
+    def add_puzzle(self, clues: str, difficulty: DIFFICULTIES_T):
+        """
+        Add a new puzzle to storage
+        Args:
+            clues: initial state of the puzzle
+            difficulty: approximate difficulty of puzzle
+        """
         if not re.fullmatch(r"[1-9\.]{81}", clues):
             raise ValueError("Invalid clues")
         if difficulty not in DIFFICULTIES:
@@ -276,13 +289,25 @@ class Puzzles:
         self.load()
 
     def delete_puzzle(self, id):
+        """
+        Delete a puzzle from storage
+        Args:
+            id: uuid of puzzle to delete
+        """
         del self._puzzles[id]
         self.save()
         self.load()
 
-    def update_puzzle_difficulty(self, id, difficulty):
+    def update_puzzle_difficulty(self, id, difficulty: DIFFICULTIES_T):
+        """
+        Change a puzzle's difficulty
+        Args:
+            id: uuid of puzzle to update
+            difficulty: new difficulty
+        """
         self._puzzles[id].difficulty = difficulty
         self.save()
+        # TODO: reloading should be unnecessary but need to test that
         self.load()
 
 
@@ -329,5 +354,3 @@ if __name__ == "__main__":
     if args.delete:
         for id in args.delete:
             puzzles.delete_puzzle(id[0])
-
-# TODO: stuff to stop this being ran if main program is being ran
