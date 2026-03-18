@@ -33,10 +33,11 @@ from custom_types import Adjacency, Coord, Cells, CellCandidates, Candidates
 
 class _TechniqueInstance(abc.ABC):
     """
-    Base class for all human technique instances
+    Base class for all human technique instances to hold information
+    about how the technique can be used on board.
     """
 
-    NAME = "Unknown Technique"
+    NAME: str
 
     @property
     def name(self) -> str:
@@ -57,7 +58,7 @@ class _TechniqueInstance(abc.ABC):
 
 class _TechniqueFinder(abc.ABC):
     """
-    Base class for all human technique finders
+    Base class for all human technique finders to find technique instances
     """
 
     def __init__(
@@ -158,6 +159,8 @@ class _TechniqueFinder(abc.ABC):
         """
         Decorator to filter Techniques to only include ones where the action has an effect on candidates and/or cells.
         Slightly simplifies technique detection as those functions are not responsible for checking if it has an effect or not.
+        Yields:
+            Techniques it is given that have an effect on the board
         """
 
         # @wraps preserves dunder attributes of decorated functions
@@ -174,6 +177,7 @@ class _TechniqueFinder(abc.ABC):
         """
         Decorator to filter out duplicate techniques.
         Duplicates are techniques of the same type with an identical action.
+        Their message does not have to be identical.
         """
 
         @wraps(func)
@@ -201,6 +205,11 @@ class _NakedSinglesInstance(_TechniqueInstance):
     NAME = "Naked Singles"
 
     def __init__(self, coord: Coord, num: SupportsInt):
+        """
+        Args:
+            coord: coordinate of naked single
+            num: value that should be at coordinate
+        """
         self._coord = coord
         self._num = num
 
@@ -233,10 +242,13 @@ class NakedSingles(_TechniqueFinder):
         Yields:
             Technique
         """
+        # TODO: attrs should probably be public from _TechniqueFinder as properties maybe
+
+        # Naked singles have exactly one candidate in a cell
         naked_singles: Cells = (
             np.add.reduce(self._candidates, axis=0, dtype=np.int8) == 1
         )
-        for coord in npc.argwhere(naked_singles).astype(np.int8, casting="same_value"):
+        for coord in npc.argwhere(naked_singles):
             row, column = coord
             num = npc.argwhere(self._candidates[:, row, column]).flatten()[0]
 
@@ -319,7 +331,7 @@ class HiddenSingles(_TechniqueFinder):
                 adjacent = func(coord[1:3]) & self._candidates[num]
                 candidates_at_cell: CellCandidates = self._candidates[:, row, column]
 
-                # TODO: deprecate and replace with non_null_actions
+                # Check it is single and not naked
                 if not (
                     np.count_nonzero(adjacent) == 1
                     and len(npc.argwhere(candidates_at_cell)) != 1
@@ -332,6 +344,17 @@ class HiddenSingles(_TechniqueFinder):
 class _NakedPairsInstance(_TechniqueInstance):
     NAME = "Naked Pairs"
 
+    def _get_remove_from(self):
+        """
+        Returns:
+            adjacency(s) candidates should be removed from
+        """
+        remove_from = []
+        for adjacency, func in self._types.items():
+            if func(self._cell1[0:2])[*self._cell2]:
+                remove_from.append(adjacency)
+        return remove_from
+
     def __init__(self, pair, nums, cell1, cell2, types, candidates):
         self._pair = pair
         self._nums = nums
@@ -339,14 +362,7 @@ class _NakedPairsInstance(_TechniqueInstance):
         self._cell2 = cell2
         self._types = types
         self._candidates = candidates
-
-    @property
-    def _remove_from(self):
-        remove_from = []
-        for adjacency, func in self._types.items():
-            if func(self._cell1[0:2])[*self._cell2]:
-                remove_from.append(adjacency)
-        return remove_from
+        self._remove_from = self._get_remove_from()
 
     def _generate_message(self):
         remove_adjacencies = self._remove_from
@@ -386,8 +402,6 @@ class _NakedPairsInstance(_TechniqueInstance):
 
 
 class NakedPairs(_TechniqueFinder):
-    NAME = "Naked Pairs"
-
     def __init__(
         self,
         candidates,
@@ -437,6 +451,8 @@ class NakedPairs(_TechniqueFinder):
 
 
 class _HiddenPairsInstance(_TechniqueInstance):
+    NAME = "Hidden Pairs"
+
     def __init__(self, cells, num_pair, adjacent_by):
         self._cells = cells
         self._num_pair = num_pair
@@ -470,8 +486,6 @@ class _HiddenPairsInstance(_TechniqueInstance):
 
 
 class HiddenPairs(_TechniqueFinder):
-    NAME = "Hidden Pairs"
-
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -512,28 +526,24 @@ class HiddenPairs(_TechniqueFinder):
                 continue
 
             # Pairs must be adjacent
-            if not npc.adjacent(cell1[0:2])[*cell2]:
+            if not npc.adjacent(cell1)[*cell2]:
                 continue
 
-            # Not super elegant or performant but the arrays are small enough that it really doesn't matter
+            # Pair is hidden so all potential pairs must be checked
             for num_pair in combinations(common_nums, r=2):
                 num_pair = np.array([*num_pair])
-                # print(num_pair)
                 adjacent_by = []
                 for adjacency, func in types.items():
-                    # If they are adjacent by {adjacency} append adjacency to adjacent_by
-                    if func(cell1[0:2])[*cell2]:
+                    # If cells are adjacent by adjacency append adjacency to adjacent_by
+                    if func(cell1)[*cell2]:
                         adjacent_by.append(adjacency)
 
                 temp = adjacent_by.copy()
                 # 9x9 array where True means either (or both) nums are there
-                # print(self.candidates[num_pair])
                 other_occurences = np.logical_or.reduce(self._candidates[num_pair])
-                # print(other_occurences)
                 for adjacency in adjacent_by:
                     func = types[adjacency]
-                    # print(func((cell1[0],cell1[1])))
-                    if np.count_nonzero(func(cell1[0:2]) & other_occurences) != 2:
+                    if np.count_nonzero(func(cell1) & other_occurences) != 2:
                         temp.remove(adjacency)
 
                 adjacent_by = temp
@@ -580,7 +590,6 @@ class _LockedCandidatesInstance(_TechniqueInstance):
 
 
 class LockedCandidates(_TechniqueFinder):
-
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -652,7 +661,7 @@ class _PointingTuples(_TechniqueFinder):
         TYPES = {"column": npc.adjacent_column, "row": npc.adjacent_row}
         for num in range(9):
             for coords in combinations(
-                npc.argwhere(self.candidates[num]), r=self.count
+                npc.argwhere(self._candidates[num]), r=self.count
             ):
                 coords = np.array([*coords])
 
@@ -671,7 +680,7 @@ class _PointingTuples(_TechniqueFinder):
                     continue
 
                 if (
-                    np.count_nonzero(TYPES[direction](coords) & self.candidates[num])
+                    np.count_nonzero(TYPES[direction](coords) & self._candidates[num])
                     <= self.count
                 ):
                     continue
@@ -680,8 +689,6 @@ class _PointingTuples(_TechniqueFinder):
 
 
 class PointingPairs(_PointingTuples):
-    NAME = "Pointing Pairs"
-
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -855,8 +862,6 @@ class _SkyscraperInstance(_TechniqueInstance):
 
 
 class Skyscrapers(_TechniqueFinder):
-    NAME = "Skyscraper"
-
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -982,8 +987,6 @@ class Skyscrapers(_TechniqueFinder):
 
 
 class XWing(_TechniqueFinder):
-    NAME = "X-Wing"
-
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
