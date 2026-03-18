@@ -9,10 +9,10 @@ class Node:
         right: Node to the right
         up: Node above
         down: Node below
+        column: reference to the HeaderNode for the column the node is in.
+           Should be set soon after instantiation unless node is root.
     """
 
-    # Reference to the column header node
-    # Is not assigned in __init__ as it cannot be known at this stage
     column: HeaderNode
 
     def __init__(self) -> None:
@@ -77,13 +77,12 @@ class Node:
 
 class HeaderNode(Node):
     """
+    Unlike Node column attribute does not need to be set manually here as it will always point to itself.
     Attributes:
         label: The name of the node.
         size: The number of nodes in the column
     """
 
-    # Technically left and right are now type HeaderNode not type Node
-    # But subclasses can't have narrower types to their parents
     label: int
     size: int
 
@@ -91,6 +90,7 @@ class HeaderNode(Node):
         super().__init__()
         self.label = label
         self.size = 0
+        self.column = self
 
 
 class Matrix:
@@ -120,7 +120,6 @@ class Matrix:
         for label in labels:
             # Create header for column
             column = HeaderNode(label)
-            column.column = column  # Header points to itself
 
             self.column_header[label] = column
 
@@ -234,7 +233,8 @@ class Matrix:
     def _search(
         self, solution: Optional[list[Node]] = None
     ) -> Generator[list[Node], None, None]:
-        """Recursive search algorithm to find exact cover solutions.
+        """
+        Recursive search algorithm to find exact cover solutions.
         Args:
             solution: List of rows in the (partial) solution
         Yields:
@@ -253,7 +253,8 @@ class Matrix:
         smallest = None
         for column in self.root.right_sweep():
             # Everything linked from left/right to the root node is a HeaderNode except the root node itself
-            # So they do have the size attribute, thus typechecker warnings can be ignored
+            # which is not included in the sweep.
+            # So they do have the size attribute, so typechecker warnings can be ignored
             if column.size < size:  # type: ignore[attr-defined]
                 size = column.size  # type: ignore[attr-defined]
                 smallest = column  # type: ignore[attr-defined]
@@ -286,7 +287,6 @@ class Matrix:
         """
         Args:
             row: Node in the row to get labels from
-
         Returns:
             List of all column labels in the row
         """
@@ -307,7 +307,6 @@ class Matrix:
             Gives each row as an array of their Node's column label.
         """
         for solution in self._search():
-            # Yielding here allows processing solutions as soon as they are found instead of waiting for them all
             yield [self._get_row_labels(s) for s in solution]
 
 
