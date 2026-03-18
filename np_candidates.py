@@ -26,7 +26,7 @@ def adjacent_row(
     Args:
         coords: [[row, column], [row, column]...] (0-based indexing). Column is required but will not change return value so can be set arbitrarily.
         to_n: how many of the coords given need to be adjacent to. (-1 for adjacent to all)
-        strict: True means most be adjacent to exactly {to_n} coords. False means {to_n} or more.
+        strict: True means most be adjacent to exactly to_n coords. False means to_n or more.
     Returns:
         9x9 Boolean array where True represents cells in rows from coords given
     """
@@ -54,7 +54,7 @@ def adjacent_column(
     Args:
         coords: [[row, column], [row, column]...] (0-based indexing). Row is required but will not change return value so can be set arbitrarily.
         to_n: how many of the coords given need to be adjacent to. (-1 for adjacent to all)
-        strict: True means most be adjacent to exactly {to_n} coords. False means {to_n} or more.
+        strict: True means most be adjacent to exactly to_n coords. False means to_n or more.
     Returns:
         9x9 Boolean array where True represents cells in columns from coords given
     """
@@ -82,7 +82,7 @@ def adjacent_box(
     Args:
         coords: [[row, column], [row, column]...] (0-based indexing).
         to_n: how many of the coords given need to be adjacent to. (-1 for adjacent to all)
-        strict: True means most be adjacent to exactly {to_n} coords. False means {to_n} or more.
+        strict: True means most be adjacent to exactly to_n coords. False means to_n or more.
     Returns:
         9x9 Boolean array where True represents cells in boxes from coords given
     """
@@ -117,7 +117,7 @@ def adjacent(
     Args:
         coords: [[row, column], [row, column]...] (0-based indexing).
         to_n: how many of the coords given need to be adjacent to. (-1 for adjacent to all)
-        strict: True means most be adjacent to exactly {to_n} coords. False means {to_n} or more.
+        strict: True means most be adjacent to exactly to_n coords. False means to_n or more.
         any_adjacency: True is logical or of all adjacency types, False is logical and.
     Returns:
         9x9 Boolean array where True represents cells in boxes from coords given
@@ -127,6 +127,7 @@ def adjacent(
         to_n = coords.shape[0]
 
     counts = np.full((9, 9), 0, dtype=np.int8)
+    # Coords have to be done one at a time to allow to_n to work as counts are needed not just bool mask
     for coord in coords:
         if any_adjacency:
             counts += np.logical_or.reduce(
