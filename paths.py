@@ -7,3 +7,6 @@ PUZZLE_DATA = PUZZLE_DIR/".data"
 GUESSES_SUFFIX="_guesses.npy"
 CANDIDATES_SUFFIX="_candidates.npy"
 SETTINGS = BASE_DIR/"settings.toml"
+
+if not PUZZLE_DATA.exists():
+    PUZZLE_DATA.mkdir(parents=True)
