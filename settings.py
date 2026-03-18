@@ -3,27 +3,28 @@ from PySide6.QtGui import QColor, QKeySequence
 from pathlib import Path
 import tomllib
 from paths import SETTINGS
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class Keybinds:
-    auto_note: list[QKeySequence]
-    hint: list[QKeySequence]
-    apply_hint: list[QKeySequence]
-    solve: list[QKeySequence]
-    remove: list[QKeySequence]
-    reset: list[QKeySequence]
+    auto_note: list[QKeySequence] = field(default_factory=list)
+    hint: list[QKeySequence] = field(default_factory=list)
+    apply_hint: list[QKeySequence] = field(default_factory=list)
+    solve: list[QKeySequence] = field(default_factory=list)
+    remove: list[QKeySequence] = field(default_factory=list)
+    reset: list[QKeySequence] = field(default_factory=list)
 
-    up: list[QKeySequence]
-    down: list[QKeySequence]
-    left: list[QKeySequence]
-    right: list[QKeySequence]
+    up: list[QKeySequence] = field(default_factory=list)
+    down: list[QKeySequence] = field(default_factory=list)
+    left: list[QKeySequence] = field(default_factory=list)
+    right: list[QKeySequence] = field(default_factory=list)
 
     # Maps each of the 9 numbers to the key sequence needed to input them
-    numbers: dict[int, list[QKeySequence]]
+    # Default set in __post_init__ so user can overwrite some but not all values
+    numbers: dict[int, list[QKeySequence]] = field(default_factory=dict)
 
-    puzzle_menu: list[QKeySequence]
+    puzzle_menu: list[QKeySequence] = field(default_factory=list)
 
     def __post_init__(self):
         keys = []
@@ -67,18 +68,23 @@ class Keybinds:
         if len(keys) > len(set(keys)):
             raise ValueError("Duplicate keybindings detected")
 
+        default_numbers = {
+            k: [QKeySequence(str(k)), QKeySequence(f"Num+{k}")] for k in range(1, 10)
+        }
+        self.numbers = default_numbers | self.numbers
+
 
 @dataclass
 class Colours:
-    clue: QColor
-    guess: QColor
-    candidate: QColor
-    special_candidate: QColor
-    rejected_candidate: QColor
-    border: QColor
-    big_border: QColor
-    background: QColor
-    text: QColor
+    clue: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
+    guess: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
+    candidate: QColor = field(default_factory=lambda: QColor(30, 50, 78, 255))
+    special_candidate: QColor = field(default_factory=lambda: QColor(25, 1, 98, 255))
+    rejected_candidate: QColor = field(default_factory=lambda: QColor(255, 0, 0, 255))
+    border: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
+    big_border: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
+    background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
+    text: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
 
     def __post_init__(self):
         for name, val in self.__dict__.items():
@@ -90,10 +96,10 @@ class Colours:
 
 @dataclass
 class Sizes:
-    border: int
-    big_border: int
-    cell: int
-    text: int
+    border: int = field(default=1)
+    big_border: int = field(default=3)
+    cell: int = field(default=60)
+    text: int = field(default=11)
 
     def __post_init__(self):
         for name, val in self.__dict__.items():
@@ -110,8 +116,8 @@ class Sizes:
 
 @dataclass
 class Gameplay:
-    auto_note: bool
-    start_full: bool
+    auto_note: bool = field(default=True)
+    start_full: bool = field(default=True)
 
     def __post_init__(self):
         for key, value in self.__dict__.items():
@@ -123,7 +129,7 @@ class Gameplay:
 
 @dataclass
 class Developer:
-    port: int
+    port: int = field(default=46215)
 
     def __post_init__(self):
         if not isinstance(self.port, int):
@@ -184,6 +190,7 @@ def parse_number_input(data: dict[int, list[str]]) -> dict[int, list[QKeySequenc
     for num, seqs in data.items():
         result[int(num)] = parse_sequences(seqs)
 
+    print(result)
     return result
 
 

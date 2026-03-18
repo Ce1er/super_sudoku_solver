@@ -1,23 +1,28 @@
+# Headings must be kept but all key/value pairs are optional 
+# Default settings will be used if not set
+
 [colours]
-
-clue = [0, 0, 0, 255]
-guess = [0, 0, 0, 255]
-candidate = [30, 50, 78, 255]
-special_candidate = [25, 1, 98, 255]
-rejected_candidate = [255, 0, 0, 255]
-
-border = [0, 0, 0, 255]
-big_border = [0, 0, 0, 255]
-background = [255, 255, 255, 255]
-text = [0, 0, 0, 255]
+# rgba values
+# clue = [0, 0, 0, 255]
+# guess = [0, 0, 0, 255]
+# candidate = [30, 50, 78, 255]
+# special_candidate = [25, 1, 98, 255]
+# rejected_candidate = [255, 0, 0, 255]
+#
+# border = [0, 0, 0, 255]
+# big_border = [0, 0, 0, 255]
+# background = [255, 255, 255, 255]
+# text = [0, 0, 0, 255]
 
 [sizes]
-border = 1
-big_border = 3
-cell = 60
-text = 11
+# sizes in pixels
+# border = 1
+# big_border = 3
+# cell = 60
+# text = 11
 
 [keybindings]
+# Optional but if not set there won't be any way to use those features
 auto_note = ["Ctrl+A"]
 hint = ["Ctrl+H"]
 apply_hint = ["Ctrl+O"]
@@ -32,21 +37,23 @@ left = ["d", "l"]
 right = ["a", "h"]
 
 [keybindings.numbers]
-1 = ["1", "Num+1"]
-2 = ["2", "Num+2"]
-3 = ["3", "Num+3"]
-4 = ["4", "Num+4"]
-5 = ["5", "Num+5"]
-6 = ["6", "Num+6"]
-7 = ["7", "Num+7"]
-8 = ["8", "Num+8"]
-9 = ["9", "Num+9"]
+# 1 = ["1", "Num+1"]
+# 2 = ["2", "Num+2"]
+# 3 = ["3", "Num+3"]
+# 4 = ["4", "Num+4"]
+# 5 = ["5", "Num+5"]
+# 6 = ["6", "Num+6"]
+# 7 = ["7", "Num+7"]
+# 8 = ["8", "Num+8"]
+# 9 = ["9", "Num+9"]
 
 # Gameplay settings to use by default
 [gameplay]
-auto_note = true
-start_full = true
+# auto_note = true
+# start_full = true
 
 # Should not be touched by most users
 [developer]
-port = 46215
+# Port should not be used by any other applications
+# If it is app won't launch
+# port = 46215
