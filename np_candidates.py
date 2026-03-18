@@ -1,6 +1,5 @@
 from collections.abc import Callable
 import numpy as np
-from numpy._typing import NDArray
 import numpy.typing as npt
 
 
@@ -20,7 +19,6 @@ def _validate_adjacent(coords):
     return coords
 
 
-# TODO: try SupportsInt and SupportsBool
 def adjacent_row(
     coords: npt.NDArray[np.integer], to_n: int = 1, strict: bool = False
 ) -> npt.NDArray[np.bool]:
@@ -128,23 +126,21 @@ def adjacent(
     if to_n == -1:
         to_n = coords.shape[0]
 
-    funcs: list[Callable[[npt.NDArray[np.integer]], npt.NDArray[np.bool]]] = [
-        adjacent_row,
-        adjacent_box,
-        adjacent_column,
-    ]
-    # mask = np.full((9, 9), not any_adjacency, dtype=np.bool)
-    board = np.full((coords.shape[0], 9, 9), False, dtype=np.bool)
-    for func in funcs:
-        # coords done one at a time to allow to_n to work
-        # counts are needed, not just the boolean mask
-        for depth, coord in enumerate(coords):
-            if any_adjacency:
-                board[depth] |= func(coord)
-            else:
-                board[depth] &= func(coord)
+    counts = np.full((9, 9), 0, dtype=np.int8)
+    for coord in coords:
+        if any_adjacency:
+            counts += np.logical_or.reduce(
+                np.array(
+                    [adjacent_row(coord), adjacent_column(coord), adjacent_box(coord)]
+                )
+            )
+        else:
+            counts += np.logical_and.reduce(
+                np.array(
+                    [adjacent_row(coord), adjacent_column(coord), adjacent_box(coord)]
+                )
+            )
 
-    counts = np.add.reduce(board, axis=0, dtype=np.uint8)
     if strict:
         mask = counts == to_n
     else:
