@@ -158,7 +158,7 @@ class Cell(QGraphicsItem):
 
     def set_highlighted(self, value: bool):
         self.highlighted = value
-        self.update()
+        self.update(self.boundingRect())
 
 
 class HintBox(QGraphicsItem):
@@ -578,7 +578,9 @@ class Board(QGraphicsScene):
 
         self.removeItem(self.hint)
         self.hint = None
-        self.paint_board()
+
+        # TODO: method to paint only changes
+        # self.paint_board()
 
     @_auto_note
     def apply_hint(self):
@@ -594,18 +596,20 @@ class Board(QGraphicsScene):
         self.data.auto_solve()
         self.update_candidates()
 
-    def reset(self):
-        """
-        Resets the puzzle to its initial state
-        """
-        self.puzzle.reset()
-
+    def reload(self):
         # Delete everything currently being rendered and redraw it
         self.clear()
         self.set_puzzle(self.puzzle)
 
         # Menu not painted with set_puzzle
         self.paint_menu()
+
+    def reset(self):
+        """
+        Resets the puzzle to its initial state
+        """
+        self.puzzle.reset()
+        self.reload()
 
     def keyPressEvent(self, event) -> None:
         if self.data is None:
@@ -634,7 +638,6 @@ class Board(QGraphicsScene):
             # FIXME: doesn't persist after auto normal
             self.remove_cell()
         elif seq in binds.auto_note:
-            # FIXME: doesn't do anything when used after the user inputs a guess
             self.auto_note()
         elif seq in binds.solve:
             self.solve()
