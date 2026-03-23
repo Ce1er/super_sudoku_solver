@@ -36,6 +36,8 @@ down = ["s", "j"]
 left = ["d", "l"]
 right = ["a", "h"]
 
+toggle_mode = ["Ctrl+T"]
+
 [keybindings.numbers]
 # 1 = ["1", "Num+1"]
 # 2 = ["2", "Num+2"]

@@ -356,6 +356,13 @@ class Board(QGraphicsScene):
         # I can either keep a hintbox at all times and toggle its visibility based on if there is a hint
         # Or I can delete it when there isn't and make a new one.
 
+        # True if cell mode False if candidates mode
+        self.cell_mode = True
+
+    def toggle_mode(self):
+        self.cell_mode = not self.cell_mode
+        # TODO: display this somewhere
+
     def send_message(self, text: str, timeout: float):
         """
         Show a message in the error box
@@ -555,6 +562,35 @@ class Board(QGraphicsScene):
 
         self.selected_cell.set_value(value)
 
+    def toggle_candidate(self, value: int):
+        """
+        Toggles whether value is a candidate at focused cell
+        Args:
+            value: value to set the cell. Between 0 and 8 inclusive.
+        """
+        delta_candidates: Candidates = np.full((9, 9, 9), False, dtype=np.bool)
+        delta_candidates[
+            value,
+            self.selected_cell.row,
+            self.selected_cell.col,
+        ] = True
+
+        # Remove
+        if self.cells[self.selected_cell.row][self.selected_cell.col].candidates[value]:
+            try:
+                self.data.remove_candidates(delta_candidates)
+            except InvalidBoard:
+                # TODO: some kind of dialog message to show this
+                self.send_message(
+                    "Cannot add cell as it would make puzzle unsolvable.", 10.0
+                )
+                return
+        # Add
+        else:
+            self.data.add_candidates(delta_candidates)
+
+        self.reload()
+
     def auto_note(self):
         """
         Remove candidates if they are adjacent to a cell with their value.
@@ -647,6 +683,8 @@ class Board(QGraphicsScene):
             self.apply_hint()
         elif seq in binds.reset:
             self.reset()
+        elif seq in binds.toggle_mode:
+            self.toggle_mode()
 
 
 def main():

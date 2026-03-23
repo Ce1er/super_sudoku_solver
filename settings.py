@@ -26,6 +26,8 @@ class Keybinds:
 
     puzzle_menu: list[QKeySequence] = field(default_factory=list)
 
+    toggle_mode: list[QKeySequence] = field(default_factory=list)
+
     def __post_init__(self):
         keys = []
 

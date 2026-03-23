@@ -44,6 +44,13 @@ class Board:
         if AUTONORMAL:
             self.all_normal()
 
+    def add_candidates(self, candidates: Candidates) -> None:
+        """
+        Args:
+            candidates: candidates to add (True means add)
+        """
+        self._puzzle.candidates |= candidates
+
     def remove_candidates(self, candidates: Candidates) -> None:
         """
         Args:
