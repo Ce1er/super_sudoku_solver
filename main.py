@@ -344,10 +344,9 @@ class Board(QGraphicsScene):
             proxy.setWidget(widget)
             proxy.setPos(x, y)
             self.addItem(proxy)
-            return proxy
 
         n = 5  # Number of buttons / switches
-        x = iter(range(35, (n + 1) * 100, 100))  # Set start x & spacing
+        x = iter(range(35, (n + 1) * 100, 100))  # Set start x & x spacing
         y = iter([-80] * n)
 
         buttons = [
@@ -373,9 +372,9 @@ class Board(QGraphicsScene):
                 "x": next(x),
                 "y": next(y),
                 "widget": QPushButton("Reset"),
-                # reset will delete the button while signal is being executed
+                # self.reset would delete the button while signal is being executed
                 # This would cause a seg fault. Timer lets signal finish before running
-                # reset method on next event loop cycle.
+                # reset method on the next event loop cycle.
                 "func": lambda: QTimer.singleShot(0, self.reset),
             },
         ]
@@ -386,7 +385,8 @@ class Board(QGraphicsScene):
 
         switch = QCheckBox("Toggle Mode")
         paint_button(switch, next(x), next(y))
-        switch.stateChanged.connect(self.toggle_mode)
+        switch.stateChanged.connect(self.set_mode)
+        self.cell_mode_widget = switch
 
     def __init__(
         self,
@@ -398,7 +398,7 @@ class Board(QGraphicsScene):
         self.data = None
         self.settings = settings
 
-        self.paint_message_box()
+        # self.paint_message_box()
         self.paint_menu()
         # TODO: hint should be tracked so it can be handled better
         # hint should be printed in paint_board instead. I think?
@@ -409,19 +409,22 @@ class Board(QGraphicsScene):
         # I can either keep a hintbox at all times and toggle its visibility based on if there is a hint
         # Or I can delete it when there isn't and make a new one.
 
-        self.paint_buttons()
-
+        self.buttons_painted = False
+        
         # True if cell mode False if candidates mode
         self.cell_mode = True
 
-    def toggle_mode(self):
-        self.cell_mode = not self.cell_mode
+    def set_mode(self):
+        # self.cell_mode = not self.cell_mode
+        self.cell_mode=not self.cell_mode_widget.isChecked()
         # TODO: display this somewhere
 
     def send_message(self, text: str, timeout: float):
         """
         Show a message in the error box
         """
+        return
+
         print(text)
         self.puzzle_message_box.setText(text)
         # await asyncio.sleep(timeout)
@@ -484,6 +487,10 @@ class Board(QGraphicsScene):
             # TODO: Use QGraphicsItemGroup instead?
             self.cells[-1].append(cell)
 
+        if not self.buttons_painted:
+            self.paint_buttons()
+            self.buttons_painted = True
+
         pen = QPen(self.settings.colours.big_border, self.settings.sizes.big_border)
         for i in range(10):
             width = self.settings.sizes.cell * 9
@@ -512,6 +519,10 @@ class Board(QGraphicsScene):
                     else QPen(self.settings.colours.border, self.settings.sizes.border)
                 ),
             )
+
+        # TODO: Avoid repainting stuff
+        # This will increase every time a new puzzle is selected
+        print(len(self.items()))
 
     def update_candidates(self):
         """
@@ -644,7 +655,7 @@ class Board(QGraphicsScene):
         else:
             self.data.add_candidates(delta_candidates)
 
-        self.reload()
+        self.paint_board()
 
     def auto_note(self):
         """
@@ -657,6 +668,7 @@ class Board(QGraphicsScene):
         """
         Apply the current hint to the board
         """
+        print("aply")
         # TODO: somewhere I need to check if the action is actually valid
         # This should always be the case but a failsafe is worth adding
         try:
@@ -671,7 +683,7 @@ class Board(QGraphicsScene):
         self.hint = None
 
         # TODO: method to paint only changes
-        # self.paint_board()
+        self.paint_board()
 
     @_auto_note
     def apply_hint(self):
@@ -729,7 +741,10 @@ class Board(QGraphicsScene):
                     break
 
             assert value is not None
-            self.add_cell(value)
+            if self.cell_mode:
+                self.add_cell(value)
+            else:
+                self.toggle_candidate(value)
 
         elif seq in binds.remove:
             # FIXME: doesn't persist after auto normal
@@ -745,7 +760,7 @@ class Board(QGraphicsScene):
         elif seq in binds.reset:
             self.reset()
         elif seq in binds.toggle_mode:
-            self.toggle_mode()
+            self.set_mode()
 
 
 def main():
