@@ -9,9 +9,12 @@ from PySide6.QtWidgets import (
     QListWidget,
     QVBoxLayout,
     QWidget,
+    QPushButton,
+    QCheckBox,
+    QVBoxLayout,
 )
 from PySide6.QtGui import QKeySequence, QPainter, QPen, QBrush, QFont, QColor
-from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal
+from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtQuick import (
     QQuickItem,
@@ -335,6 +338,56 @@ class Board(QGraphicsScene):
         # TODO: chose this position based on sizes
         self.message_proxy.setPos(-300, 150)
 
+    def paint_buttons(self):
+        def paint_button(widget, x, y):
+            proxy = QGraphicsProxyWidget()
+            proxy.setWidget(widget)
+            proxy.setPos(x, y)
+            self.addItem(proxy)
+            return proxy
+
+        n = 5  # Number of buttons / switches
+        x = iter(range(35, (n + 1) * 100, 100))  # Set start x & spacing
+        y = iter([-80] * n)
+
+        buttons = [
+            {
+                "x": next(x),
+                "y": next(y),
+                "widget": QPushButton("Auto Note"),
+                "func": self.auto_note,
+            },
+            {
+                "x": next(x),
+                "y": next(y),
+                "widget": QPushButton("Hint"),
+                "func": self.show_hint,
+            },
+            {
+                "x": next(x),
+                "y": next(y),
+                "widget": QPushButton("Solve"),
+                "func": self.solve,
+            },
+            {
+                "x": next(x),
+                "y": next(y),
+                "widget": QPushButton("Reset"),
+                # reset will delete the button while signal is being executed
+                # This would cause a seg fault. Timer lets signal finish before running
+                # reset method on next event loop cycle.
+                "func": lambda: QTimer.singleShot(0, self.reset),
+            },
+        ]
+
+        for value in buttons:
+            paint_button(value["widget"], value["x"], value["y"])
+            value["widget"].clicked.connect(value["func"])
+
+        switch = QCheckBox("Toggle Mode")
+        paint_button(switch, next(x), next(y))
+        switch.stateChanged.connect(self.toggle_mode)
+
     def __init__(
         self,
         # data: BoardData,
@@ -355,6 +408,8 @@ class Board(QGraphicsScene):
         # Also needs proper highlighting
         # I can either keep a hintbox at all times and toggle its visibility based on if there is a hint
         # Or I can delete it when there isn't and make a new one.
+
+        self.paint_buttons()
 
         # True if cell mode False if candidates mode
         self.cell_mode = True
@@ -633,19 +688,25 @@ class Board(QGraphicsScene):
         self.update_candidates()
 
     def reload(self):
+        # HACK: ideally only stuff that actually needs redrawing would be drawn
+
         # Delete everything currently being rendered and redraw it
         self.clear()
         self.set_puzzle(self.puzzle)
 
         # Menu not painted with set_puzzle
         self.paint_menu()
+        self.paint_buttons()
 
     def reset(self):
         """
         Resets the puzzle to its initial state
         """
+        print("a")
         self.puzzle.reset()
+        print("b")
         self.reload()
+        print("c")
 
     def keyPressEvent(self, event) -> None:
         if self.data is None:
