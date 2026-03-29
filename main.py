@@ -655,13 +655,16 @@ class Board(QGraphicsScene):
         else:
             self.data.add_candidates(delta_candidates)
 
-        self.paint_board()
+        # self.paint_board()
+        self.update_candidates()
 
     def auto_note(self):
         """
         Remove candidates if they are adjacent to a cell with their value.
         """
         self.data.auto_normal()
+        print("aosdfi")
+        print(self.data.candidates)
         self.update_candidates()
 
     def apply_action(self, action: Action):
