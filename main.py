@@ -423,6 +423,14 @@ class Board(QGraphicsScene):
         """
         Show a message in the error box
         """
+        # TODO: HintBox should inherit from base class
+        # This will probably just use that base or maybe different child
+        # Just need a box to show some text that can disapear on click and maybe on timer
+
+        # hint = HintBox(technique, self.settings)
+        # hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
+        # self.hint = hint
+        # self.addItem(hint)
         return
 
         print(text)
