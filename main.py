@@ -169,7 +169,7 @@ class HintBox(QGraphicsItem):
     def split_text(
         text: str,
         line_length: int,
-        delimiters: tuple[str, ...] = ("\n", r"\.", r"\)"),
+        delimiters: tuple[str, ...] = ("\n", r"\.", r"\)", " "),
         truncation_symbol: str = "-",
     ) -> str:
         """
@@ -200,6 +200,7 @@ class HintBox(QGraphicsItem):
         lines = []
 
         while remaining:
+            truncate = False
             if len(remaining) <= line_length:
                 lines.append(remaining)
                 break
@@ -216,8 +217,9 @@ class HintBox(QGraphicsItem):
                     break
             if split_pos is None:
                 split_pos = line_length
+                truncate = True
 
-            lines.append(remaining[:split_pos])
+            lines.append(remaining[:split_pos] + truncate * truncation_symbol)
             remaining = remaining[split_pos:].lstrip()
 
         return "\n".join(lines)
@@ -410,13 +412,13 @@ class Board(QGraphicsScene):
         # Or I can delete it when there isn't and make a new one.
 
         self.buttons_painted = False
-        
+
         # True if cell mode False if candidates mode
         self.cell_mode = True
 
     def set_mode(self):
         # self.cell_mode = not self.cell_mode
-        self.cell_mode=not self.cell_mode_widget.isChecked()
+        self.cell_mode = not self.cell_mode_widget.isChecked()
         # TODO: display this somewhere
 
     def send_message(self, text: str, timeout: float):
