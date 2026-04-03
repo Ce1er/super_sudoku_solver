@@ -26,7 +26,7 @@ import sys
 import logging
 
 from functools import wraps, singledispatchmethod, partial
-from itertools import product
+from itertools import product, count,repeat
 from random import choice
 
 import np_candidates as npc
@@ -197,7 +197,7 @@ class Cell(QGraphicsItem):
     #     self.update(self.boundingRect())
 
 
-# This class is more of a QGraphicsItem but QObject is needed for Signal
+# This class is mostly a QGraphicsItem, QObject is only needed for Signal
 class HintBox(QObject, QGraphicsItem):
     # Coords or Coord of cells to highlight
     highlight_cells = Signal(object)
@@ -221,6 +221,7 @@ class HintBox(QObject, QGraphicsItem):
 
         self.highlight_cells_calls = []
 
+        # TODO: move to settings
         colours = {1: "#a50510", 2: "#aabb00", 3: "#0000bb"}
         html = "<b>" + self.technique.technique + "</b><br>"
         for message_part in self.technique.message_parts:
@@ -243,8 +244,6 @@ class HintBox(QObject, QGraphicsItem):
                 else:
                     html += message_part.text
 
-            # Doesn't matter if message_part already contains trailing/leading space as html collapses
-            # consecutive spaces. Although ideally they shouldn't have these anyway.
             html += " "
             # TODO: check if resulting html has trailing space after it is loaded
 
@@ -381,9 +380,8 @@ class Board(QGraphicsScene):
             proxy.setPos(x, y)
             self.addItem(proxy)
 
-        n = 5  # Number of buttons / switches
-        x = iter(range(35, (n + 1) * 100, 100))  # Set start x & x spacing
-        y = iter([-80] * n)
+        x = count(35, 100) # Set start x & x spacing
+        y = repeat(-80)
 
         buttons = [
             {

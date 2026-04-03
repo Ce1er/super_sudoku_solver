@@ -44,12 +44,10 @@ class _TechniqueInstance(abc.ABC):
         return self.NAME
 
     @abc.abstractmethod
-    def _generate_action(self) -> Action:
-        pass
+    def _generate_action(self) -> Action: ...
 
     @abc.abstractmethod
-    def _generate_message(self) -> list[MessagePart]:
-        pass
+    def _generate_message(self) -> list[MessagePart]: ...
 
     @property
     def technique(self) -> Technique:
@@ -103,31 +101,12 @@ class _TechniqueFinder(abc.ABC):
         self._guesses = guesses
         self._cells = cells
 
-        # They should never be mutated
+        # Subclasses of this find techniques, they don't apply them
+        # So these shouldn't change
         self._candidates.flags.writeable = False
         self._clues.flags.writeable = False
         self._guesses.flags.writeable = False
         self._cells.flags.writeable = False
-
-    # @property
-    # def candidates(self):
-    #     return self._candidates
-    #
-    # @property
-    # def clues(self):
-    #     return self._clues
-    #
-    # @property
-    # def guesses(self):
-    #     return self._guesses
-    #
-    # @property
-    # def cells(self):
-    #     return self._cells
-    #
-    # @property
-    # def name(self):
-    #     return self.NAME
 
     @abc.abstractmethod
     def _find(self) -> Generator[_TechniqueInstance]: ...
