@@ -103,10 +103,10 @@ class Cell(QGraphicsItem):
         self._highlight_lock = False
 
     @singledispatchmethod
-    def highlight_background(self, arg):
+    def highlight_background(self, colour):
         raise NotImplementedError("Could not interpret colour")
 
-    # Handle differently based on arg type
+    # Handle differently based on type of colour
     @highlight_background.register
     def _(self, colour: QColor):
         if self._highlight_lock:
@@ -149,6 +149,7 @@ class Cell(QGraphicsItem):
         painter.setPen(pen)
         painter.drawRect(self.boundingRect())
 
+        # Paint value
         if self.value != -1:
             if self.clue:
                 painter.setPen(self.clue_pen)
@@ -159,6 +160,7 @@ class Cell(QGraphicsItem):
                 painter.setFont(QFont("Arial", int(self.size * 0.5)))
                 painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self.value))
 
+        # Paint candidates
         elif np.count_nonzero(self.candidates) != 0:
             painter.setFont(QFont("Arial", int(self.size * 0.2)))
             width = self.size / 3
@@ -340,6 +342,18 @@ class Board(QGraphicsScene):
             func(self, *args, **kwargs)
             if self.do_auto_note:
                 self.auto_note()
+
+        return wrapper
+
+    def _update_candidates(func: Callable[[Self], None]) -> Callable[[Self], None]:
+        """
+        Decorator for methods that modify cell values and/or candidates
+        """
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            func(self, *args, **kwargs)
+            self.update_candidates()
 
         return wrapper
 
@@ -575,6 +589,7 @@ class Board(QGraphicsScene):
         # Techniques should be recalculated if candidates change
         self.techniques = None
 
+        # Set value and candidates again for every cell
         for row, col in product(range(9), repeat=2):
             self.cells[row][col].set_candidates((self.data.candidates[:, row, col]))
             self.cells[row][col].set_value(self.data.cells[row, col])
@@ -584,9 +599,10 @@ class Board(QGraphicsScene):
 
         self.selected_cell = cell
         if self.selected_cell:
-            print("foo")
+            # Highlight to show cell selected
             self.selected_cell.highlight_background(self.settings.colours.selected)
 
+            # Highlight to show adjacent cells
             for coord in npc.argwhere(
                 npc.adjacent(np.array([self.selected_cell.row, self.selected_cell.col]))
             ):
@@ -595,9 +611,12 @@ class Board(QGraphicsScene):
                 if cell != self.selected_cell:
                     cell.highlight_background(self.settings.colours.adjacent)
 
-    def highlight_cells(self, args: tuple[Coords, str], *, lock=False):
+    def highlight_cells(self, args: tuple[Coords, str|QColor], *, lock=False):
         """
         Args:
+            args: 
+                index 0: coords of cells to highlight
+                index 1: colour to set cells to
             lock: if True will not allow cell to be highlighted
                 again until lock is removed.
         """
@@ -628,12 +647,6 @@ class Board(QGraphicsScene):
                     self.data.guesses,
                 )
                 yield from x.find()
-
-        # FIXME:the hint system can't see guesses. Only initial clues. I think the candidates also aren't being updated properly for guesses.
-
-        # TODO: check action is non-null
-
-        # TODO: a way of getting other ones
 
         valid = True
         if self.techniques is not None:
@@ -710,22 +723,6 @@ class Board(QGraphicsScene):
         self.addItem(hint)
         print("pao")
 
-        # action: Action = technique.action
-        # cells = action.cells
-        # candidates = action.candidates
-        #
-        # for cell in np.argwhere(cells):
-        #     print(cell)
-        #
-        # print(self.cells)
-        # for candidate in np.argwhere(candidates):
-        #     num, row, col = candidate
-        #     print(num, row, col)
-        #     print(type(row))
-        #
-        #     # TODO: maybe make self.cells a numpy array of objects. Got so confused here why np style indexing didn't work.
-        #     self.cells[(row)][(col)].highlight_candidates([num], "a50510")
-
     def remove_cell(self):
         """
         Remove the value for the currently selected cell.
@@ -765,6 +762,7 @@ class Board(QGraphicsScene):
 
         self.selected_cell.set_value(value)
 
+    @_update_candidates
     def toggle_candidate(self, value: int):
         """
         Toggles whether value is a candidate at focused cell
@@ -792,9 +790,7 @@ class Board(QGraphicsScene):
         else:
             self.data.add_candidates(delta_candidates)
 
-        # self.paint_board()
-        self.update_candidates()
-
+    @_update_candidates
     def auto_note(self):
         """
         Remove candidates if they are adjacent to a cell with their value.
@@ -802,8 +798,8 @@ class Board(QGraphicsScene):
         self.data.auto_normal()
         print("aosdfi")
         print(self.data.candidates)
-        self.update_candidates()
 
+    @_update_candidates
     def apply_action(self, action: Action):
         """
         Apply the current hint to the board
@@ -826,7 +822,6 @@ class Board(QGraphicsScene):
         self.clear_highlight()
         if self.do_auto_note:
             self.auto_note()
-        self.update_candidates()
 
     @_auto_note
     def apply_hint(self):
@@ -835,6 +830,7 @@ class Board(QGraphicsScene):
 
         self.apply_action(self.hint.technique.action)
 
+    @_update_candidates
     def solve(self):
         """
         Solve the puzzle automatically
@@ -846,7 +842,6 @@ class Board(QGraphicsScene):
         self.clear_highlight()
 
         self.data.auto_solve()
-        self.update_candidates()
 
     def reload(self):
         self.set_puzzle(self.puzzle)
