@@ -844,6 +844,8 @@ class Board(QGraphicsScene):
         if seq in number_keys:
             self.clear_highlight()
 
+            # TODO: maybe move somewhere else
+            # Like as a decorator to add_cell and toggle_candidate
             if self.hint is not None:
                 self.removeItem(self.hint)
                 del self.hint
@@ -876,6 +878,7 @@ class Board(QGraphicsScene):
             self.reset()
         elif seq in binds.toggle_mode:
             self.set_mode()
+        # If it isn't a recognised keybind do nothing
 
 
 def main():
