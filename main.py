@@ -227,7 +227,10 @@ class HintBox(QObject, QGraphicsItem):
                         (message_part.coords, colours[message_part.highlight])
                     )
             else:
-                html += message_part.text
+                if isinstance(message_part, human_solver.MessageNum):
+                    html += "<b>"+message_part.text + "</b>"
+                else:
+                    html += message_part.text
 
             # Doesn't matter if message_part already contains trailing/leading space as html collapses
             # consecutive spaces. Although ideally they shouldn't have these anyway.
