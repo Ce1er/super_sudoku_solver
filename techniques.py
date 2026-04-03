@@ -839,11 +839,11 @@ class _SkyscraperInstance(_TechniqueInstance):
             MessageText(
                 f"because they are the only {self._num + 1} in their {self._adjacency} except these"
             ),
-            MessageCoords(np.array([self._cell3, self._cell4]), highlight=1),
+            MessageCoords(np.array([self._cell3, self._cell4]), highlight=2),
             MessageText(f"which share a {self._other_adjacency}. That means"),
             # MessageCandidates(removed_candidates),
             MessageText(
-                f"which see both the cells that do not share a {self._other_adjacency} can't be {self._num + 1}"
+                f"which see both the cells that do not share a {self._other_adjacency} can't be {self._num + 1}."
             ),
         ]
 

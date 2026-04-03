@@ -42,10 +42,11 @@ import human_solver
 from human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
 from settings import settings, Settings
 
-from custom_types import  Candidates, Coords
+from custom_types import Candidates, Coords
 from custom_types import Cell as CellT
 
 from utils import get_first
+
 
 # TODO: pass in font so it is customisable
 # Also all these colours and sizes and stuff is getting excessive
@@ -235,7 +236,9 @@ class HintBox(QObject, QGraphicsItem):
                         (message_part.coords, colours[message_part.highlight])
                     )
             else:
-                if isinstance(message_part, human_solver.MessageNum):
+                if isinstance(message_part, human_solver.MessageNum) or isinstance(
+                    message_part, human_solver.MessageNums
+                ):
                     html += "<b>" + message_part.text + "</b>"
                 else:
                     html += message_part.text
