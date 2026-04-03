@@ -203,7 +203,7 @@ class Cell(QGraphicsItem):
 
 
 # This class is mostly a QGraphicsItem, QObject is only needed for Signal
-class HintBox(QObject, QGraphicsItem):
+class HintBox(QGraphicsItem,QObject):
     # Coords or Coord of cells to highlight
     highlight_cells = Signal(object)
     highlight_candidates = Signal(object)
@@ -213,7 +213,7 @@ class HintBox(QObject, QGraphicsItem):
         technique: Technique,
         settings: Settings,
     ):  # TODO: take colours and stuff as well. Probably should implement Action before trying to get cell highlighting working but the message box part can be done at any time.
-        # super().__init__()
+
         QObject.__init__(self)
         QGraphicsItem.__init__(self)
 
@@ -510,6 +510,7 @@ class Board(QGraphicsScene):
             raise ValueError("Board has no solution")
         self.solution = solution
 
+        self.removeItem(self.hint)
         del self.hint
         self.hint = None
 
