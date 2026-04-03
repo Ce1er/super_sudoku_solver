@@ -637,12 +637,20 @@ class Board(QGraphicsScene):
 
         # TODO: a way of getting other ones
 
+        valid = True
         if self.techniques is not None:
             try:
                 technique = next(self.techniques)
             except StopIteration:
                 technique = None
+
+                # If there isn't a technique it is worth trying get_techniques again
+                # In case all techniques have been seen this can wrap around to start
+                valid = False
         else:
+            valid = False
+
+        if not valid:
             self.techniques = get_techniques()
             try:
                 technique = next(self.techniques)
