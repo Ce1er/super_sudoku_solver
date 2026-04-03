@@ -26,8 +26,9 @@ import sys
 import logging
 
 from functools import wraps, singledispatchmethod, partial
-from itertools import product, count,repeat
+from itertools import product, count, repeat
 from random import choice
+from html import escape
 
 import np_candidates as npc
 import numpy as np
@@ -104,6 +105,11 @@ class Cell(QGraphicsItem):
 
     @singledispatchmethod
     def highlight_background(self, colour):
+        """
+        Change the background colour of the cell
+        Args:
+            colour: QColor or str that can be interpreted by QColor. None can be used to reset to default.
+        """
         raise NotImplementedError("Could not interpret colour")
 
     # Handle differently based on type of colour
@@ -121,7 +127,6 @@ class Cell(QGraphicsItem):
         if self._highlight_lock:
             return
 
-        print("hi")
         self.highlighted = True
         self.background_colour = QColor(colour)
         self.update()
@@ -223,10 +228,10 @@ class HintBox(QObject, QGraphicsItem):
 
         # TODO: move to settings
         colours = {1: "#a50510", 2: "#aabb00", 3: "#0000bb"}
-        html = "<b>" + self.technique.technique + "</b><br>"
+        html = "<b>" + escape(self.technique.technique) + "</b><br>"
         for message_part in self.technique.message_parts:
             if message_part.highlight is not None:
-                html += f'<span style="background-color: {colours[message_part.highlight]};"><b>{message_part.text}</b></span>'
+                html += f'<span style="background-color: {colours[message_part.highlight]};"><b>{escape(message_part.text)}</b></span>'
 
                 if isinstance(message_part, human_solver.MessageCoord):
                     self.highlight_cells_calls.append(
@@ -240,9 +245,9 @@ class HintBox(QObject, QGraphicsItem):
                 if isinstance(message_part, human_solver.MessageNum) or isinstance(
                     message_part, human_solver.MessageNums
                 ):
-                    html += "<b>" + message_part.text + "</b>"
+                    html += "<b>" + escape(message_part.text) + "</b>"
                 else:
-                    html += message_part.text
+                    html += escape(message_part.text)
 
             html += " "
             # TODO: check if resulting html has trailing space after it is loaded
@@ -380,7 +385,7 @@ class Board(QGraphicsScene):
             proxy.setPos(x, y)
             self.addItem(proxy)
 
-        x = count(35, 100) # Set start x & x spacing
+        x = count(35, 100)  # Set start x & x spacing
         y = repeat(-80)
 
         buttons = [
@@ -413,9 +418,9 @@ class Board(QGraphicsScene):
             },
         ]
 
-        for value in buttons:
-            paint_button(value["widget"], value["x"], value["y"])
-            value["widget"].clicked.connect(value["func"])
+        for button in buttons:
+            paint_button(button["widget"], button["x"], button["y"])
+            button["widget"].clicked.connect(button["func"])
 
         switch = QCheckBox("Toggle Mode")
         paint_button(switch, next(x), next(y))
@@ -547,33 +552,30 @@ class Board(QGraphicsScene):
             self.paint_buttons()
             self.buttons_painted = True
 
-        pen = QPen(self.settings.colours.big_border, self.settings.sizes.big_border)
+        big_pen = QPen(self.settings.colours.big_border, self.settings.sizes.big_border)
+        normal_pen = QPen(self.settings.colours.border, self.settings.sizes.border)
+        width = self.settings.sizes.cell * 9
+
+        # Draw cell borders
         for i in range(10):
-            width = self.settings.sizes.cell * 9
+            # Vertical
             x = i * self.settings.sizes.cell
             self.addLine(
                 x,
                 0,
                 x,
                 width,
-                (
-                    pen
-                    if i % 3 == 0
-                    else QPen(self.settings.colours.border, self.settings.sizes.border)
-                ),
+                (big_pen if i % 3 == 0 else normal_pen),
             )
 
+            # Horizontal
             y = i * self.settings.sizes.cell
             self.addLine(
                 0,
                 y,
                 width,
                 y,
-                (
-                    pen
-                    if i % 3 == 0
-                    else QPen(self.settings.colours.border, self.settings.sizes.border)
-                ),
+                (big_pen if i % 3 == 0 else normal_pen),
             )
 
         # TODO: Avoid repainting stuff
@@ -609,12 +611,11 @@ class Board(QGraphicsScene):
                 if cell != self.selected_cell:
                     cell.highlight_background(self.settings.colours.adjacent)
 
-    def highlight_cells(self, args: tuple[Coords, str|QColor], *, lock=False):
+    def highlight_cells(self, args: tuple[Coords, str | QColor], *, lock=False):
         """
         Args:
-            args: 
-                index 0: coords of cells to highlight
-                index 1: colour to set cells to
+            args:
+                (coords of cells to highlight, colour to set cells to)
             lock: if True will not allow cell to be highlighted
                 again until lock is removed.
         """

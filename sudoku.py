@@ -218,8 +218,7 @@ class Board:
 
         x = 0
         y = 0
-        # Number of rows = clues + 9 * (81-clues)
-        # for column, row, value in self.cells.get_cells(include_empty=True):
+        # Number of rows = clues + 9 * (81 - clues)
         cells = self._puzzle.cells
         for column, row in np.argwhere(cells > -2):
             value = cells[column, row]
@@ -273,9 +272,6 @@ class Board:
 
     @property
     def solution(self):
-        # PERF:
-        # Could store solution as an attribute but this takes at most like 10ms
-        # Might still be worth it, need to check
         first = True
         solution = None
         for s in self.solve():
