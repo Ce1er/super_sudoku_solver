@@ -76,11 +76,16 @@ class MessageCoord(MessagePart):
             coord: 0-based coordinate. size 2 and can be any ndim as long as it can be reshaped to (2,).
             highlight: highlight group
         """
+        self._coord = coord
         coord = np.copy(coord)
         self.highlight = highlight
         coord.reshape(2)
         coord += 1
         self.text = "Cell ({}, {})".format(*coord)
+
+    @property
+    def coord(self):
+        return self._coord
 
 
 class MessageCoords(MessagePart):
@@ -97,6 +102,7 @@ class MessageCoords(MessagePart):
             highlight: highlight group
 
         """
+        self._coords = coords
         coords = np.copy(coords)
         self.highlight = highlight
         tmp = "Cells"
@@ -104,6 +110,10 @@ class MessageCoords(MessagePart):
         for coord in coords:
             tmp += " ({}, {})".format(*coord.reshape(2))
         self.text = tmp
+
+    @property
+    def coords(self):
+        return self._coords
 
 
 class MessageNum(MessagePart):
@@ -245,10 +255,13 @@ class Technique:
             action: The action to perform. Which cells to add and which candidates to remove.
         """
         self._technique: str = technique
+        self._message = message
 
         # TODO: highlights are ignored rewrite in a way that actually uses them.
         # Will probably keep message as an attribute. The string version could probably be a functools.cached_property
-        self._message: str = reduce(lambda prev, next: prev + next._text, message, "")
+        self._raw_message: str = reduce(
+            lambda prev, next: prev + next._text, message, ""
+        )
         self._action: Action = action
 
     @property
@@ -257,6 +270,10 @@ class Technique:
 
     @property
     def message(self) -> str:
+        return self._raw_message
+
+    @property
+    def message_parts(self) -> list[T]:
         return self._message
 
     @property

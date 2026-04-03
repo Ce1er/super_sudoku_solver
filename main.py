@@ -1,3 +1,4 @@
+from types import NoneType
 from PySide6.QtWidgets import (
     QApplication,
     QGraphicsProxyWidget,
@@ -13,8 +14,16 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QVBoxLayout,
 )
-from PySide6.QtGui import QKeySequence, QPainter, QPen, QBrush, QFont, QColor
-from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer
+from PySide6.QtGui import (
+    QKeySequence,
+    QPainter,
+    QPen,
+    QBrush,
+    QFont,
+    QColor,
+    QTextDocument,
+)
+from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer, QObject
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtQuick import (
     QQuickItem,
@@ -22,12 +31,14 @@ from PySide6.QtQuick import (
 import sys
 import numpy as np
 import numpy.typing as npt
+import np_candidates as npc
 from typing import Callable, Optional, Self
 from itertools import product
-from functools import wraps
+from functools import wraps, singledispatchmethod
 import re
 
 # The latter is for type hints. It should never be used directly and I should enforce this.
+import human_solver
 from settings import settings, Settings
 
 from sudoku import Board as BoardData
@@ -40,7 +51,7 @@ import techniques
 
 from save_manager import Puzzles
 
-from custom_types import Coord, Candidates, Cells, Candidates, CellCandidates
+from custom_types import Coord, Candidates, Cells, Candidates, CellCandidates, Coords
 from custom_types import Cell as CellT
 
 from utils import text_hints
@@ -68,6 +79,7 @@ class Cell(QGraphicsItem):
             candidates: 1d boolean array where candidates[n] == True means number n+1 can be in cell
         """
         super().__init__()
+        self.settings = settings
         self.row: int = coord[0]
         self.col: int = coord[1]
         self.value: int = -1 if coord[2] == -1 else coord[2] + 1
@@ -96,6 +108,25 @@ class Cell(QGraphicsItem):
         self.setAcceptedMouseButtons(Qt.LeftButton)
         self.highlighted = False
 
+    @singledispatchmethod
+    def highlight_background(self, arg):
+        raise NotImplementedError("Could not interpret colour")
+
+    # Handle differently based on arg type
+    @highlight_background.register
+    def _(self, colour: QColor):
+        self.background_colour = colour
+
+    @highlight_background.register
+    def _(self, colour: str):
+        print("hi")
+        self.background_colour = QColor(colour)
+        self.update()
+
+    @highlight_background.register
+    def _(self, _: None):
+        self.background_colour = self.settings.colours.background
+
     def highlight_candidates(self, candidates: list[int], colour: QColor) -> None:
         for candidate in candidates:
             self.candidate_pens[candidate] = QPen(colour)
@@ -104,15 +135,7 @@ class Cell(QGraphicsItem):
         return QRectF(0, 0, self.size, self.size)
 
     def paint(self, painter, option, widget):
-        # TODO: IMPORTANT
-        # Make this work with highlights
-        if self.highlight:
-            painter.fillRect(
-                self.boundingRect(),
-                QBrush(self.highlight_colour),
-            )
-        else:
-            painter.fillRect(self.boundingRect(), QBrush(settings.colours.background))
+        painter.fillRect(self.boundingRect(), QBrush(self.background_colour))
 
         pen = QPen(self.border_colour, self.border_size)
         painter.setPen(pen)
@@ -164,72 +187,20 @@ class Cell(QGraphicsItem):
         self.update(self.boundingRect())
 
 
-class HintBox(QGraphicsItem):
-    @staticmethod
-    def split_text(
-        text: str,
-        line_length: int,
-        delimiters: tuple[str, ...] = ("\n", r"\.", r"\)", " "),
-        truncation_symbol: str = "-",
-    ) -> str:
-        """
-        Split text into multiple lines. Keeping line length below line_length.
-
-        Try to avoid text containing words longer than line_length (where a word is a substring split by any delimiter)
-        as this will lead to that word being forced to be split over multiple lines.
-        Args:
-            text: the text to be split
-            line_length: the maximum line length. This is a hard limit and will not be surpassed.
-                "\n" is not counted for line length.
-            delimiters: a list of acceptable regex for delimiters to split text on. In order of priority.
-                Delimiter will be kept at the line it is on originally.
-            truncation_symbol: the symbol to use at the end of the line if it cannot be split by a delimiter
-        Returns:
-            text with no lines longer than line_length
-        """
-        # TODO: support truncation properly
-        # add tests
-        if line_length < 1 + len(truncation_symbol):
-            raise ValueError(
-                "line_length must be at least 1 longer than the length of truncation_symbol"
-            )
-            # Otherwise lines would not be able to contain any actual content
-
-        patterns = [re.compile(p) for p in delimiters]
-        remaining = text
-        lines = []
-
-        while remaining:
-            truncate = False
-            if len(remaining) <= line_length:
-                lines.append(remaining)
-                break
-
-            segment = remaining[:line_length]
-            split_pos = None
-
-            for pattern in patterns:
-                last = None
-                for m in pattern.finditer(segment):
-                    last = m.end()
-                if last:
-                    split_pos = last
-                    break
-            if split_pos is None:
-                split_pos = line_length
-                truncate = True
-
-            lines.append(remaining[:split_pos] + truncate * truncation_symbol)
-            remaining = remaining[split_pos:].lstrip()
-
-        return "\n".join(lines)
+# This class is more of a QGraphicsItem but QObject is needed for Signal
+class HintBox(QObject, QGraphicsItem):
+    # Coords or Coord of cells to highlight
+    highlight_cells = Signal(object)
+    highlight_candidates = Signal(object)
 
     def __init__(
         self,
         technique: Technique,
         settings: Settings,
     ):  # TODO: take colours and stuff as well. Probably should implement Action before trying to get cell highlighting working but the message box part can be done at any time.
-        super().__init__()
+        # super().__init__()
+        QObject.__init__(self)
+        QGraphicsItem.__init__(self)
 
         # TODO: Width and height set based on text length.
         # Also need to handle multiline text.
@@ -237,15 +208,41 @@ class HintBox(QGraphicsItem):
         # Maybe look at redbot formatting pagify
 
         self.technique = technique
-        self.text = self.split_text(technique.message, 30)
 
+        self.highlight_cells_calls = []
+
+        colours = {1: "#a50510", 2: "#aabb00", 3: "#0000bb"}
+        html = "<b>" + self.technique.technique + "</b><br>"
+        for message_part in self.technique.message_parts:
+            if message_part.highlight is not None:
+                html += f'<span style="background-color: {colours[message_part.highlight]};"><b>{message_part.text}</b></span>'
+
+                if isinstance(message_part, human_solver.MessageCoord):
+                    self.highlight_cells_calls.append(
+                        (message_part.coord, colours[message_part.highlight])
+                    )
+                elif isinstance(message_part, human_solver.MessageCoords):
+                    self.highlight_cells_calls.append(
+                        (message_part.coords, colours[message_part.highlight])
+                    )
+            else:
+                html += message_part.text
+
+        self.width = 200
+        self.text = QTextDocument()
+        self.text.setHtml(html)
+        self.text.setTextWidth(self.width)
         self.settings = settings
+        self.height = self.text.size().height()
 
         self.text_size = settings.sizes.text
-        self.width = max(map(len, self.text.split("\n"))) * settings.sizes.text
-        self.height = settings.sizes.text * 2 * (1 + self.text.count("\n"))
 
         print(self, self.text, self.width, self.height)
+
+    def send_highlights(self):
+        for call in self.highlight_cells_calls:
+            print(call)
+            self.highlight_cells.emit(call)
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -258,7 +255,12 @@ class HintBox(QGraphicsItem):
 
         painter.setFont(QFont("Arial", self.text_size))
         # TODO: handle special text highlighting and stuff.
-        painter.drawText(self.boundingRect(), Qt.AlignCenter, self.text)
+        # painter.drawText(self.boundingRect(), Qt.AlignCenter, self.text)
+
+        painter.save()
+        # painter.translate(20,40)
+        self.text.drawContents(painter)
+        painter.restore
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
         """
@@ -399,6 +401,7 @@ class Board(QGraphicsScene):
 
         self.data = None
         self.settings = settings
+        self.hint=None
 
         # self.paint_message_box()
         self.paint_menu()
@@ -415,6 +418,8 @@ class Board(QGraphicsScene):
 
         # True if cell mode False if candidates mode
         self.cell_mode = True
+
+        self.board_painted = False
 
     def set_mode(self):
         # self.cell_mode = not self.cell_mode
@@ -451,7 +456,7 @@ class Board(QGraphicsScene):
         self.data = BoardData(puzzle)
 
         self.selected_cell = None
-        self.cells: list[list[Cell]] = []
+        # self.cells: list[list[Cell]] = []
 
         self.do_auto_note = self.settings.gameplay.auto_note
 
@@ -468,11 +473,20 @@ class Board(QGraphicsScene):
             raise ValueError("Board has no solution")
         self.solution = solution
 
+        del self.hint
         self.hint = None
-        self.paint_board()
+
+        if self.board_painted:
+            self.update_candidates()
+            self.clear_highlight()
+        else:
+            self.paint_board()
+            self.board_painted=True
 
     def paint_board(self):
+        print("painting")
         # print("pb", text_hints(self.data.candidates))
+        self.cells=[]
         x = -1
         for row, col in product(range(9), repeat=2):
             if row > x:
@@ -549,6 +563,20 @@ class Board(QGraphicsScene):
         self.selected_cell = cell
         cell.set_highlighted(True)
 
+    def highlight_cells(self, args: tuple[Coords, str]):
+        cells = args[0]
+        colour = args[1]
+        coords = npc.normalise_coords(cells)
+        for coord in coords:
+            row, col = coord
+            print("foo")
+            self.cells[row][col].highlight_background(colour)
+
+    def clear_highlight(self):
+        for row in self.cells:
+            for cell in row:
+                cell.highlight_background(None)
+
     def show_hint(self):
         def get_techniques():
             for technique in techniques.TECHNIQUES:
@@ -581,23 +609,27 @@ class Board(QGraphicsScene):
         hint = HintBox(technique, self.settings)
         hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
         self.hint = hint
+        print("poo")
+        self.hint.highlight_cells.connect(self.highlight_cells)
+        self.hint.send_highlights()
         self.addItem(hint)
+        print("pao")
 
-        action: Action = technique.action
-        cells = action.cells
-        candidates = action.candidates
-
-        for cell in np.argwhere(cells):
-            print(cell)
-
-        print(self.cells)
-        for candidate in np.argwhere(candidates):
-            num, row, col = candidate
-            print(num, row, col)
-            print(type(row))
-
-            # TODO: maybe make self.cells a numpy array of objects. Got so confused here why np style indexing didn't work.
-            self.cells[(row)][(col)].highlight_candidates([num], "a50510")
+        # action: Action = technique.action
+        # cells = action.cells
+        # candidates = action.candidates
+        #
+        # for cell in np.argwhere(cells):
+        #     print(cell)
+        #
+        # print(self.cells)
+        # for candidate in np.argwhere(candidates):
+        #     num, row, col = candidate
+        #     print(num, row, col)
+        #     print(type(row))
+        #
+        #     # TODO: maybe make self.cells a numpy array of objects. Got so confused here why np style indexing didn't work.
+        #     self.cells[(row)][(col)].highlight_candidates([num], "a50510")
 
     def remove_cell(self):
         """
@@ -693,10 +725,13 @@ class Board(QGraphicsScene):
             return
 
         self.removeItem(self.hint)
+        del self.hint
         self.hint = None
 
-        # TODO: method to paint only changes
-        self.paint_board()
+        self.clear_highlight()
+        if self.do_auto_note:
+            self.auto_note()
+        self.update_candidates()
 
     @_auto_note
     def apply_hint(self):
@@ -713,15 +748,7 @@ class Board(QGraphicsScene):
         self.update_candidates()
 
     def reload(self):
-        # HACK: ideally only stuff that actually needs redrawing would be drawn
-
-        # Delete everything currently being rendered and redraw it
-        self.clear()
         self.set_puzzle(self.puzzle)
-
-        # Menu not painted with set_puzzle
-        self.paint_menu()
-        self.paint_buttons()
 
     def reset(self):
         """
@@ -747,6 +774,13 @@ class Board(QGraphicsScene):
 
         number_keys = [i for s in binds.numbers.values() for i in s]
         if seq in number_keys:
+            self.clear_highlight()
+
+            if self.hint is not None:
+                self.removeItem(self.hint)
+                del self.hint
+                self.hint=None
+
             value = None
             for k, v in binds.numbers.items():
                 if key in v:

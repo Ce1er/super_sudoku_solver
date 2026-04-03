@@ -8,6 +8,8 @@ Adjacency = Literal["row", "column", "box"]
 # Values: [row, column]
 Coord = np.ndarray[tuple[Literal[2]], np.dtype[np.int8]]
 
+Coords = np.ndarray[tuple[int, Literal[2]], np.dtype[np.int8]]
+
 # Values: [row, column, value]
 Cell = np.ndarray[tuple[Literal[3]], np.dtype[np.int8]]
 

@@ -3,7 +3,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-def _validate_adjacent(coords):
+def normalise_coords(coords):
     coords = coords.astype(np.int8, casting="same_value")
     if coords.shape[0] > 256:
         raise ValueError("Too many coords given")
@@ -30,7 +30,7 @@ def adjacent_row(
     Returns:
         9x9 Boolean array where True represents cells in rows from coords given
     """
-    coords = _validate_adjacent(coords)
+    coords = normalise_coords(coords)
     if to_n == -1:
         to_n = coords.shape[0]
 
@@ -58,7 +58,7 @@ def adjacent_column(
     Returns:
         9x9 Boolean array where True represents cells in columns from coords given
     """
-    coords = _validate_adjacent(coords)
+    coords = normalise_coords(coords)
     if to_n == -1:
         to_n = coords.shape[0]
 
@@ -86,7 +86,7 @@ def adjacent_box(
     Returns:
         9x9 Boolean array where True represents cells in boxes from coords given
     """
-    coords = _validate_adjacent(coords)
+    coords = normalise_coords(coords)
     if to_n == -1:
         to_n = coords.shape[0]
 
@@ -122,7 +122,7 @@ def adjacent(
     Returns:
         9x9 Boolean array where True represents cells in boxes from coords given
     """
-    coords = _validate_adjacent(coords)
+    coords = normalise_coords(coords)
     if to_n == -1:
         to_n = coords.shape[0]
 
