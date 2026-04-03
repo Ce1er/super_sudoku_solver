@@ -202,7 +202,7 @@ class _TechniqueFinder(abc.ABC):
 
 
 class _NakedSinglesInstance(_TechniqueInstance):
-    NAME = "Naked Singles"
+    NAME = "Naked Single"
 
     def __init__(self, coord: Coord, num: SupportsInt):
         """
@@ -284,9 +284,9 @@ class _HiddenSinglesInstance(_TechniqueInstance):
 
         return [
             MessageCoord(self._coord[1:], highlight=1),
-            MessageText(" is "),
+            MessageText("is"),
             MessageNum(self._coord[0]),
-            MessageText(f" because there are no others in the {self._adjacency}."),
+            MessageText(f"because there are no others in the {self._adjacency}."),
         ]
 
     def _generate_action(self):
@@ -377,9 +377,9 @@ class _NakedPairsInstance(_TechniqueInstance):
 
         return [
             MessageCoords(np.array([*self._pair]), highlight=1),
-            MessageText(" are "),
+            MessageText("are"),
             MessageNums(npc.argwhere(self._nums)),
-            MessageText(f" because they are adjacent by {adjacencies}."),
+            MessageText(f"because they are adjacent by {adjacencies}."),
         ]
 
     def _generate_action(self):
@@ -461,12 +461,12 @@ class _HiddenPairsInstance(_TechniqueInstance):
     def _generate_message(self):
         return [
             MessageCoords(self._cells, highlight=1),
-            MessageText(" are the only cells that can be "),
+            MessageText("are the only cells that can be"),
             MessageNums(self._num_pair),
             MessageText(
-                " in their "
+                "in their "
                 + ", ".join(self._adjacent_by)
-                + " so we can remove all other candidates from them"
+                + "so we can remove all other candidates from them"
             ),
         ]
 
@@ -573,11 +573,11 @@ class _LockedCandidatesInstance(_TechniqueInstance):
     def _generate_message(self):
         return [
             MessageCoords(self._coords, highlight=1),
-            MessageText(" are the only cells that can be "),
+            MessageText("are the only cells that can be"),
             MessageNum(self._num),
-            MessageText(f" in their {self._adjacency} so we can remove "),
+            MessageText(f"in their {self._adjacency} so we can remove"),
             MessageNum(self._num),
-            MessageText(" from the other cells in their house."),
+            MessageText("from the other cells in their house."),
         ]
 
     def _generate_action(self):
@@ -702,10 +702,10 @@ class PointingPairs(_PointingTuples):
     def _generate_message(coords, num, direction):
         return [
             MessageCoords(coords, highlight=1),
-            MessageText(" are the only cells that can be "),
+            MessageText("are the only cells that can be"),
             MessageNum(num),
             MessageText(
-                f" in their box so we can remove other options from their {direction}."
+                f"in their box so we can remove other options from their {direction}."
             ),
         ]
 
@@ -801,10 +801,10 @@ class PointingPairs(_PointingTuples):
 #                 "Pointing Tuple",
 #                 [
 #                     MessageCoords(coords),
-#                     MessageText(" are the only cells that can be "),
+#                     MessageText("are the only cells that can be"),
 #                     MessageNum(num),
 #                     MessageText(
-#                         f" in their box so we can remove other options from their {adjacency}."
+#                         f"in their box so we can remove other options from their {adjacency}."
 #                     ),
 #                 ],
 #                 Action(remove_candidates=removed_candidates),
@@ -833,13 +833,13 @@ class _SkyscraperInstance(_TechniqueInstance):
             MessageText("must be"),
             MessageNum(self._num),
             MessageText(
-                f" because they are the only {self._num+1} in their {self._adjacency} except these "
+                f"because they are the only {self._num+1} in their {self._adjacency} except these"
             ),
             MessageCoords(np.array([self._cell3, self._cell4]), highlight=1),
-            MessageText(f" which share a {self._other_adjacency}. That means"),
+            MessageText(f"which share a {self._other_adjacency}. That means"),
             # MessageCandidates(removed_candidates),
             MessageText(
-                f" which see both the cells that do not share a {self._other_adjacency} can't be {self._num+1}"
+                f"which see both the cells that do not share a {self._other_adjacency} can't be {self._num+1}"
             ),
         ]
 
@@ -1047,9 +1047,9 @@ class XWing(_TechniqueFinder):
             print(coords)
             message = [
                 MessageCoords(coords, highlight=1),
-                MessageText("are the only "),
+                MessageText("are the only"),
                 MessageNum(num),
-                MessageText(f"s in their {adjacency} so we can remove "),
+                MessageText(f"s in their {adjacency} so we can remove"),
                 MessageNum(num),
                 MessageText("from all other cells in their columns."),
             ]
@@ -1065,9 +1065,9 @@ class XWing(_TechniqueFinder):
             print(coords)
             message = [
                 MessageCoords(coords, highlight=1),
-                MessageText("are the only "),
+                MessageText("are the only"),
                 MessageNum(num),
-                MessageText(f"s in their {adjacency} so we can remove "),
+                MessageText(f"s in their {adjacency} so we can remove"),
                 MessageNum(num),
                 MessageText("from all other cells in their rows."),
             ]

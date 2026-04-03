@@ -41,12 +41,13 @@ import re
 import human_solver
 from settings import settings, Settings
 
+from random import choice
 from sudoku import Board as BoardData
 from sudoku import InvalidBoard
 from utils import get_first
 
 # from human_solver import HumanSolver, Technique
-from human_solver import Technique, Action
+from human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
 import techniques
 
 from save_manager import Puzzles
@@ -228,7 +229,10 @@ class HintBox(QObject, QGraphicsItem):
             else:
                 html += message_part.text
 
+            # Doesn't matter if message_part already contains trailing/leading space as html collapses
+            # consecutive spaces. Although ideally they shouldn't have these anyway.
             html += " "
+            # TODO: check if resulting html has trailing space after it is loaded
 
         self.width = 200
         self.text = QTextDocument()
@@ -403,7 +407,7 @@ class Board(QGraphicsScene):
 
         self.data = None
         self.settings = settings
-        self.hint=None
+        self.hint = None
 
         # self.paint_message_box()
         self.paint_menu()
@@ -483,12 +487,12 @@ class Board(QGraphicsScene):
             self.clear_highlight()
         else:
             self.paint_board()
-            self.board_painted=True
+            self.board_painted = True
 
     def paint_board(self):
         print("painting")
         # print("pb", text_hints(self.data.candidates))
-        self.cells=[]
+        self.cells = []
         x = -1
         for row, col in product(range(9), repeat=2):
             if row > x:
@@ -597,8 +601,26 @@ class Board(QGraphicsScene):
         # TODO: a way of getting other ones
         technique = get_first(get_techniques())
         print(technique)
+
+        # Fallback hint
+        # Give solution to random cell
         if technique is None:
-            return -1
+            # Pick random coordinate without cell
+            coord = choice(np.argwhere(self.data.cells == -1))
+
+            new_cells = np.full((9,9), -1,dtype=np.int8)
+            num=self.data.solution[*coord]
+            new_cells[*coord] =num
+
+            technique = Technique("Fallback Hint", 
+                                  [
+                                      MessageCoord(coord,highlight=1),
+                                      MessageText("is"),
+                                      MessageNum(num)
+                                      ],
+                                  Action(add_cells=new_cells)
+                    )
+
         print("hint")
         print(technique.message)
         action = technique.action
@@ -781,7 +803,7 @@ class Board(QGraphicsScene):
             if self.hint is not None:
                 self.removeItem(self.hint)
                 del self.hint
-                self.hint=None
+                self.hint = None
 
             value = None
             for k, v in binds.numbers.items():
