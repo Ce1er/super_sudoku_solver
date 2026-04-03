@@ -1,4 +1,5 @@
-from types import NoneType
+from typing import Callable, Optional, Self
+
 from PySide6.QtWidgets import (
     QApplication,
     QGraphicsProxyWidget,
@@ -8,15 +9,11 @@ from PySide6.QtWidgets import (
     QGraphicsSceneMouseEvent,
     QLabel,
     QListWidget,
-    QVBoxLayout,
-    QWidget,
     QPushButton,
     QCheckBox,
-    QVBoxLayout,
 )
 from PySide6.QtGui import (
     QKeySequence,
-    QPainter,
     QPen,
     QBrush,
     QFont,
@@ -24,44 +21,31 @@ from PySide6.QtGui import (
     QTextDocument,
 )
 from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer, QObject
-from PySide6.QtQuickControls2 import QQuickStyle
-from PySide6.QtQuick import (
-    QQuickItem,
-)  # Presets should inherit from this. Like buttons and switches and stuff but idk how to use those.
+
 import sys
-import numpy as np
-import numpy.typing as npt
-import np_candidates as npc
-from typing import Callable, Optional, Self
-from itertools import product
-from functools import wraps, singledispatchmethod, partial
-import re
-
-# The latter is for type hints. It should never be used directly and I should enforce this.
-import human_solver
-from settings import settings, Settings
-
-from random import choice
-from sudoku import Board as BoardData
-from sudoku import InvalidBoard
-from utils import get_first
-
-# from human_solver import HumanSolver, Technique
-from human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
-import techniques
-
-from save_manager import Puzzles
-
-from custom_types import Coord, Candidates, Cells, Candidates, CellCandidates, Coords
-from custom_types import Cell as CellT
-
-from utils import text_hints
-
-import time
-import asyncio
-import threading
 import logging
 
+from functools import wraps, singledispatchmethod, partial
+from itertools import product
+from random import choice
+
+import np_candidates as npc
+import numpy as np
+import numpy.typing as npt
+
+from sudoku import Board as BoardData
+from sudoku import InvalidBoard
+from save_manager import Puzzles
+
+import techniques
+import human_solver
+from human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
+from settings import settings, Settings
+
+from custom_types import  Candidates, Coords
+from custom_types import Cell as CellT
+
+from utils import get_first
 
 # TODO: pass in font so it is customisable
 # Also all these colours and sizes and stuff is getting excessive
@@ -903,14 +887,6 @@ def main():
     )
     view = QGraphicsView(scene)
     view.setFocusPolicy(Qt.StrongFocus)
-
-    # This does nothing right now.
-    # Because everything I'm using is kinda custom
-    # But I'll keep this here in case I use something that does benefit from it
-    # Such as buttons
-    # I think I also need to start an engine
-    # https://gist.github.com/itarozzi/9de52df93fa7e19f21fba21c28f51bb2 like that kinda
-    QQuickStyle.setStyle("Material")
 
     view.show()
     sys.exit(app.exec())
