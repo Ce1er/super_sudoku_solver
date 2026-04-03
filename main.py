@@ -656,7 +656,7 @@ class Board(QGraphicsScene):
                 technique = next(self.techniques)
             except StopIteration:
                 # Will go to fallback technique
-                technique=None
+                technique = None
 
         print(technique)
 
@@ -687,7 +687,7 @@ class Board(QGraphicsScene):
 
             print(coord)
             technique = Technique(
-name,
+                name,
                 [MessageCoord(coord, highlight=1), MessageText("is"), MessageNum(num)],
                 Action(add_cells=new_cells),
             )

@@ -316,10 +316,7 @@ class Board:
         self._puzzle.guesses = np.where(
             self._puzzle.clues != -1, self._puzzle.clues, self.solution
         )
-        self._puzzle.candidates= np.full((9,9,9), False,dtype=np.bool)
-
-
-
+        self._puzzle.candidates = np.full((9, 9, 9), False, dtype=np.bool)
 
 
 # board = Board(

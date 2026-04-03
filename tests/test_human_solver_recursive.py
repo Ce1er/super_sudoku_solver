@@ -5,18 +5,14 @@
 # # from human_solver import HumanSolver
 # from techniques import TECHNIQUES
 #
+# from tests.data.test_techniques_data import board_1
 #
 # @pytest.fixture
 # def board():
-#     return HumanSolver(
-#         Board(
-#             "1.5..2.84..63.12.7.2..5.....9..1....8.2.3674.3.7.2..9.47...8..1..16..4.926914.37."
-#         )
-#     )
-#
+#     return board_1
 #
 # # @line_profiler.profile
-# def apply_all_techniques(board: HumanSolver, max_depth=5, depth=0, seen=None):
+# def apply_all_techniques(board, max_depth=5, depth=0, seen=None):
 #     if depth > max_depth:
 #         return
 #     board.auto_normal()
@@ -56,15 +52,5 @@
 #
 # def test_human_techniques(board):
 #     apply_all_techniques(board)
-#
-#
-# if __name__ == "__main__":
-#     apply_all_techniques(
-#         HumanSolver(
-#             Board(
-#                 "1.5..2.84..63.12.7.2..5.....9..1....8.2.3674.3.7.2..9.47...8..1..16..4.926914.37."
-#             )
-#         )
-#     )
-#
-# # TODO: some sort of check which
+
+# TODO: Make this work with new setup
