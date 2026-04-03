@@ -228,6 +228,8 @@ class HintBox(QObject, QGraphicsItem):
             else:
                 html += message_part.text
 
+            html += " "
+
         self.width = 200
         self.text = QTextDocument()
         self.text.setHtml(html)
