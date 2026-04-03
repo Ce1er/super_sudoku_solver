@@ -155,7 +155,9 @@ class _TechniqueFinder(abc.ABC):
             self._cells, cells
         )
 
-    def _non_null_actions(func: Callable[[Self], Generator[Technique]]) -> Callable[[Self], Generator[Technique]]:  # type: ignore[misc]
+    def _non_null_actions(
+        func: Callable[[Self], Generator[Technique]],
+    ) -> Callable[[Self], Generator[Technique]]:  # type: ignore[misc]
         """
         Decorator to filter Techniques to only include ones where the action has an effect on candidates and/or cells.
         Slightly simplifies technique detection as those functions are not responsible for checking if it has an effect or not.
@@ -173,7 +175,9 @@ class _TechniqueFinder(abc.ABC):
 
         return wrapper
 
-    def _non_duplicate_actions(func: Callable[[Self], Generator[Technique]]) -> Callable[[Self], Generator[Technique]]:  # type: ignore[misc]
+    def _non_duplicate_actions(
+        func: Callable[[Self], Generator[Technique]],
+    ) -> Callable[[Self], Generator[Technique]]:  # type: ignore[misc]
         """
         Decorator to filter out duplicate techniques.
         Duplicates are techniques of the same type with an identical action.
@@ -833,13 +837,13 @@ class _SkyscraperInstance(_TechniqueInstance):
             MessageText("must be"),
             MessageNum(self._num),
             MessageText(
-                f"because they are the only {self._num+1} in their {self._adjacency} except these"
+                f"because they are the only {self._num + 1} in their {self._adjacency} except these"
             ),
             MessageCoords(np.array([self._cell3, self._cell4]), highlight=1),
             MessageText(f"which share a {self._other_adjacency}. That means"),
             # MessageCandidates(removed_candidates),
             MessageText(
-                f"which see both the cells that do not share a {self._other_adjacency} can't be {self._num+1}"
+                f"which see both the cells that do not share a {self._other_adjacency} can't be {self._num + 1}"
             ),
         ]
 

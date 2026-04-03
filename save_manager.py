@@ -184,7 +184,7 @@ class Puzzles:
                             "difficulty": {
                                 "description": "The approximate difficulty of the puzzle",
                                 "type": "string",
-                                "pattern": rf"^({"|".join(DIFFICULTIES)})$",
+                                "pattern": rf"^({'|'.join(DIFFICULTIES)})$",
                             },
                             "clues": {
                                 "description": "The cells initially set",

@@ -34,7 +34,7 @@ import numpy.typing as npt
 import np_candidates as npc
 from typing import Callable, Optional, Self
 from itertools import product
-from functools import wraps, singledispatchmethod,partial
+from functools import wraps, singledispatchmethod, partial
 import re
 
 # The latter is for type hints. It should never be used directly and I should enforce this.
@@ -109,7 +109,7 @@ class Cell(QGraphicsItem):
         self.setAcceptedMouseButtons(Qt.LeftButton)
         self.highlighted = False
 
-        self._highlight_lock=False
+        self._highlight_lock = False
 
     def highlight_lock(self):
         print("locked")
@@ -129,7 +129,7 @@ class Cell(QGraphicsItem):
         if self._highlight_lock:
             return
 
-        self.highlighted=True
+        self.highlighted = True
         self.background_colour = colour
         self.update()
 
@@ -139,7 +139,7 @@ class Cell(QGraphicsItem):
             return
 
         print("hi")
-        self.highlighted=True
+        self.highlighted = True
         self.background_colour = QColor(colour)
         self.update()
 
@@ -148,7 +148,7 @@ class Cell(QGraphicsItem):
         if self._highlight_lock:
             return
 
-        self.highlighted=False
+        self.highlighted = False
         self.background_colour = self.settings.colours.background
         self.update()
 
@@ -252,7 +252,7 @@ class HintBox(QObject, QGraphicsItem):
                     )
             else:
                 if isinstance(message_part, human_solver.MessageNum):
-                    html += "<b>"+message_part.text + "</b>"
+                    html += "<b>" + message_part.text + "</b>"
                 else:
                     html += message_part.text
 
@@ -598,7 +598,9 @@ class Board(QGraphicsScene):
             print("foo")
             self.selected_cell.highlight_background(self.settings.colours.selected)
 
-            for coord in npc.argwhere(npc.adjacent(np.array([self.selected_cell.row,self.selected_cell.col]))):
+            for coord in npc.argwhere(
+                npc.adjacent(np.array([self.selected_cell.row, self.selected_cell.col]))
+            ):
                 cell = self.cells[coord[0]][coord[1]]
 
                 if cell != self.selected_cell:
@@ -623,6 +625,8 @@ class Board(QGraphicsScene):
     def clear_highlight(self, hint_highlight=True):
         for row in self.cells:
             for cell in row:
+                if hint_highlight:
+                    cell.highlight_unlock()
                 cell.highlight_background(None)
 
     def show_hint(self):
@@ -650,18 +654,15 @@ class Board(QGraphicsScene):
             # Pick random coordinate without cell
             coord = choice(np.argwhere(self.data.cells == -1))
 
-            new_cells = np.full((9,9), -1,dtype=np.int8)
-            num=self.data.solution[*coord]
-            new_cells[*coord] =num
+            new_cells = np.full((9, 9), -1, dtype=np.int8)
+            num = self.data.solution[*coord]
+            new_cells[*coord] = num
 
-            technique = Technique("Fallback Hint", 
-                                  [
-                                      MessageCoord(coord,highlight=1),
-                                      MessageText("is"),
-                                      MessageNum(num)
-                                      ],
-                                  Action(add_cells=new_cells)
-                    )
+            technique = Technique(
+                "Fallback Hint",
+                [MessageCoord(coord, highlight=1), MessageText("is"), MessageNum(num)],
+                Action(add_cells=new_cells),
+            )
 
         print("hint")
         print(technique.message)
