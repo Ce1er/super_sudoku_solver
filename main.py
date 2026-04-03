@@ -441,6 +441,8 @@ class Board(QGraphicsScene):
 
         self.board_painted = False
 
+        self.techniques = None
+
     def set_mode(self):
         # self.cell_mode = not self.cell_mode
         self.cell_mode = not self.cell_mode_widget.isChecked()
@@ -572,7 +574,9 @@ class Board(QGraphicsScene):
         """
         Updates candidates and cells
         """
-        # print("uc", text_hints(self.data.candidates))
+        # Techniques should be recalculated if candidates change
+        self.techniques = None
+
         for row, col in product(range(9), repeat=2):
             self.cells[row][col].set_candidates((self.data.candidates[:, row, col]))
             self.cells[row][col].set_value(self.data.cells[row, col])
@@ -632,21 +636,50 @@ class Board(QGraphicsScene):
         # TODO: check action is non-null
 
         # TODO: a way of getting other ones
-        technique = get_first(get_techniques())
+
+        if self.techniques is not None:
+            try:
+                technique = next(self.techniques)
+            except StopIteration:
+                technique = None
+        else:
+            self.techniques = get_techniques()
+            try:
+                technique = next(self.techniques)
+            except StopIteration:
+                # Will go to fallback technique
+                technique=None
+
         print(technique)
+
+        self.clear_highlight()
 
         # Fallback hint
         # Give solution to random cell
         if technique is None:
-            # Pick random coordinate without cell
-            coord = choice(np.argwhere(self.data.cells == -1))
+            name = "Fallback Hint"
+            try:
+                # Pick random coordinate without cell
+                coord = choice(np.argwhere(self.data.cells == -1))
+
+            # All cells have a value
+            except IndexError:
+                try:
+                    coord = choice(np.argwhere(self.data.cells != self.data.solution))
+                except IndexError:
+                    # All cells have correct value
+                    # Board is solved
+                    return
+
+                name = "Incorrect Cell"
 
             new_cells = np.full((9, 9), -1, dtype=np.int8)
             num = self.data.solution[*coord]
             new_cells[*coord] = num
 
+            print(coord)
             technique = Technique(
-                "Fallback Hint",
+name,
                 [MessageCoord(coord, highlight=1), MessageText("is"), MessageNum(num)],
                 Action(add_cells=new_cells),
             )
@@ -800,6 +833,12 @@ class Board(QGraphicsScene):
         """
         Solve the puzzle automatically
         """
+        self.removeItem(self.hint)
+        del self.hint
+        self.hint = None
+
+        self.clear_highlight()
+
         self.data.auto_solve()
         self.update_candidates()
 
