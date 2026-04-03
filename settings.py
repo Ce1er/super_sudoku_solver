@@ -88,6 +88,9 @@ class Colours:
     background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
     text: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
 
+    selected: QColor = field(default_factory=lambda: QColor(0, 0, 255, 100))
+    adjacent: QColor = field(default_factory=lambda: QColor(0, 0, 170, 50))
+
     def __post_init__(self):
         for name, val in self.__dict__.items():
             if not isinstance(val, QColor):

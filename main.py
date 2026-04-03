@@ -34,7 +34,7 @@ import numpy.typing as npt
 import np_candidates as npc
 from typing import Callable, Optional, Self
 from itertools import product
-from functools import wraps, singledispatchmethod
+from functools import wraps, singledispatchmethod,partial
 import re
 
 # The latter is for type hints. It should never be used directly and I should enforce this.
@@ -109,6 +109,16 @@ class Cell(QGraphicsItem):
         self.setAcceptedMouseButtons(Qt.LeftButton)
         self.highlighted = False
 
+        self._highlight_lock=False
+
+    def highlight_lock(self):
+        print("locked")
+        self._highlight_lock = True
+
+    def highlight_unlock(self):
+        print("unlocked")
+        self._highlight_lock = False
+
     @singledispatchmethod
     def highlight_background(self, arg):
         raise NotImplementedError("Could not interpret colour")
@@ -116,17 +126,31 @@ class Cell(QGraphicsItem):
     # Handle differently based on arg type
     @highlight_background.register
     def _(self, colour: QColor):
+        if self._highlight_lock:
+            return
+
+        self.highlighted=True
         self.background_colour = colour
+        self.update()
 
     @highlight_background.register
     def _(self, colour: str):
+        if self._highlight_lock:
+            return
+
         print("hi")
+        self.highlighted=True
         self.background_colour = QColor(colour)
         self.update()
 
     @highlight_background.register
     def _(self, _: None):
+        if self._highlight_lock:
+            return
+
+        self.highlighted=False
         self.background_colour = self.settings.colours.background
+        self.update()
 
     def highlight_candidates(self, candidates: list[int], colour: QColor) -> None:
         for candidate in candidates:
@@ -183,9 +207,9 @@ class Cell(QGraphicsItem):
         self.candidates = value
         self.update()
 
-    def set_highlighted(self, value: bool):
-        self.highlighted = value
-        self.update(self.boundingRect())
+    # def set_highlighted(self, value: bool):
+    #     self.highlighted = value
+    #     self.update(self.boundingRect())
 
 
 # This class is more of a QGraphicsItem but QObject is needed for Signal
@@ -567,12 +591,25 @@ class Board(QGraphicsScene):
             self.cells[row][col].set_value(self.data.cells[row, col])
 
     def cell_clicked(self, cell: Cell):
-        if self.selected_cell:
-            self.selected_cell.set_highlighted(False)
-        self.selected_cell = cell
-        cell.set_highlighted(True)
+        self.clear_highlight(False)
 
-    def highlight_cells(self, args: tuple[Coords, str]):
+        self.selected_cell = cell
+        if self.selected_cell:
+            print("foo")
+            self.selected_cell.highlight_background(self.settings.colours.selected)
+
+            for coord in npc.argwhere(npc.adjacent(np.array([self.selected_cell.row,self.selected_cell.col]))):
+                cell = self.cells[coord[0]][coord[1]]
+
+                if cell != self.selected_cell:
+                    cell.highlight_background(self.settings.colours.adjacent)
+
+    def highlight_cells(self, args: tuple[Coords, str], *, lock=False):
+        """
+        Args:
+            lock: if True will not allow cell to be highlighted
+                again until lock is removed.
+        """
         cells = args[0]
         colour = args[1]
         coords = npc.normalise_coords(cells)
@@ -580,8 +617,10 @@ class Board(QGraphicsScene):
             row, col = coord
             print("foo")
             self.cells[row][col].highlight_background(colour)
+            if lock:
+                self.cells[row][col].highlight_lock()
 
-    def clear_highlight(self):
+    def clear_highlight(self, hint_highlight=True):
         for row in self.cells:
             for cell in row:
                 cell.highlight_background(None)
@@ -637,7 +676,9 @@ class Board(QGraphicsScene):
         hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
         self.hint = hint
         print("poo")
-        self.hint.highlight_cells.connect(self.highlight_cells)
+
+        highlight_hint_cells = partial(self.highlight_cells, lock=True)
+        self.hint.highlight_cells.connect(highlight_hint_cells)
         self.hint.send_highlights()
         self.addItem(hint)
         print("pao")
