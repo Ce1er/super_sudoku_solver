@@ -3,11 +3,6 @@ import numpy.typing as npt
 from itertools import product
 
 
-def get_first(generator):
-    for item in generator:
-        return item
-
-
 def text_board(board: npt.NDArray[np.int8]):
     # TODO: rewrite this whole function. It works but has no validation and isn't very readable.
     top = "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗"

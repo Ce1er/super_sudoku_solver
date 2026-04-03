@@ -17,7 +17,7 @@ from human_solver import Action
 from save_manager import Puzzle
 import np_candidates as npc
 
-from utils import get_first, text_hints
+from utils import text_hints
 
 
 class InvalidBoard(Exception):

@@ -45,8 +45,6 @@ from settings import settings, Settings
 from custom_types import Candidates, Coords
 from custom_types import Cell as CellT
 
-from utils import get_first
-
 
 # TODO: pass in font so it is customisable
 # Also all these colours and sizes and stuff is getting excessive
