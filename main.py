@@ -905,7 +905,7 @@ class Board(QGraphicsScene):
         elif seq in binds.reset:
             self.reset()
         elif seq in binds.toggle_mode:
-            self.set_mode()
+            self.cell_mode_widget.toggle()
 
         # Python's negative indexing will handle wrap around for L and U
         elif seq in binds.left:
@@ -926,7 +926,6 @@ class Board(QGraphicsScene):
                 self.cells[(self.selected_cell.row + 1) % 9][self.selected_cell.col]
             )
         # If it isn't a recognised keybind do nothing
-        print(self.selected_cell.row, self.selected_cell.col)
 
 
 def main():
