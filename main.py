@@ -203,7 +203,7 @@ class Cell(QGraphicsItem):
 
 
 # This class is mostly a QGraphicsItem, QObject is only needed for Signal
-class HintBox(QGraphicsItem,QObject):
+class HintBox(QGraphicsItem, QObject):
     # Coords or Coord of cells to highlight
     highlight_cells = Signal(object)
     highlight_candidates = Signal(object)
@@ -870,7 +870,7 @@ class Board(QGraphicsScene):
 
         number_keys = [i for s in binds.numbers.values() for i in s]
         if seq in number_keys:
-            self.clear_highlight()
+            # self.clear_highlight()
 
             # TODO: maybe move somewhere else
             # Like as a decorator to add_cell and toggle_candidate
@@ -906,7 +906,27 @@ class Board(QGraphicsScene):
             self.reset()
         elif seq in binds.toggle_mode:
             self.set_mode()
+
+        # Python's negative indexing will handle wrap around for L and U
+        elif seq in binds.left:
+            self.cell_clicked(
+                self.cells[self.selected_cell.row][self.selected_cell.col - 1]
+            )
+        elif seq in binds.up:
+            self.cell_clicked(
+                self.cells[self.selected_cell.row - 1][self.selected_cell.col]
+            )
+
+        elif seq in binds.right:
+            self.cell_clicked(
+                self.cells[self.selected_cell.row][(self.selected_cell.col + 1) % 9]
+            )
+        elif seq in binds.down:
+            self.cell_clicked(
+                self.cells[(self.selected_cell.row + 1) % 9][self.selected_cell.col]
+            )
         # If it isn't a recognised keybind do nothing
+        print(self.selected_cell.row, self.selected_cell.col)
 
 
 def main():
