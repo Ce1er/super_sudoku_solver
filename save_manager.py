@@ -62,7 +62,7 @@ def atomic_write(
     """
     Write binary data to a file atomically. This will prevent partially written files caused by kernel panics,
     power outages, etc. at the cost of some performance. Best used with important data that gets written
-    infrequently.
+    infrequently and/or large data.
     """
     # Avoid writing to file directly to avoid corruption
     # https://lwn.net/Articles/457667/
@@ -130,7 +130,7 @@ class Puzzle:
         # If not warn against mutating array
         self._guesses = new
         # I don't want to wait for an atomic save here because that extra time would be noticable to user
-        # Corruption is unlikely and would only affect one puzzle anyway
+        # Corruption is very unlikely and would only affect one puzzle anyway
         np.save(self._guesses_file, new)
 
     @property
