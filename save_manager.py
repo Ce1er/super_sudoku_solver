@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional
 from paths import (
     PUZZLE_DATA,
     PUZZLE_DIR,
@@ -10,14 +10,18 @@ from paths import (
 import json
 from jsonschema import ValidationError, validate
 import numpy as np
+import numpy.typing as npt
 from uuid import uuid7, UUID
 import re
 from custom_types import Candidates, Cells
 import argparse
-from functools import total_ordering
+from functools import total_ordering, partial
 import socket
 from settings import settings
 import sys
+import os
+import tempfile
+import time
 
 DIFFICULTIES = ["easy", "medium", "hard"]
 DIFFICULTIES_T = Literal["easy", "medium", "hard"]
@@ -50,6 +54,41 @@ lock_socket = ensure_single_instance()
 # Right now I think that Board should get things from here
 
 
+def atomic_write(
+    data: bytes,
+    dst: Path,
+    save_func=lambda file, data: file.write(data),
+):
+    """
+    Write binary data to a file atomically. This will prevent partially written files caused by kernel panics,
+    power outages, etc. at the cost of some performance. Best used with important data that gets written
+    infrequently.
+    """
+    # Avoid writing to file directly to avoid corruption
+    # https://lwn.net/Articles/457667/
+    fd, tmp_path = tempfile.mkstemp(dir=dst.parent)
+
+    try:
+        with os.fdopen(fd, "wb") as f:
+            save_func(f, data)
+            f.flush()
+            os.fsync(f.fileno())
+
+        os.replace(tmp_path, dst)
+
+        dir = os.open(dst.parent, os.O_DIRECTORY)
+
+        try:
+            os.fsync(dir)
+        finally:
+            os.close(dir)
+
+    except Exception:
+        # If fail before os.replace tmp_file will persist
+        Path(tmp_path).unlink(missing_ok=True)
+        raise
+
+
 @total_ordering
 class Puzzle:
     def __init__(self, uuid: str, clues: str, difficulty: str):
@@ -70,6 +109,10 @@ class Puzzle:
     def str_clues(self) -> str:
         return self._str_clues
 
+    # np_atomic_save = staticmethod(
+    #     partial(atomic_write, save_func=lambda file, data: np.save(file, data))
+    # )
+
     @property
     def guesses(self) -> Cells:
         if self._guesses is not None:
@@ -85,9 +128,9 @@ class Puzzle:
     def guesses(self, new: Cells) -> None:
         # TODO: consider using a copy instead.
         # If not warn against mutating array
-        print("hi")
         self._guesses = new
-        # I don't mind waiting for IO here because
+        # I don't want to wait for an atomic save here because that extra time would be noticable to user
+        # Corruption is unlikely and would only affect one puzzle anyway
         np.save(self._guesses_file, new)
 
     @property
@@ -267,9 +310,14 @@ class Puzzles:
         except ValidationError as e:
             raise e from ValueError("Failed to save")
 
-        data = json.dumps(new)
-        with PUZZLE_JSON.open("w", encoding="utf-8") as f:
-            f.write(data)
+        data = json.dumps(new).encode("utf-8")
+
+        # data is not written very often and can be large if there are lots of puzzles saved
+        # so safety from atomic_write is worth performance hit
+        try:
+            atomic_write(data, PUZZLE_JSON)
+        except Exception as e:
+            raise RuntimeError("Puzzle JSON save failed.") from e
 
     def add_puzzle(self, clues: str, difficulty: DIFFICULTIES_T):
         """
