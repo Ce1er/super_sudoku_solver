@@ -195,11 +195,11 @@ class Puzzle:
             raise NotImplementedError
 
         # Sort first based on difficulty
-        if DIFFICULTIES.index(self._difficulty) < DIFFICULTIES.index(other.difficulty):
-            return True
-
         # Then on time of puzzle creation
-        return self._uuid.time < other.uuid.time
+        return (DIFFICULTIES.index(self._difficulty), self._uuid.time) < (
+            DIFFICULTIES.index(other.difficulty),
+            other.uuid.time,
+        )
 
     # Other comparisons aren't strictly needed for sorting with python inbuild functions
     # But since lt is defined I would rather them all be (@total_ordering does the rest)

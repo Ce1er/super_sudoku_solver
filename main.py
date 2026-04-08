@@ -488,6 +488,7 @@ class Board(QGraphicsScene):
 
     @_auto_note
     def set_puzzle(self, puzzle: Puzzle):
+        print(puzzle.uuid)
         print(type(puzzle))
         self.puzzle = puzzle
         self.data = BoardData(puzzle)
