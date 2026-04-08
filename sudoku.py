@@ -125,6 +125,13 @@ class Board:
 
         self._puzzle.candidates = new
 
+    def remove_cell(self, row, col):
+        new = self._puzzle.guesses.copy()
+        print(new)
+        new[row,col] = -1
+        self._puzzle.guesses=new
+
+
     @property
     def cells(self):
         return self._puzzle.cells

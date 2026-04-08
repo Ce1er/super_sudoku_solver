@@ -723,15 +723,24 @@ class Board(QGraphicsScene):
         self.addItem(hint)
         print("pao")
 
+    @_update_candidates
+    @_auto_note
     def remove_cell(self):
         """
         Remove the value for the currently selected cell.
+        Will only work for guesses.
         """
         # Do not let user remove clues
         if self.selected_cell.clue:
             return
 
-        self.selected_cell.set_value(-1)
+        self.data.remove_cell(self.selected_cell.row, self.selected_cell.col)
+
+        # Restore all notes for the cell if auto_note is enabled
+        if self.do_auto_note:
+            new: Candidates = np.full((9, 9, 9), False, dtype=np.bool)
+            new[:, self.selected_cell.row, self.selected_cell.col] = True
+            self.data.add_candidates(new)
 
     @_auto_note
     def add_cell(self, value: int):

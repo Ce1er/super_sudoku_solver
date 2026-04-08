@@ -85,6 +85,7 @@ class Puzzle:
     def guesses(self, new: Cells) -> None:
         # TODO: consider using a copy instead.
         # If not warn against mutating array
+        print("hi")
         self._guesses = new
         # I don't mind waiting for IO here because
         np.save(self._guesses_file, new)
