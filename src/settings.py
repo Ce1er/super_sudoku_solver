@@ -153,11 +153,11 @@ class Developer:
 
 @dataclass
 class Settings:
-    keybinds: Keybinds
-    colours: Colours
-    sizes: Sizes
-    gameplay: Gameplay
-    developer: Developer
+    keybinds: Keybinds = field(default_factory=lambda: Keybinds())
+    colours: Colours = field(default_factory=lambda: Colours())
+    sizes: Sizes = field(default_factory=lambda: Sizes())
+    gameplay: Gameplay = field(default_factory=lambda: Gameplay())
+    developer: Developer = field(default_factory=lambda: Developer())
 
     def __post_init__(self):
         # If the other dataclasses fail it's probably a user error with an invalid .toml file.
@@ -217,7 +217,7 @@ def load_settings(path: Optional[Path] = None) -> Settings:
         with path.open("rb") as f:
             data = tomllib.load(f)
     else:
-        data = {}
+        return Settings()
 
     try:
         return Settings(
@@ -236,7 +236,7 @@ def load_settings(path: Optional[Path] = None) -> Settings:
         )
     except Exception as e:
         # Catches missing settings keys, invalid settings keys and anything that fails the parsing funcs
-        raise e from ValueError(f"Invalid {path.absolute()}")
+        raise e from ValueError("Invalid settings file")
 
 
 if SETTINGS.is_file():
