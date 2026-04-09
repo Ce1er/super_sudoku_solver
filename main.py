@@ -126,7 +126,7 @@ class Cell(QGraphicsItem):
         if not new.isValid():
             raise ValueError("Could not interpret colour for cell background")
 
-        self.background_colour = colour
+        self.background_colour = new
         self.update()
 
     def highlight_candidates(self, candidates: list[int], colour: QColor) -> None:
