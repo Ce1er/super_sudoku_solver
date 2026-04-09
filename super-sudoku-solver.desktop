@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Super Sudoku Solver
+Comment=Sudoku game
+Exec=super-sudoku-solver
+Terminal=false
