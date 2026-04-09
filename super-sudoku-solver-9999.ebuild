@@ -50,11 +50,11 @@ src_test() {
 
 
 src_install() {
+	PYTHON_MODULES="np_candidates sudoku save_manager techniques human_solver settings custom_types dlx_solver utils paths main"
 	# Would break tests if done earlier
-	sed -i -E 's/^\b(import|from) (np_candidates|sudoku|save_manager|custom_types|settings|techniques|human_solver|dlx_solver|utils|paths)\b/\1 super_sudoku_solver.\2/' ${S}/src/*.py || die
+	sed -i -E "s/^\b(import|from) (${PYTHON_MODULES// /|})\b/\1 super_sudoku_solver.\2/" ${S}/src/*.py || die
 
 	python_moduleinto $(echo ${PN} | tr '-' '_')
-	PYTHON_MODULES="np_candidates sudoku save_manager techniques human_solver settings custom_types dlx_solver utils paths main"
 	for mod in ${PYTHON_MODULES}; do
 		python_domodule "${S}/src/${mod}.py"
 	done
