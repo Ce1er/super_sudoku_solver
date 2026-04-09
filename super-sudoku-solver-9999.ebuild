@@ -39,13 +39,13 @@ BDEPEND="
 
 src_prepare() {
 	default
-
-	rm requirements.txt build.sh
 }
 
 
-python_test() {
-	epytest
+src_test() {
+	# can't access /usr/local/share
+	sed 's/dir.mkdir(parents=True, exist_ok=True)/pass/' "${S}/src/paths.py"
+	epytest tests
 }
 
 
@@ -57,4 +57,12 @@ src_install() {
 
 	python_newscript "${S}/src/main.py" "${PN}"
 	python_newscript "${S}/src/save_manager.py" "${PN}-save-manager"
+
+	domenu "${S}/super-sudoku-solver.desktop"
+
+	insinto /usr/share/${PN}/
+	doins "${S}/settings.toml"
+
+	elog "A skeleton configuration file is provided in /usr/share/${PN}/settings.toml"
+	elog "This can be copied to ~/.config/${PN}/settings.toml and modified as desired"
 }
