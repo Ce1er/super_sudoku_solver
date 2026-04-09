@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Self
+from typing import Callable, Optional, Self, TYPE_CHECKING, Any
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -40,11 +40,15 @@ from save_manager import Puzzles
 
 import techniques
 import human_solver
-from human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
-from settings import settings, Settings
 
-from custom_types import Candidates, Coords
-from custom_types import Cell as CellT
+from settings import settings
+
+if TYPE_CHECKING:
+    from human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
+    from settings import Settings
+
+    from custom_types import Candidates, Coords
+    from custom_types import Cell as CellT
 
 
 # TODO: pass in font so it is customisable
@@ -103,41 +107,26 @@ class Cell(QGraphicsItem):
         print("unlocked")
         self._highlight_lock = False
 
-    @singledispatchmethod
     def highlight_background(self, colour):
         """
-        Change the background colour of the cell
         Args:
-            colour: QColor or str that can be interpreted by QColor. None can be used to reset to default.
+            colour: None to reset to default. Anything QColor can interpret to set new colour.
         """
-        raise NotImplementedError("Could not interpret colour")
-
-    # Handle differently based on type of colour
-    @highlight_background.register
-    def _(self, colour: QColor):
         if self._highlight_lock:
             return
 
-        self.highlighted = True
+        if colour is None:
+            self.highlighted = False
+            new = self.settings.colours.background
+        else:
+            self.highlighted = True
+            new = QColor(colour)
+
+        # QColor doesn't raise an error for all invalid inputs
+        if not new.isValid():
+            raise ValueError("Could not interpret colour for cell background")
+
         self.background_colour = colour
-        self.update()
-
-    @highlight_background.register
-    def _(self, colour: str):
-        if self._highlight_lock:
-            return
-
-        self.highlighted = True
-        self.background_colour = QColor(colour)
-        self.update()
-
-    @highlight_background.register
-    def _(self, _: None):
-        if self._highlight_lock:
-            return
-
-        self.highlighted = False
-        self.background_colour = self.settings.colours.background
         self.update()
 
     def highlight_candidates(self, candidates: list[int], colour: QColor) -> None:
