@@ -19,8 +19,6 @@ import np_candidates as npc
 
 from utils import text_hints
 
-from settings import settings
-
 
 class InvalidBoard(Exception):
     pass
@@ -91,14 +89,12 @@ class Board:
                 # Now solution_candidates is in standard Candidates form
                 # There is exactly one candidate in each cell (the correct one)
 
-                # Candidates are correct if any of these are true:
+                # Candidates are correct if exactly one of these are true for every coord:
                 # 1. There is a guess at coord
                 # 2. There is a clue at coord
                 # 3. Candidates at coord contain solution value
-                # TODO: technically only one of these should be true
-                # Maybe np.add.reduce(...)==1?
                 x: np.ndarray[tuple[Literal[9], Literal[9]], np.dtype[np.bool]] = (
-                    np.logical_or.reduce(
+                    np.add.reduce(
                         np.array(
                             [
                                 self._puzzle.guesses != -1,
@@ -110,6 +106,7 @@ class Board:
                             ]
                         )
                     )
+                    == 1
                 )
                 if not x.all():
                     raise InvalidBoard(
@@ -126,9 +123,8 @@ class Board:
     def remove_cell(self, row, col):
         new = self._puzzle.guesses.copy()
         print(new)
-        new[row,col] = -1
-        self._puzzle.guesses=new
-
+        new[row, col] = -1
+        self._puzzle.guesses = new
 
     @property
     def cells(self):
