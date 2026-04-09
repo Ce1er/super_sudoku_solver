@@ -321,7 +321,8 @@ class Puzzles:
 
     def add_puzzle(self, clues: str, difficulty: DIFFICULTIES_T):
         """
-        Add a new puzzle to storage
+        Add a new puzzle.
+        Does not save automatically. Use save() method after.
         Args:
             clues: initial state of the puzzle
             difficulty: approximate difficulty of puzzle
@@ -334,30 +335,25 @@ class Puzzles:
         uuid = uuid7()
         self._puzzles[str(uuid)] = Puzzle(str(uuid), clues, difficulty)
 
-        self.save()
-        self.load()
-
     def delete_puzzle(self, id):
         """
-        Delete a puzzle from storage
+        Delete a puzzle.
+        Does not save automatically. Use save() method after.
         Args:
             id: uuid of puzzle to delete
         """
         del self._puzzles[id]
-        self.save()
-        self.load()
 
     def update_puzzle_difficulty(self, id, difficulty: DIFFICULTIES_T):
         """
-        Change a puzzle's difficulty
+        Change a puzzle's difficulty.
+        Does not save automatically. Use save() method after.
         Args:
             id: uuid of puzzle to update
             difficulty: new difficulty
         """
         self._puzzles[id].difficulty = difficulty
-        self.save()
         # TODO: reloading should be unnecessary but need to test that
-        self.load()
 
 
 if __name__ == "__main__":
@@ -403,3 +399,5 @@ if __name__ == "__main__":
     if args.delete:
         for id in args.delete:
             puzzles.delete_puzzle(id[0])
+
+    puzzles.save()
