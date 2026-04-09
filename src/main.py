@@ -40,7 +40,7 @@ from sudoku import Board as BoardData
 from sudoku import InvalidBoard
 from save_manager import Puzzles
 
-import techniques
+from techniques import TECHNIQUES
 import human_solver
 
 from settings import settings
@@ -632,7 +632,7 @@ class Board(QGraphicsScene):
 
     def show_hint(self):
         def get_techniques():
-            for technique in techniques.TECHNIQUES:
+            for technique in TECHNIQUES:
                 # print(technique)
                 x = technique(
                     self.data.candidates,
