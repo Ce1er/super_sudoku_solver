@@ -265,12 +265,17 @@ class Puzzles:
         for id, puzzle in data["puzzles"].items():
             puzzles[id] = Puzzle(id, puzzle["clues"], puzzle["difficulty"])
 
+        # TODO: sort on save instead
         # Sort puzzles based on Puzzle.__lt__
         puzzles = dict(sorted(puzzles.items(), key=lambda x: x[1]))
         self._puzzles = puzzles
 
     def __init__(self):
         self.load()
+
+    @property
+    def puzzles(self):
+        return self._puzzles
 
     @property
     def puzzle_map(self) -> dict[str, Puzzle]:
@@ -342,6 +347,7 @@ class Puzzles:
         Args:
             id: uuid of puzzle to delete
         """
+        self._puzzles[id].reset()
         del self._puzzles[id]
 
     def update_puzzle_difficulty(self, id, difficulty: DIFFICULTIES_T):
@@ -355,6 +361,12 @@ class Puzzles:
         self._puzzles[id].difficulty = difficulty
         # TODO: reloading should be unnecessary but need to test that
 
+def confirm(prompt: str) -> bool:
+    try:
+        response = input(f"{prompt} (y/N) ")
+    except Exception:
+        return False
+    return response.strip().lower() in ("y", "yes")
 
 if __name__ == "__main__":
     puzzles = Puzzles()
@@ -385,6 +397,16 @@ if __name__ == "__main__":
         metavar=("CLUES", "DIFFICULTY"),
         help="Add a puzzle",
     )
+    parser.add_argument(
+        "--reset-puzzle-data",
+        action="store_true",
+        help="Revert all puzzles to their starting state.",
+    )
+    parser.add_argument(
+        "--reset-all-data",
+        action="store_true",
+        help="Delete all save data.",
+    )
 
     args = parser.parse_args()
 
@@ -397,7 +419,23 @@ if __name__ == "__main__":
             puzzles.update_puzzle_difficulty(id, difficulty)
 
     if args.delete:
-        for id in args.delete:
-            puzzles.delete_puzzle(id[0])
+        for puzzle in args.delete:
+            puzzles.delete_puzzle(puzzle)
+
+    if args.reset_puzzle_data:
+        if not confirm("Are you sure? This action will revert all puzzles to their original state and is irreversable."):
+            print("aborting")
+            exit()
+        for puzzle in puzzles.puzzles.values():
+            puzzle.reset()
+
+    if args.reset_all_data:
+        if not confirm("Are you sure? This action will delete all puzzles is irreversable."):
+            print("aborting")
+            exit()
+
+        uuids = list(puzzles.puzzles.keys())
+        for puzzle in uuids:
+            puzzles.delete_puzzle(puzzle)
 
     puzzles.save()
