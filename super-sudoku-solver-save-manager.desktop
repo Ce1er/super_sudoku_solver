@@ -1,7 +1,0 @@
-[Desktop Entry]
-Type=Application
-Version=1.0
-Name=Super Sudoku Solver Save Manager
-Comment=Save manager for Super Sudoku Solver
-Exec=super-sudoku-solver-save-manager
-Terminal=true
