@@ -239,5 +239,9 @@ def load_settings(path: Optional[Path] = None) -> Settings:
         raise e from ValueError(f"Invalid {path.absolute()}")
 
 
-settings = load_settings(SETTINGS)
+if SETTINGS.is_file():
+    settings = load_settings(SETTINGS)
+else:
+    settings = load_settings()
+
 # TODO: Don't let anyone import anything besides this
