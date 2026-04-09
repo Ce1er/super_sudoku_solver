@@ -589,7 +589,7 @@ class Board(QGraphicsScene):
             self.cells[row][col].set_value(self.data.cells[row, col])
 
     def cell_clicked(self, cell: Cell):
-        self.clear_highlight(False)
+        self.clear_highlight(hint_highlight=False)
 
         self.selected_cell = cell
         if self.selected_cell:
@@ -623,11 +623,15 @@ class Board(QGraphicsScene):
             if lock:
                 self.cells[row][col].highlight_lock()
 
-    def clear_highlight(self, hint_highlight=True):
+    def clear_highlight(self, hint_highlight=True, adjacent_highlight=True):
+        # FIXME: clears adjacent when doing hint stuff
+        print(hint_highlight,adjacent_highlight)
         for row in self.cells:
             for cell in row:
                 if hint_highlight:
                     cell.highlight_unlock()
+                elif not adjacent_highlight:
+                    continue
                 cell.highlight_background(None)
 
     def show_hint(self):
@@ -664,7 +668,7 @@ class Board(QGraphicsScene):
 
         print(technique)
 
-        self.clear_highlight()
+        self.clear_highlight(adjacent_highlight=False)
 
         # Fallback hint
         # Give solution to random cell
@@ -821,7 +825,7 @@ class Board(QGraphicsScene):
         del self.hint
         self.hint = None
 
-        self.clear_highlight()
+        self.clear_highlight(adjacent_highlight=False)
         if self.do_auto_note:
             self.auto_note()
 
@@ -880,6 +884,8 @@ class Board(QGraphicsScene):
                 self.removeItem(self.hint)
                 del self.hint
                 self.hint = None
+
+                self.clear_highlight(adjacent_highlight=False)
 
             value = None
             for k, v in binds.numbers.items():
