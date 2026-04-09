@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from typing import Callable, Optional, Self, TYPE_CHECKING, Any
 
 from PySide6.QtWidgets import (
