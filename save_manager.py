@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import Callable, Literal, Optional
+from typing import  Any, Literal, Optional
+from collections.abc import Callable
 from paths import (
     PUZZLE_DATA,
     PUZZLE_DIR,
@@ -21,6 +22,7 @@ from settings import settings
 import sys
 import os
 import tempfile
+from io import BufferedWriter
 import time
 
 DIFFICULTIES = ["easy", "medium", "hard"]
@@ -56,13 +58,17 @@ lock_socket = ensure_single_instance()
 
 def atomic_write(
     data: bytes,
-    dst: Path,
-    save_func=lambda file, data: file.write(data),
+    dst: os.PathLike,
+    save_func: Callable[[BufferedWriter, bytes], Any]=lambda file, data: file.write(data),
 ):
     """
     Write binary data to a file atomically. This will prevent partially written files caused by kernel panics,
     power outages, etc. at the cost of some performance. Best used with important data that gets written
     infrequently and/or large data.
+    Args:
+        data: bytes data to save
+        dst: path to save to
+        save_func: optional custom write function which takes `dst` file in mode "wb" and `data` as input
     """
     # Avoid writing to file directly to avoid corruption
     # https://lwn.net/Articles/457667/
@@ -70,6 +76,7 @@ def atomic_write(
 
     try:
         with os.fdopen(fd, "wb") as f:
+            print(type(f))
             save_func(f, data)
             f.flush()
             os.fsync(f.fileno())
@@ -265,7 +272,6 @@ class Puzzles:
         for id, puzzle in data["puzzles"].items():
             puzzles[id] = Puzzle(id, puzzle["clues"], puzzle["difficulty"])
 
-        # TODO: sort on save instead
         # Sort puzzles based on Puzzle.__lt__
         puzzles = dict(sorted(puzzles.items(), key=lambda x: x[1]))
         self._puzzles = puzzles
