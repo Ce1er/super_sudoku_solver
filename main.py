@@ -43,8 +43,8 @@ import human_solver
 
 from settings import settings
 
+from human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
 if TYPE_CHECKING:
-    from human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
     from settings import Settings
 
     from custom_types import Candidates, Coords
@@ -109,6 +109,7 @@ class Cell(QGraphicsItem):
 
     def highlight_background(self, colour):
         """
+        Change background colour for the cell.
         Args:
             colour: None to reset to default. Anything QColor can interpret to set new colour.
         """

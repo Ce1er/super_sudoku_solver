@@ -19,6 +19,8 @@ import np_candidates as npc
 
 from utils import text_hints
 
+from settings import settings
+
 
 class InvalidBoard(Exception):
     pass
@@ -39,10 +41,6 @@ class Board:
         self._puzzle = puzzle
         self.allow_mistakes = allow_mistakes
         self.one_solution = one_solution
-
-        AUTONORMAL = True  # TODO: move this to somewhere else. Idealing reading from a settings.* file.
-        if AUTONORMAL:
-            self.all_normal()
 
     def add_candidates(self, candidates: Candidates) -> None:
         """
