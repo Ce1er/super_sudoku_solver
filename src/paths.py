@@ -27,7 +27,8 @@ DEFAULT_SETTINGS = DEFAULT_DIR / _SETTINGS_FILE
 
 LOG_DIR = Path(user_log_dir(APP_NAME))
 
-for dir in (PUZZLE_DATA_DIR, CONFIG_DIR, DEFAULT_DIR, LOG_DIR):
+# TODO: this will mess with permissions
+for dir in (PUZZLE_DATA_DIR,): #CONFIG_DIR, DEFAULT_DIR, LOG_DIR):
     dir.mkdir(parents=True, exist_ok=True)
 
 # # A missing settings file isn't an issue but it would be easier for a user to edit from a skeleton
