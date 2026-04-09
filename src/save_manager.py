@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import  Any, Literal, Optional
 from collections.abc import Callable
 from paths import (
-    PUZZLE_DATA,
+    PUZZLE_DATA_DIR,
     PUZZLE_DIR,
     PUZZLE_JSON,
     GUESSES_SUFFIX,
@@ -101,8 +101,8 @@ def atomic_write(
 @total_ordering
 class Puzzle:
     def __init__(self, uuid: str, clues: str, difficulty: str):
-        self._guesses_file: Path = PUZZLE_DATA / (uuid + GUESSES_SUFFIX)
-        self._candidates_file: Path = PUZZLE_DATA / (uuid + CANDIDATES_SUFFIX)
+        self._guesses_file: Path = PUZZLE_DATA_DIR / (uuid + GUESSES_SUFFIX)
+        self._candidates_file: Path = PUZZLE_DATA_DIR / (uuid + CANDIDATES_SUFFIX)
         self._uuid: UUID = UUID(uuid)  # (uuid7)
         self._difficulty: str = difficulty
 
