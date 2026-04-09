@@ -1,3 +1,4 @@
+from typing import Optional
 from PySide6.QtGui import QColor, QKeySequence
 
 from pathlib import Path
@@ -208,9 +209,15 @@ def parse_colours(data: dict[str, list[int]]) -> dict[str, QColor]:
     return result
 
 
-def load_settings(path: Path = SETTINGS) -> Settings:
-    with path.open("rb") as f:
-        data = tomllib.load(f)
+def load_settings(path: Optional[Path] = None) -> Settings:
+    """
+    Load settings from path if given or fallback to defaults.
+    """
+    if path is not None:
+        with path.open("rb") as f:
+            data = tomllib.load(f)
+    else:
+        data = {}
 
     try:
         return Settings(
@@ -232,5 +239,5 @@ def load_settings(path: Path = SETTINGS) -> Settings:
         raise e from ValueError(f"Invalid {path.absolute()}")
 
 
-settings = load_settings()
+settings = load_settings(SETTINGS)
 # TODO: Don't let anyone import anything besides this
