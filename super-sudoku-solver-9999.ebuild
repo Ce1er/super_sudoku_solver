@@ -2,7 +2,8 @@ EAPI=8
 
 PYTHON_COMPAT=( python3_14 )
 
-inherit python-single-r1 desktop
+DISTUTILS_USE_PEP517=setuptools
+inherit distutils-r1 desktop
 
 DESCRIPTION="Application to help solve sudoku puzzles"
 HOMEPAGE="https://github.com/Ce1er/super_sudoku_solver"
@@ -21,8 +22,7 @@ RDEPEND="
 	${PYTHON_DEPS}
 	$(python_gen_cond_dep '
 	dev-python/iniconfig[${PYTHON_USEDEP}]
-	>=dev-python/numpy-2.4.2[${PYTHON_USEDEP}]
-	dev-python/pygments[${PYTHON_USEDEP}]
+	>=dev-python/numpy-2.4.4[${PYTHON_USEDEP}]
 	dev-python/jsonschema[${PYTHON_USEDEP}]
 	>=dev-python/pyside-6[${PYTHON_USEDEP}]
 	dev-python/appdirs[${PYTHON_USEDEP}]
@@ -37,21 +37,17 @@ BDEPEND="
 	')
 "
 
-
-src_test() {
-	epytest
-}
+distutils_enable_tests pytest
 
 
 src_install() {
-	python_domodule "${S}/super_sudoku_solver"
-	python_newscript "${S}/__main__.py" "${PN}"
+	distutils-r1_src_install
 
 	domenu "${S}/super-sudoku-solver.desktop"
 
 	insinto /usr/share/${PN}/
 	doins "${S}/settings.toml"
-	doins "${S}/puzzles/puzzles.json"
+	doins "${S}/puzzles.json"
 
 	elog "A skeleton configuration file is provided in /usr/share/${PN}/settings.toml"
 	elog "This can be copied to ~/.config/${PN}/settings.toml and modified as desired"
