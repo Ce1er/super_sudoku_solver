@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, final
 from collections.abc import Callable
 from super_sudoku_solver.paths import (
     PUZZLE_DATA_DIR,
@@ -12,7 +12,7 @@ from super_sudoku_solver.paths import (
     DEFAULT_PUZZLES,
     DEFAULT_CONFIG,
     SETTINGS,
-    CACHE_DIR
+    CACHE_DIR,
 )
 import json
 from jsonschema import ValidationError, validate
@@ -26,7 +26,6 @@ import socket
 from super_sudoku_solver.settings import settings
 import sys
 import os
-import tempfile
 from io import BufferedWriter
 import logging
 import shutil
@@ -71,43 +70,51 @@ def atomic_write(
 ):
     """
     Write binary data to a file atomically. This will prevent partially written files caused by kernel panics,
-    power outages, etc. at the cost of some performance. Best used with important data that gets written
+    power outages, SIGKILL, etc. at the cost of some performance. Best used with important data that gets written
     infrequently and/or large data.
     Args:
         data: bytes data to save
         dst: path to save to
         save_func: optional custom write function which takes `dst` file in mode "wb" and `data` as input
     """
+    dst = Path(dst)
+
     # Avoid writing to file directly to avoid corruption
     # https://lwn.net/Articles/457667/
-    # CACHE_DIR is not used here because it may be on a different filesystem.
-    fd, tmp_path = tempfile.mkstemp(dir=dst.parent)
 
+    # dst.parent is used instead of CACHE_DIR here because CACHE_DIR may be on a different filesystem to dst.
+    # Which could cause os.replace to fail https://docs.python.org/3/library/os.html#os.replace
+    temp = dst.parent / ("." + dst.name + ".tmp")
     try:
-        with os.fdopen(fd, "wb") as f:
-            print(type(f))
+        with temp.open("wb") as f:
             save_func(f, data)
             f.flush()
             os.fsync(f.fileno())
 
-        os.replace(tmp_path, dst)
-
-        dir = os.open(dst.parent, os.O_DIRECTORY)
-
-        try:
-            os.fsync(dir)
-        finally:
-            os.close(dir)
-
+        os.replace(temp, dst)
     except Exception:
-        # If fail before os.replace tmp_file will persist
-        Path(tmp_path).unlink(missing_ok=True)
+        # If something fails before os.replace finishes temp file will persist so try to delete it
+        # If that's not possible due to process death it will be overwritten next time an atomic write is used for the same dst
+        Path(temp).unlink(missing_ok=True)
         raise
+
+    dir = os.open(dst.parent, os.O_DIRECTORY)
+
+    try:
+        os.fsync(dir)
+    finally:
+        os.close(dir)
 
 
 @total_ordering
 class Puzzle:
-    def __init__(self, uuid: str, clues: str, difficulty: str, puzzle_data_dir: Path= PUZZLE_DATA_DIR):
+    def __init__(
+        self,
+        uuid: str,
+        clues: str,
+        difficulty: str,
+        puzzle_data_dir: Path = PUZZLE_DATA_DIR,
+    ):
         self.puzzle_data_dir = puzzle_data_dir
         self._guesses_file: Path = self.puzzle_data_dir / (uuid + GUESSES_SUFFIX)
         self._candidates_file: Path = self.puzzle_data_dir / (uuid + CANDIDATES_SUFFIX)
@@ -288,7 +295,9 @@ class Puzzles:
         puzzles = dict(sorted(puzzles.items(), key=lambda x: x[1]))
         self._puzzles = puzzles
 
-    def __init__(self, puzzle_json: Path= PUZZLE_JSON, puzzle_data_dir: Path= PUZZLE_DATA_DIR):
+    def __init__(
+        self, puzzle_json: Path = PUZZLE_JSON, puzzle_data_dir: Path = PUZZLE_DATA_DIR
+    ):
         self.puzzle_json = puzzle_json
         self.puzzle_data_dir = puzzle_data_dir
         self.load()
