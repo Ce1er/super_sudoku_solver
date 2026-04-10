@@ -2,7 +2,13 @@
 """
 Main entry point for program.
 """
-from super_sudoku_solver.entry_points import main
 
-main()
+import super_sudoku_solver.entry_points as entry_points
 
+
+def main():
+    entry_points.main()
+
+
+if __name__ == "__main__":
+    main()

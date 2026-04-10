@@ -17,7 +17,7 @@ dependencies = [
 test = ["pytest==8.4.1"]
 
 [project.scripts]
-super-sudoku-solver = "super_sudoku_solver.__main__"
+super-sudoku-solver = "super_sudoku_solver.__main__:main"
 
 [tool.setuptools.package-data]
 super_sudoku_solver = ["settings.toml", "puzzles.json"]
