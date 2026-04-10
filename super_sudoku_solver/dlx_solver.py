@@ -308,6 +308,3 @@ class Matrix:
         """
         for solution in self._search():
             yield [self._get_row_labels(s) for s in solution]
-
-
-# TODO: remove some unneeded comments

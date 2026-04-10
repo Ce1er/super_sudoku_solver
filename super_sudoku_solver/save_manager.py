@@ -17,7 +17,6 @@ import numpy.typing as npt
 from uuid import uuid7, UUID
 import re
 from super_sudoku_solver.custom_types import Candidates, Cells
-import argparse
 from functools import total_ordering, partial
 import socket
 from super_sudoku_solver.settings import settings
@@ -25,7 +24,6 @@ import sys
 import os
 import tempfile
 from io import BufferedWriter
-import time
 
 DIFFICULTIES = ["easy", "medium", "hard"]
 DIFFICULTIES_T = Literal["easy", "medium", "hard"]

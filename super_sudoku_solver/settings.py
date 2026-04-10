@@ -98,6 +98,10 @@ class Colours:
                 raise ValueError(
                     f"Value for key {name} under [colours] is invalid. Failed to convert to QColor."
                 )
+            elif not val.isValid():
+                raise ValueError(
+                    f"Value for key {name} under [colours] is invalid. Failed to convert to valid QColor."
+                )
 
 
 @dataclass
@@ -239,6 +243,7 @@ def load_settings(path: Optional[Path] = None) -> Settings:
         raise e from ValueError("Invalid settings file")
 
 
+# Use user-defined settings or fallback to defaults
 if SETTINGS.is_file():
     settings = load_settings(SETTINGS)
 else:

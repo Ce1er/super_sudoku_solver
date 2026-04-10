@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from typing import Callable, Optional, Self, TYPE_CHECKING, Any
 
 from PySide6.QtWidgets import (
@@ -45,7 +43,14 @@ import super_sudoku_solver.human_solver as human_solver
 
 from super_sudoku_solver.settings import settings
 
-from super_sudoku_solver.human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
+from super_sudoku_solver.human_solver import (
+    MessageCoord,
+    MessageText,
+    Technique,
+    Action,
+    MessageNum,
+)
+
 if TYPE_CHECKING:
     from super_sudoku_solver.settings import Settings
 
@@ -625,7 +630,7 @@ class Board(QGraphicsScene):
 
     def clear_highlight(self, hint_highlight=True, adjacent_highlight=True):
         # FIXME: clears adjacent when doing hint stuff
-        print(hint_highlight,adjacent_highlight)
+        print(hint_highlight, adjacent_highlight)
         for row in self.cells:
             for cell in row:
                 if hint_highlight:
@@ -938,32 +943,13 @@ class Board(QGraphicsScene):
 
 def main():
     app = QApplication()
-    # puzzles = Puzzles()
-    # for name, puzzle in puzzles.puzzle_map.items():
-    #     print("a", name, puzzle)
-    #     p = puzzle
-    #     if name == "hard_1":
-    #         break
 
-    scene = Board(
-        # BoardData(
-        #     # "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
-        #     # "123456789..............................................................1........."
-        #     # ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
-        #     # "1.....569492.561.8.561.924...964.8.1.64.1....218.356.4.4.5...169.5.614.2621.....5"
-        #     p
-        # ),
-        settings,
-    )
+    scene = Board(settings)
     view = QGraphicsView(scene)
     view.setFocusPolicy(Qt.StrongFocus)
 
     view.show()
     sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    main()
 
 
 # TODO: sudoku board needs buttons as alternatives to all key binds
