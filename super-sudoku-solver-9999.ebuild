@@ -43,25 +43,13 @@ src_prepare() {
 
 
 src_test() {
-	# can't access /usr/local/share
-	sed 's/dir.mkdir(parents=True, exist_ok=True)/pass/' "${S}/src/paths.py"
 	epytest tests
 }
 
 
 src_install() {
-	PYTHON_MODULES="np_candidates sudoku save_manager techniques human_solver settings custom_types dlx_solver utils paths main"
-	# Would break tests if done earlier
-	sed -i -E "s/^\b(import|from) (${PYTHON_MODULES// /|})\b/\1 super_sudoku_solver.\2/" ${S}/src/*.py || die
-	sed -i -E "s/import super_sudoku_solver.human_solver/import super_sudoku_solver.human_solver as human_solver/" ${S}/src/main.py || die
-
-	python_moduleinto $(echo ${PN} | tr '-' '_')
-	for mod in ${PYTHON_MODULES}; do
-		python_domodule "${S}/src/${mod}.py"
-	done
-
-	python_newscript "${S}/src/main.py" "${PN}"
-	python_newscript "${S}/src/save_manager.py" "${PN}-save-manager"
+	python_domodule "${S}/super_sudoku_solver"
+	python_newscript "${S}/__main__.py" "${PN}"
 
 	domenu "${S}/super-sudoku-solver.desktop"
 
