@@ -37,10 +37,6 @@ BDEPEND="
 	')
 "
 
-src_prepare() {
-	default
-}
-
 
 src_test() {
 	epytest tests
