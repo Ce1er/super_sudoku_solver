@@ -39,7 +39,7 @@ BDEPEND="
 
 
 src_test() {
-	epytest tests
+	epytest
 }
 
 
