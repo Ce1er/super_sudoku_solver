@@ -45,13 +45,9 @@ src_install() {
 
 	domenu "${S}/super-sudoku-solver.desktop"
 
-	insinto /usr/share/${PN}/
-	doins "${S}/settings.toml"
-	doins "${S}/puzzles.json"
-
-	elog "A skeleton configuration file is provided in /usr/share/${PN}/settings.toml"
-	elog "This can be copied to ~/.config/${PN}/settings.toml and modified as desired"
+	elog "Default puzzles can be generated with the following command:"
+	elog "$ super-sudoku-solver --restore-default-puzzles"
 	elog ""
-	elog "Some default puzzles have been saved in /usr/share/${PN}/puzzles/puzzles.json"
-	elog "Which can be copied to ~/.local/share/super-sudoku-solver/puzzles.json"
+	elog "A skeleton configuration file can be written using the following command"
+	elog "$ super-sudoku-solver --restore-default-config"
 }
