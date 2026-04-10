@@ -2,13 +2,13 @@
 from _pytest.mark import ParameterSet
 
 # from human_solver import Technique, HumanSolver
-import techniques
+import super_sudoku_solver.techniques as techniques
 from collections.abc import Generator, Callable
 from typing import Optional
 import pytest
-from sudoku import Board
+from super_sudoku_solver.sudoku import Board
 import numpy as np
-import human_solver
+import super_sudoku_solver.human_solver as human_solver
 
 # board_1 = human_solver.HumanSolver(
 #     Board(

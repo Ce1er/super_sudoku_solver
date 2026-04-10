@@ -1,6 +1,6 @@
 import pytest
-from sudoku import Board
-from save_manager import Puzzle
+from super_sudoku_solver.sudoku import Board
+from super_sudoku_solver.save_manager import Puzzle
 from uuid import uuid7
 
 

@@ -32,25 +32,25 @@ from itertools import product, count, repeat
 from random import choice
 from html import escape
 
-import np_candidates as npc
+import super_sudoku_solver.np_candidates as npc
 import numpy as np
 import numpy.typing as npt
 
-from sudoku import Board as BoardData
-from sudoku import InvalidBoard
-from save_manager import Puzzles
+from super_sudoku_solver.sudoku import Board as BoardData
+from super_sudoku_solver.sudoku import InvalidBoard
+from super_sudoku_solver.save_manager import Puzzles
 
-from techniques import TECHNIQUES
-import human_solver
+from super_sudoku_solver.techniques import TECHNIQUES
+import super_sudoku_solver.human_solver as human_solver
 
-from settings import settings
+from super_sudoku_solver.settings import settings
 
-from human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
+from super_sudoku_solver.human_solver import MessageCoord, MessageText, Technique, Action, MessageNum
 if TYPE_CHECKING:
-    from settings import Settings
+    from super_sudoku_solver.settings import Settings
 
-    from custom_types import Candidates, Coords
-    from custom_types import Cell as CellT
+    from super_sudoku_solver.custom_types import Candidates, Coords
+    from super_sudoku_solver.custom_types import Cell as CellT
 
 
 # TODO: pass in font so it is customisable
@@ -937,7 +937,7 @@ class Board(QGraphicsScene):
 
 
 def main():
-    app = QApplication(sys.argv)
+    app = QApplication()
     # puzzles = Puzzles()
     # for name, puzzle in puzzles.puzzle_map.items():
     #     print("a", name, puzzle)

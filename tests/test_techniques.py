@@ -2,14 +2,14 @@
 # TODO: think about how is actually best to hide the long techniques arrays, maybe importing from a different file.
 from collections.abc import Generator, Callable
 import pytest
-from human_solver import Technique
-from sudoku import Board
+from super_sudoku_solver.human_solver import Technique
+from super_sudoku_solver.sudoku import Board
 import tests.data.test_techniques_data as test_techniques_data
 import re
 from typing import Optional
 import numpy as np
 import numpy.typing as npt
-import techniques
+import super_sudoku_solver.techniques as techniques
 
 
 @pytest.mark.parametrize(

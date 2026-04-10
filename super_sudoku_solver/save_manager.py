@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 from pathlib import Path
-from typing import  Any, Literal, Optional
+from typing import Any, Literal, Optional
 from collections.abc import Callable
-from paths import (
+from super_sudoku_solver.paths import (
     PUZZLE_DATA_DIR,
     PUZZLE_DIR,
     PUZZLE_JSON,
@@ -16,11 +16,11 @@ import numpy as np
 import numpy.typing as npt
 from uuid import uuid7, UUID
 import re
-from custom_types import Candidates, Cells
+from super_sudoku_solver.custom_types import Candidates, Cells
 import argparse
 from functools import total_ordering, partial
 import socket
-from settings import settings
+from super_sudoku_solver.settings import settings
 import sys
 import os
 import tempfile
@@ -61,7 +61,9 @@ lock_socket = ensure_single_instance()
 def atomic_write(
     data: bytes,
     dst: os.PathLike,
-    save_func: Callable[[BufferedWriter, bytes], Any]=lambda file, data: file.write(data),
+    save_func: Callable[[BufferedWriter, bytes], Any] = lambda file, data: file.write(
+        data
+    ),
 ):
     """
     Write binary data to a file atomically. This will prevent partially written files caused by kernel panics,
@@ -369,6 +371,10 @@ class Puzzles:
         self._puzzles[id].difficulty = difficulty
         # TODO: reloading should be unnecessary but need to test that
 
+
+puzzles = Puzzles()
+
+
 def confirm(prompt: str) -> bool:
     try:
         response = input(f"{prompt} (y/N) ")
@@ -376,48 +382,8 @@ def confirm(prompt: str) -> bool:
         return False
     return response.strip().lower() in ("y", "yes")
 
-if __name__ == "__main__":
-    puzzles = Puzzles()
-    parser = argparse.ArgumentParser(
-        prog="save_manager", description="Create, delete or modify saved puzzles."
-    )
-    parser.add_argument(
-        "-d",
-        "--delete",
-        nargs=1,
-        action="append",
-        metavar=("UUID"),
-        help="Delete a puzzle",
-    )
-    parser.add_argument(
-        "-u",
-        "--update",
-        nargs=2,
-        action="append",
-        metavar=("UUID", "DIFFICULTY"),
-        help="Change a puzzle's difficulty",
-    )
-    parser.add_argument(
-        "-a",
-        "--add",
-        nargs=2,
-        action="append",
-        metavar=("CLUES", "DIFFICULTY"),
-        help="Add a puzzle",
-    )
-    parser.add_argument(
-        "--reset-puzzle-data",
-        action="store_true",
-        help="Revert all puzzles to their starting state.",
-    )
-    parser.add_argument(
-        "--reset-all-data",
-        action="store_true",
-        help="Delete all save data.",
-    )
 
-    args = parser.parse_args()
-
+def main(args):
     if args.add:
         for clues, difficulty in args.add:
             puzzles.add_puzzle(clues, difficulty)
@@ -431,14 +397,18 @@ if __name__ == "__main__":
             puzzles.delete_puzzle(puzzle)
 
     if args.reset_puzzle_data:
-        if not confirm("Are you sure? This action will revert all puzzles to their original state and is irreversable."):
+        if not confirm(
+            "Are you sure? This action will revert all puzzles to their original state and is irreversable."
+        ):
             print("aborting")
             exit()
         for puzzle in puzzles.puzzles.values():
             puzzle.reset()
 
     if args.reset_all_data:
-        if not confirm("Are you sure? This action will delete all puzzles is irreversable."):
+        if not confirm(
+            "Are you sure? This action will delete all puzzles is irreversable."
+        ):
             print("aborting")
             exit()
 

@@ -1,6 +1,6 @@
 import re
-from custom_types import Candidates, CellCandidates, Cells, Coord
-import human_solver
+from super_sudoku_solver.custom_types import Candidates, CellCandidates, Cells, Coord
+import super_sudoku_solver.human_solver as human_solver
 from time import time
 
 # TODO: make techniques work
@@ -10,14 +10,14 @@ from time import time
 from typing import Literal, Optional, Generator
 import numpy as np
 import numpy.typing as npt
-import dlx_solver as dlx
-import techniques
-from human_solver import Action
+import super_sudoku_solver.dlx_solver as dlx
+import super_sudoku_solver.techniques as techniques
+from super_sudoku_solver.human_solver import Action
 
-from save_manager import Puzzle
-import np_candidates as npc
+from super_sudoku_solver.save_manager import Puzzle
+import super_sudoku_solver.np_candidates as npc
 
-from utils import text_hints
+from super_sudoku_solver.utils import text_hints
 
 
 class InvalidBoard(Exception):

@@ -1,16 +1,16 @@
 from collections.abc import Generator
-import utils
+import super_sudoku_solver.utils
 import itertools
 from os import remove
 from dataclasses import dataclass
 
 # from sudoku import Board
-import sudoku
+import super_sudoku_solver.sudoku as sudoku
 import copy
 from functools import wraps
 import numpy as np
 import numpy.typing as npt
-from human_solver import (
+from super_sudoku_solver.human_solver import (
     MessagePart,
     Technique,
     Action,
@@ -22,11 +22,11 @@ from human_solver import (
     MessageText,
 )
 from itertools import combinations
-import np_candidates as npc
+import super_sudoku_solver.np_candidates as npc
 import abc
 from typing import Any, SupportsInt, Type, TypedDict, Self, Callable, Literal
 import logging
-from custom_types import Adjacency, Coord, Cells, CellCandidates, Candidates
+from super_sudoku_solver.custom_types import Adjacency, Coord, Cells, CellCandidates, Candidates
 
 # from human_solver import HumanSolver
 

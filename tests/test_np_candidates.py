@@ -1,6 +1,6 @@
 import pytest
 import tests.data.test_np_candidates_data as test_np_candidates_data
-import np_candidates
+import super_sudoku_solver.np_candidates as npc
 import numpy as np
 
 
@@ -58,22 +58,22 @@ class TestAdjacent:
 
     def test_adjacent_row(self, normal_args, adjacent_row, null):
         assert (
-            np_candidates.adjacent_row(*normal_args).tolist() == adjacent_row.tolist()
+            npc.adjacent_row(*normal_args).tolist() == adjacent_row.tolist()
         ), "adjacent_row returned wrong array"
 
     def test_adjacent_column(self, normal_args, adjacent_column, null):
         assert (
-            np_candidates.adjacent_column(*normal_args).tolist()
+            npc.adjacent_column(*normal_args).tolist()
             == adjacent_column.tolist()
         ), "adjacent_column returned wrong array"
 
     def test_adjacent_box(self, normal_args, adjacent_box, null):
         print(*normal_args)
         assert (
-            np_candidates.adjacent_box(*normal_args).tolist() == adjacent_box.tolist()
+            npc.adjacent_box(*normal_args).tolist() == adjacent_box.tolist()
         ), "adjacent_box returned wrong array"
 
     def test_adjacent(self, adjacency_args, adjacent, null):
         assert (
-            np_candidates.adjacent(*adjacency_args).tolist() == adjacent.tolist()
+            npc.adjacent(*adjacency_args).tolist() == adjacent.tolist()
         ), "adjacent returned wrong array"

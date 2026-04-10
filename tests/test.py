@@ -1,6 +1,6 @@
 import pytest
-import dlx_solver
-import sudoku
+import super_sudoku_solver.dlx_solver as dlx_solver
+import super_sudoku_solver.sudoku as sudoku
 
 
 @pytest.fixture

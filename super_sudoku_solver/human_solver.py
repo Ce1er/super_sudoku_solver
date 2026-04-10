@@ -10,7 +10,7 @@ import numpy.typing as npt
 import logging
 from functools import reduce, wraps
 from itertools import combinations
-import np_candidates as npc
+import super_sudoku_solver.np_candidates as npc
 
 
 # TODO: fix types. Mostly which specific np int type? Also consider non-numpy types being passed in such as int to MessageNum
