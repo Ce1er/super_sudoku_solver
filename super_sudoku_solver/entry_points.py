@@ -7,11 +7,12 @@ def main():
     # If subparser used set entry_point to subparser's name
     subparsers = parser.add_subparsers(title="entry points", dest="entry_point")
 
+    save_manager_names = ("save_manager", "sm")
     # Parser to use when first arg is save_manager (or alias)
     save_manager_parser = subparsers.add_parser(
-        name="save_manager",
+        name=save_manager_names[0],
         description="Create, delete or modify saved puzzles.",
-        aliases=["sm"],
+        aliases=save_manager_names[1:],
     )
     save_manager_parser.add_argument(
         "-d",
@@ -52,12 +53,11 @@ def main():
 
     # Determine entrypoint based on subparser used
     # Fallback to gui if no subparser used
-    match args.entry_point:
-        case "save_manager":
-            import super_sudoku_solver.save_manager as save_manager
+    if args.entry_point in save_manager_names:
+        import super_sudoku_solver.save_manager as save_manager
 
-            save_manager.main(args)
-        case _:
-            import super_sudoku_solver.gui as gui
+        save_manager.main(args)
+    else:
+        import super_sudoku_solver.gui as gui
 
-            gui.main()
+        gui.main()
