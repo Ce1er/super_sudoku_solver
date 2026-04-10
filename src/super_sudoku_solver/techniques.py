@@ -26,7 +26,13 @@ import super_sudoku_solver.np_candidates as npc
 import abc
 from typing import Any, SupportsInt, Type, TypedDict, Self, Callable, Literal
 import logging
-from super_sudoku_solver.custom_types import Adjacency, Coord, Cells, CellCandidates, Candidates
+from super_sudoku_solver.custom_types import (
+    Adjacency,
+    Coord,
+    Cells,
+    CellCandidates,
+    Candidates,
+)
 
 # from human_solver import HumanSolver
 
@@ -203,7 +209,7 @@ class _NakedSinglesInstance(_TechniqueInstance):
 
     def _generate_message(self):
         return [
-            MessageCoord(self._coord, highlight=1),
+            MessageCoords(self._coord, highlight=1),
             MessageText("is"),
             MessageNum(self._num),
             MessageText("because it is the only candidate for the cell."),
@@ -266,7 +272,7 @@ class _HiddenSinglesInstance(_TechniqueInstance):
         # print(coord)
 
         return [
-            MessageCoord(self._coord[1:], highlight=1),
+            MessageCoords(self._coord[1:], highlight=1),
             MessageText("is"),
             MessageNum(self._coord[0]),
             MessageText(f"because there are no others in the {self._adjacency}."),
@@ -362,7 +368,9 @@ class _NakedPairsInstance(_TechniqueInstance):
             MessageCoords(np.array([*self._pair]), highlight=1),
             MessageText("are"),
             MessageNums(npc.argwhere(self._nums)),
-            MessageText(f"because they are adjacent by {adjacencies}."),
+            MessageText(
+                "so any cells adjacent to both cells can have those numbers removed as candidates."
+            ),
         ]
 
     def _generate_action(self):
@@ -449,7 +457,7 @@ class _HiddenPairsInstance(_TechniqueInstance):
             MessageText(
                 "in their "
                 + ", ".join(self._adjacent_by)
-                + "so we can remove all other candidates from them"
+                + " so we can remove all other candidates from them"
             ),
         ]
 
@@ -819,11 +827,13 @@ class _SkyscraperInstance(_TechniqueInstance):
                 f"because they are the only {self._num + 1} in their {self._adjacency} except these"
             ),
             MessageCoords(np.array([self._cell3, self._cell4]), highlight=2),
-            MessageText(f"which share a {self._other_adjacency}. That means"),
-            # MessageCandidates(removed_candidates),
             MessageText(
-                f"which see both the cells that do not share a {self._other_adjacency} can't be {self._num + 1}."
+                f"which share a {self._other_adjacency}. That means any cells that see both"
             ),
+            MessageCoords(np.array([self._cell1, self._cell2]), highlight=1),
+            MessageText("can't be"),
+            MessageNum(self._num),
+            MessageText("."),
         ]
 
     def _generate_action(self):

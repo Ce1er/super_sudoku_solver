@@ -63,34 +63,34 @@ class MessageText(MessagePart):
         self.highlight = highlight
 
 
-class MessageCoord(MessagePart):
-    """
-    For a single coordinate
-    """
-
-    def __init__(
-        self, coord: npt.NDArray[np.signedinteger], highlight: Optional[int] = None
-    ) -> None:
-        """
-        Args:
-            coord: 0-based coordinate. size 2 and can be any ndim as long as it can be reshaped to (2,).
-            highlight: highlight group
-        """
-        self._coord = coord
-        coord = np.copy(coord)
-        self.highlight = highlight
-        coord.reshape(2)
-        coord += 1
-        self.text = "Cell ({}, {})".format(*coord)
-
-    @property
-    def coord(self):
-        return self._coord
+# class MessageCoord(MessagePart):
+#     """
+#     For a single coordinate
+#     """
+#
+#     def __init__(
+#         self, coord: npt.NDArray[np.signedinteger], highlight: Optional[int] = None
+#     ) -> None:
+#         """
+#         Args:
+#             coord: 0-based coordinate. size 2 and can be any ndim as long as it can be reshaped to (2,).
+#             highlight: highlight group
+#         """
+#         self._coord = coord
+#         coord = np.copy(coord)
+#         self.highlight = highlight
+#         coord.reshape(2)
+#         coord += 1
+#         self.text = "Cell ({}, {})".format(*coord)
+#
+#     @property
+#     def coord(self):
+#         return self._coord
 
 
 class MessageCoords(MessagePart):
     """
-    For multiple coordinates
+    For cell coordinates
     """
 
     def __init__(
@@ -102,14 +102,17 @@ class MessageCoords(MessagePart):
             highlight: highlight group
 
         """
-        self._coords = coords
+        self._coords = npc.normalise_coords(coords)
         coords = np.copy(coords)
         self.highlight = highlight
-        tmp = "Cells"
-        coords += 1
-        for coord in coords:
-            tmp += " ({}, {})".format(*coord.reshape(2))
-        self.text = tmp
+        if len(coords) > 1:
+            tmp = "Cells"
+            coords += 1
+            for coord in coords:
+                tmp += " ({}, {})".format(*coord.reshape(2))
+            self.text = tmp
+        else:
+            self.text = "Cell ({}, {})".format(*coords.reshape(2))
 
     @property
     def coords(self):

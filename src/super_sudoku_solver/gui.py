@@ -230,11 +230,12 @@ class HintBox(QGraphicsItem, QObject):
             if message_part.highlight is not None:
                 html += f'<span style="background-color: {colours[message_part.highlight]};"><b>{escape(message_part.text)}</b></span>'
 
-                if isinstance(message_part, human_solver.MessageCoord):
-                    self.highlight_cells_calls.append(
-                        (message_part.coord, colours[message_part.highlight])
-                    )
-                elif isinstance(message_part, human_solver.MessageCoords):
+                # if isinstance(message_part, human_solver.MessageCoord):
+                #     self.highlight_cells_calls.append(
+                #         (message_part.coord, colours[message_part.highlight])
+                #     )
+
+                if isinstance(message_part, human_solver.MessageCoords):
                     self.highlight_cells_calls.append(
                         (message_part.coords, colours[message_part.highlight])
                     )
