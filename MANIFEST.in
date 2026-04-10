@@ -1,0 +1,2 @@
+include src/super_sudoku_solver/puzzles.json
+include src/super_sudoku_solver/settings.toml
