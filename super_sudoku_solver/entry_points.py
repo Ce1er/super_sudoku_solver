@@ -4,11 +4,12 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(prog="super_sudoku_solver")
 
-    # If subparser used set entry_point to subparser's name
+    # If subparser used set entry_point to subparser's name. Otherwise leave as None.
     subparsers = parser.add_subparsers(title="entry points", dest="entry_point")
 
     save_manager_names = ("save_manager", "sm")
-    # Parser to use when first arg is save_manager (or alias)
+
+    # Use this subparser when first arg is in `save_manager_names`
     save_manager_parser = subparsers.add_parser(
         name=save_manager_names[0],
         description="Create, delete or modify saved puzzles.",
