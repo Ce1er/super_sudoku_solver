@@ -20,4 +20,4 @@ test = ["pytest==8.4.1"]
 super-sudoku-solver = "super_sudoku_solver.__main__:main"
 
 [tool.setuptools.packages.find]
-where = ["super_sudoku_solver"]
+where = ["src"]
