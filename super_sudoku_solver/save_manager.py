@@ -24,6 +24,7 @@ import sys
 import os
 import tempfile
 from io import BufferedWriter
+import logging
 
 DIFFICULTIES = ["easy", "medium", "hard"]
 DIFFICULTIES_T = Literal["easy", "medium", "hard"]
@@ -40,9 +41,9 @@ def ensure_single_instance():
     try:
         sock.bind(("127.0.0.1", settings.developer.port))
     except OSError:
-        print("Failed to launch. Another instance appears to be running.")
-        print(
-            f"If there is no other instance running it could be a result of another app running on port {settings.developer.port}."
+        logging.error(
+            f"Failed to launch. Another instance appears to be running.\
+            If there is no other instance running it could be a result of another app running on port {settings.developer.port}."
         )
         sys.exit()
 
