@@ -67,6 +67,7 @@ def atomic_write(
     save_func: Callable[[BufferedWriter, bytes], Any] = lambda file, data: file.write(
         data
     ),
+    suffix: str = "",
 ):
     """
     Write binary data to a file atomically. This will prevent partially written files caused by kernel panics,
@@ -74,8 +75,12 @@ def atomic_write(
     infrequently and/or large data.
     Args:
         data: bytes data to save
-        dst: path to save to
+        dst: file path to save to
         save_func: optional custom write function which takes `dst` file in mode "wb" and `data` as input
+        suffix: optional suffix for tempfile placed at the end of the name but before ".tmp".
+    Note:
+        Will overwrite file in same location as `dst` with prefix "." and suffix ".tmp" if it exists.
+        If this file is being used for something else then `suffix` can be used to make the temp file's name unique.
     """
     dst = Path(dst)
 
@@ -84,18 +89,20 @@ def atomic_write(
 
     # dst.parent is used instead of CACHE_DIR here because CACHE_DIR may be on a different filesystem to dst.
     # Which could cause os.replace to fail https://docs.python.org/3/library/os.html#os.replace
-    temp = dst.parent / ("." + dst.name + ".tmp")
+
+    # Deterministic name is used so that if program crashes and temp file is left on disk it will be overwritten
+    # the next time an atomic write is called on `dst`. So there can be at most one leftover temp file per `dst`.
+    temp_path = dst.parent / ("." + dst.name + suffix + ".tmp")
     try:
-        with temp.open("wb") as f:
+        with temp_path.open("wb") as f:
             save_func(f, data)
             f.flush()
             os.fsync(f.fileno())
 
-        os.replace(temp, dst)
+        os.replace(temp_path, dst)
     except Exception:
         # If something fails before os.replace finishes temp file will persist so try to delete it
-        # If that's not possible due to process death it will be overwritten next time an atomic write is used for the same dst
-        Path(temp).unlink(missing_ok=True)
+        Path(temp_path).unlink(missing_ok=True)
         raise
 
     dir = os.open(dst.parent, os.O_DIRECTORY)
