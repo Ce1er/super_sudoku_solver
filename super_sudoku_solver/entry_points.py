@@ -49,6 +49,16 @@ def main():
         action="store_true",
         help="Delete all save data.",
     )
+    save_manager_parser.add_argument(
+        "--restore-default-puzzles",
+        action="store_true",
+        help="Restore default puzzles.",
+    )
+    save_manager_parser.add_argument(
+        "--restore-default-config",
+        action="store_true",
+        help="Restore default config file.",
+    )
 
     args = parser.parse_args()
 

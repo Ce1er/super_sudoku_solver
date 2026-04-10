@@ -9,6 +9,10 @@ from super_sudoku_solver.paths import (
     PUZZLE_JSON,
     GUESSES_SUFFIX,
     CANDIDATES_SUFFIX,
+    DEFAULT_PUZZLES,
+    DEFAULT_CONFIG,
+    SETTINGS,
+    CACHE_DIR
 )
 import json
 from jsonschema import ValidationError, validate
@@ -25,6 +29,7 @@ import os
 import tempfile
 from io import BufferedWriter
 import logging
+import shutil
 
 DIFFICULTIES = ["easy", "medium", "hard"]
 DIFFICULTIES_T = Literal["easy", "medium", "hard"]
@@ -75,6 +80,7 @@ def atomic_write(
     """
     # Avoid writing to file directly to avoid corruption
     # https://lwn.net/Articles/457667/
+    # CACHE_DIR is not used here because it may be on a different filesystem.
     fd, tmp_path = tempfile.mkstemp(dir=dst.parent)
 
     try:
@@ -101,9 +107,10 @@ def atomic_write(
 
 @total_ordering
 class Puzzle:
-    def __init__(self, uuid: str, clues: str, difficulty: str):
-        self._guesses_file: Path = PUZZLE_DATA_DIR / (uuid + GUESSES_SUFFIX)
-        self._candidates_file: Path = PUZZLE_DATA_DIR / (uuid + CANDIDATES_SUFFIX)
+    def __init__(self, uuid: str, clues: str, difficulty: str, puzzle_data_dir: Path= PUZZLE_DATA_DIR):
+        self.puzzle_data_dir = puzzle_data_dir
+        self._guesses_file: Path = self.puzzle_data_dir / (uuid + GUESSES_SUFFIX)
+        self._candidates_file: Path = self.puzzle_data_dir / (uuid + CANDIDATES_SUFFIX)
         self._uuid: UUID = UUID(uuid)  # (uuid7)
         self._difficulty: str = difficulty
 
@@ -258,11 +265,11 @@ class Puzzles:
     }
 
     def load(self):
-        if PUZZLE_JSON.is_file():
-            with PUZZLE_JSON.open("r", encoding="utf-8") as f:
+        if self.puzzle_json.is_file():
+            with self.puzzle_json.open("r", encoding="utf-8") as f:
                 data = json.load(f)
         else:
-            with PUZZLE_JSON.open("w", encoding="utf-8") as f:
+            with self.puzzle_json.open("w", encoding="utf-8") as f:
                 data = {"puzzles": {}}
                 f.write(json.dumps(data))
 
@@ -273,17 +280,25 @@ class Puzzles:
 
         puzzles = {}
         for id, puzzle in data["puzzles"].items():
-            puzzles[id] = Puzzle(id, puzzle["clues"], puzzle["difficulty"])
+            puzzles[id] = Puzzle(
+                id, puzzle["clues"], puzzle["difficulty"], self.puzzle_data_dir
+            )
 
         # Sort puzzles based on Puzzle.__lt__
         puzzles = dict(sorted(puzzles.items(), key=lambda x: x[1]))
         self._puzzles = puzzles
 
-    def __init__(self):
+    def __init__(self, puzzle_json: Path= PUZZLE_JSON, puzzle_data_dir: Path= PUZZLE_DATA_DIR):
+        self.puzzle_json = puzzle_json
+        self.puzzle_data_dir = puzzle_data_dir
         self.load()
 
     @property
     def puzzles(self):
+        """
+        Returns:
+            dict mapping uuid to puzzle
+        """
         return self._puzzles
 
     @property
@@ -329,7 +344,7 @@ class Puzzles:
         # data is not written very often and can be large if there are lots of puzzles saved
         # so safety from atomic_write is worth performance hit
         try:
-            atomic_write(data, PUZZLE_JSON)
+            atomic_write(data, self.puzzle_json)
         except Exception as e:
             raise RuntimeError("Puzzle JSON save failed.") from e
 
@@ -347,7 +362,9 @@ class Puzzles:
             raise ValueError("Invalid difficulty")
 
         uuid = uuid7()
-        self._puzzles[str(uuid)] = Puzzle(str(uuid), clues, difficulty)
+        self._puzzles[str(uuid)] = Puzzle(
+            str(uuid), clues, difficulty, self.puzzle_data_dir
+        )
 
     def delete_puzzle(self, id):
         """
@@ -414,5 +431,18 @@ def main(args):
         uuids = list(puzzles.puzzles.keys())
         for puzzle in uuids:
             puzzles.delete_puzzle(puzzle)
+
+    if args.restore_default_puzzles:
+        # Puzzle data dir is not used but has to be set
+        # It shouldn't be written to but if it is it will be cleared on next app launch anyway
+        default_puzzles = Puzzles(DEFAULT_PUZZLES, CACHE_DIR)
+
+        # Add all the default puzzles unless they are already saved
+        for uuid, puzzle in default_puzzles.puzzles.items():
+            if uuid not in puzzles.puzzles:
+                puzzles.add_puzzle(puzzle.str_clues, puzzle.difficulty)
+
+    if args.restore_default_config:
+        shutil.copy(DEFAULT_CONFIG, SETTINGS)
 
     puzzles.save()
