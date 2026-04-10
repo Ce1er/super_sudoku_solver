@@ -21,3 +21,6 @@ super-sudoku-solver = "super_sudoku_solver.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+super_sudoku_solver = ["puzzles.json", "settings.toml"]
