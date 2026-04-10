@@ -44,7 +44,7 @@ import super_sudoku_solver.human_solver as human_solver
 from super_sudoku_solver.settings import settings
 
 from super_sudoku_solver.human_solver import (
-    MessageCoord,
+    # MessageCoord,
     MessageText,
     Technique,
     Action,

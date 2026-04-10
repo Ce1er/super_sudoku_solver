@@ -15,7 +15,7 @@ from super_sudoku_solver.human_solver import (
     Technique,
     Action,
     MessageCandidates,
-    MessageCoord,
+    # MessageCoord,
     MessageCoords,
     MessageNums,
     MessageNum,

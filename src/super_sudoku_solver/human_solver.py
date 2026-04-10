@@ -102,17 +102,17 @@ class MessageCoords(MessagePart):
             highlight: highlight group
 
         """
-        self._coords = npc.normalise_coords(coords)
-        coords = np.copy(coords)
+        coords = npc.normalise_coords(np.copy(coords))
+        self._coords = coords
         self.highlight = highlight
         if len(coords) > 1:
             tmp = "Cells"
             coords += 1
             for coord in coords:
-                tmp += " ({}, {})".format(*coord.reshape(2))
+                tmp += " ({}, {})".format(*coord)
             self.text = tmp
         else:
-            self.text = "Cell ({}, {})".format(*coords.reshape(2))
+            self.text = "Cell ({}, {})".format(*coords[0])
 
     @property
     def coords(self):
