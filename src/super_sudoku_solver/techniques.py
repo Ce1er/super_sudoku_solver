@@ -275,7 +275,9 @@ class _HiddenSinglesInstance(_TechniqueInstance):
             MessageCoords(self._coord[1:], highlight=1),
             MessageText("is"),
             MessageNum(self._coord[0]),
-            MessageText(f"because there are no others in the {self._adjacency}."),
+            MessageText("because there are no others cells that can be"),
+            MessageNum(self._coord[0]),
+            MessageText(f"in the {self._adjacency}."),
         ]
 
     def _generate_action(self):
@@ -368,9 +370,11 @@ class _NakedPairsInstance(_TechniqueInstance):
             MessageCoords(np.array([*self._pair]), highlight=1),
             MessageText("are"),
             MessageNums(npc.argwhere(self._nums)),
-            MessageText(
-                "so any cells adjacent to both cells can have those numbers removed as candidates."
-            ),
+            MessageText("so any cells adjacent to both"),
+            MessageCoords(np.array([*self._pair]), highlight=1),
+            MessageText("can have"),
+            MessageNums(npc.argwhere(self._nums)),
+            MessageText("removed as candidates."),
         ]
 
     def _generate_action(self):
@@ -457,7 +461,7 @@ class _HiddenPairsInstance(_TechniqueInstance):
             MessageText(
                 "in their "
                 + ", ".join(self._adjacent_by)
-                + " so we can remove all other candidates from them"
+                + " so we can remove all other candidates from them."
             ),
         ]
 
@@ -564,7 +568,9 @@ class _LockedCandidatesInstance(_TechniqueInstance):
     def _generate_message(self):
         return [
             MessageCoords(self._coords, highlight=1),
-            MessageText("are the only cells that can be"),
+            MessageText(
+                f"{'are' if self._coords.size > 2 else 'is'} the only cells that can be"
+            ),
             MessageNum(self._num),
             MessageText(f"in their {self._adjacency} so we can remove"),
             MessageNum(self._num),

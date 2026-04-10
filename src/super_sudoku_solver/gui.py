@@ -702,7 +702,7 @@ class Board(QGraphicsScene):
             print(coord)
             technique = Technique(
                 name,
-                [MessageCoord(coord, highlight=1), MessageText("is"), MessageNum(num)],
+                [MessageCoords(coord, highlight=1), MessageText("is"), MessageNum(num)],
                 Action(add_cells=new_cells),
             )
 
