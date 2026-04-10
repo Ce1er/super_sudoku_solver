@@ -7,9 +7,7 @@ name = "super_sudoku_solver"
 version = "1.0.0"
 dependencies = [
   "iniconfig==2.1.0",
-  "numpy==2.4.2",
-  "packaging==25.0",
-  "pluggy==1.6.0",
+  "numpy==2.4.4",
   "Pygments==2.20.0",
   "pytest==8.4.1",
   "jsonschema==4.26.0",
