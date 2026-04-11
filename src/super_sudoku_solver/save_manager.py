@@ -68,6 +68,7 @@ def atomic_write(
         data
     ),
     suffix: str = "",
+    fsync_dir: bool = True,
 ):
     """
     Write binary data to a file atomically. This will prevent partially written files caused by kernel panics,
@@ -78,9 +79,15 @@ def atomic_write(
         dst: file path to save to
         save_func: optional custom write function which takes `dst` file in mode "wb" and `data` as input
         suffix: optional suffix for tempfile placed at the end of the name but before ".tmp".
-    Note:
+        fsync_dir: optionally force fsync on directory. This is not needed to guarantee file write is atomic
+            but makes it more likely for new data to persist after a power failure or similar
+            very soon after data is written. This will not work on all systems, especially Windows.
+    Notes:
         Will overwrite file in same location as `dst` with prefix "." and suffix ".tmp" if it exists.
         If this file is being used for something else then `suffix` can be used to make the temp file's name unique.
+
+        The best way to do this varies based on OS, filesystem and mount options. This function is meant
+        to provide a reasonable solution for all of these not a perfect one.
     """
     dst = Path(dst)
 
@@ -105,12 +112,34 @@ def atomic_write(
         Path(temp_path).unlink(missing_ok=True)
         raise
 
-    dir = os.open(dst.parent, os.O_DIRECTORY)
+    # Try to force the directory entry to be written to disk
+    # This should be done soon anyway so failure isn't a major issue
+    # Worst case scenario would be new data being left as an orphaned inode due to power failure or similar
+    # in which case it may or may not be assigned to a directory entry after reboot but even if it isn't any old data
+    # at `dst` would persist so this step is essentially optional.
+    if fsync_dir:
+        try:
+            # O_DIRECTORY is slightly better because it will be enforced by the kernel
+            # but DoS from opening a FIFO really isn't a major concern here so omitting it is fine.
+            if hasattr(os, "O_DIRECTORY"):
+                dir = os.open(dst.parent, os.O_DIRECTORY)
+            else:
+                logging.info("O_DIRECTORY does not exist")
+                if not dst.parent.is_dir():
+                    raise NotADirectoryError("Not a directory: '{}'".format(dst.parent))
+                dir = os.open(dst.parent, 0)
 
-    try:
-        os.fsync(dir)
-    finally:
-        os.close(dir)
+            try:
+                os.fsync(dir)
+            finally:
+                os.close(dir)
+        except Exception as e:
+            # Errors are explicitly ignored here because behaviour of this will vary based on the operating system, filesystem and mount options so they are expected
+            # and usually won't result in any actual issues.
+            # It should usually work on modern unix-based systems but is expected to fail on Windows which doesn't have the concept of opening directories
+            # https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/open-wopen?view=msvc-170
+            logging.warning(e)
+            logging.warning("Could not fsync directory due to error above.")
 
 
 @total_ordering
