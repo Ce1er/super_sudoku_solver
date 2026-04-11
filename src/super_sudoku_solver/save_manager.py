@@ -71,17 +71,17 @@ def atomic_write(
     fsync_dir: bool = True,
 ):
     """
-    Write binary data to a file atomically. This will prevent partially written files caused by kernel panics,
-    power outages, SIGKILL, etc. at the cost of some performance. Best used with important data that gets written
-    infrequently and/or large data.
+    Write binary data to a file atomically (as long as os.replace is atomic on the system). This will prevent partially 
+    written files caused by kernel panics, power outages, SIGKILL, etc. at the cost of some performance. Best used with 
+    important data that gets written infrequently and/or large data.
     Args:
         data: bytes data to save
         dst: file path to save to
         save_func: optional custom write function which takes `dst` file in mode "wb" and `data` as input
         suffix: optional suffix for tempfile placed at the end of the name but before ".tmp".
         fsync_dir: optionally force fsync on directory. This is not needed to guarantee file write is atomic
-            but makes it more likely for new data to persist after a power failure or similar
-            very soon after data is written. This will not work on all systems, especially Windows.
+            but is required to ensure the new file's  directory entry has reached disk before function exits.
+            This will not work on all systems, especially Windows.
     Notes:
         Will overwrite file in same location as `dst` with prefix "." and suffix ".tmp" if it exists.
         If this file is being used for something else then `suffix` can be used to make the temp file's name unique.
@@ -106,6 +106,9 @@ def atomic_write(
             f.flush()
             os.fsync(f.fileno())
 
+        # This operation being atomic is a POSIX requirement and it is atomic on Windows as well
+        # Whether it's actually implemented properly will depend on the OS
+        # http://www.weirdnet.nl/apple/rename.html
         os.replace(temp_path, dst)
     except Exception:
         # If something fails before os.replace finishes temp file will persist so try to delete it
@@ -114,9 +117,6 @@ def atomic_write(
 
     # Try to force the directory entry to be written to disk
     # This should be done soon anyway so failure isn't a major issue
-    # Worst case scenario would be new data being left as an orphaned inode due to power failure or similar
-    # in which case it may or may not be assigned to a directory entry after reboot but even if it isn't any old data
-    # at `dst` would persist so this step is essentially optional.
     if fsync_dir:
         try:
             # O_DIRECTORY is slightly better because it will be enforced by the kernel
