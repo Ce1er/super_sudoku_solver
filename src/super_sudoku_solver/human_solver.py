@@ -109,7 +109,6 @@ class MessageCoords(MessagePart):
         self.highlight = highlight
         if len(coords) > 1:
             tmp = "Cells"
-            coords += 1
             for coord in coords:
                 tmp += " ({}, {})".format(*coord)
             self.text = tmp
