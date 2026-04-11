@@ -568,8 +568,11 @@ class _LockedCandidatesInstance(_TechniqueInstance):
     def _generate_message(self):
         return [
             MessageCoords(self._coords, highlight=1),
-            MessageText(
-                f"{'are' if self._coords.size > 2 else 'is'} the only cells that can be"
+            # If there's more that 1 coord use plural
+            (
+                MessageText("are the only cells that can be")
+                if self._coords.size > 2
+                else MessageText("is the only cell that can be")
             ),
             MessageNum(self._num),
             MessageText(f"in their {self._adjacency} so we can remove"),
