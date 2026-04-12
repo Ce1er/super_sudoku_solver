@@ -30,7 +30,6 @@ from super_sudoku_solver.custom_types import (
     Adjacency,
     Coord,
     Cells,
-    Cell,
     CellCandidates,
     Candidates,
 )
@@ -993,6 +992,78 @@ class Skyscrapers(_TechniqueFinder):
                         self._candidates,
                     )
 
+class _XWingInstance(_TechniqueInstance):
+    NAME= "X-Wing"
+    def __init__(self,adjacency,pairing,num,arr) -> None:
+        self.adjacency=adjacency
+        self.pairing=np.array(pairing).flatten()
+        self.num=num
+        self.arr=arr
+        self.indices = np.array(npc.argwhere(self.arr).flatten(), dtype=np.int8)
+        print(self.__dict__)
+
+    def _generate_action(self):
+
+        remove_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+
+        # Candidates will be removed in opposite direction to adjacency
+        if self.adjacency == "column":
+            remove_candidates[self.num, self.indices, :] = True
+
+            coords = itertools.product(self.indices, self.pairing)
+            for coord in coords:
+                # Don't remove candidates for the cells that are part of the X-Wing
+                remove_candidates[self.num, coord[0], coord[1]] = False
+
+        elif self.adjacency == "row":
+            remove_candidates[self.num, :, self.indices] = True
+
+            coords = itertools.product(self.pairing, self.indices)
+            for coord in coords:
+                # Don't remove candidates for the cells that are part of the X-Wing
+                remove_candidates[self.num, coord[0], coord[1]] = False
+
+        return Action(remove_candidates=remove_candidates)
+
+    def _generate_message(self):
+        if self.adjacency == "row":
+            coords = np.array(
+                list(
+                    map(
+                        lambda x: np.array(list(map(np.int8, x))),
+                        itertools.product(self.pairing, self.indices),
+                    )
+                )
+            )
+            print(coords)
+            message = [
+                MessageCoords(coords, highlight=1),
+                MessageText("are the only"),
+                MessageNum(self.num),
+                MessageText(f"s in their {self.adjacency} so we can remove"),
+                MessageNum(self.num),
+                MessageText("from all other cells in their columns."),
+            ]
+        elif self.adjacency == "column":
+            coords = np.array(
+                list(
+                    map(
+                        lambda x: np.array(list(map(np.int8, x))),
+                        itertools.product(self.indices, self.pairing),
+                    )
+                )
+            )
+            print(coords)
+            message = [
+                MessageCoords(coords, highlight=1),
+                MessageText("are the only"),
+                MessageNum(self.num),
+                MessageText(f"s in their {self.adjacency} so we can remove"),
+                MessageNum(self.num),
+                MessageText("from all other cells in their rows."),
+            ]
+
+        return message
 
 class XWing(_TechniqueFinder):
     def __init__(
@@ -1003,84 +1074,6 @@ class XWing(_TechniqueFinder):
     ):
         super().__init__(candidates, clues, guesses)
 
-    @staticmethod
-    def _generate_action(technique):
-        pairing = np.array(technique["pairing"]).flatten()
-        adjacency = technique["adjacency"]
-        num = technique["num"]
-        arr = technique["arr"]
-        indices = np.array(npc.argwhere(arr).flatten(), dtype=np.int8)
-
-        remove_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-
-        # Candidates will be removed in opposite direction to adjacency
-        if adjacency == "column":
-            remove_candidates[num, indices, :] = True
-
-            coords = itertools.product(indices, pairing)
-            for coord in coords:
-                # Don't remove candidates for the cells that are part of the X-Wing
-                remove_candidates[num, coord[0], coord[1]] = False
-
-        elif adjacency == "row":
-            remove_candidates[num, :, indices] = True
-
-            coords = itertools.product(pairing, indices)
-            for coord in coords:
-                # Don't remove candidates for the cells that are part of the X-Wing
-                remove_candidates[num, coord[0], coord[1]] = False
-
-        return Action(remove_candidates=remove_candidates)
-
-    @staticmethod
-    def _generate_message(technique):
-        # pairing = technique["pairing"]
-        # adjacency = technique["adjacency"]
-        # num = technique["num"]
-        pairing = np.array(technique["pairing"]).flatten()
-        adjacency = technique["adjacency"]
-        num = technique["num"]
-        arr = technique["arr"]
-        indices = np.array(npc.argwhere(arr).flatten(), dtype=np.int8)
-
-        if adjacency == "row":
-            coords = np.array(
-                list(
-                    map(
-                        lambda x: np.array(list(map(np.int8, x))),
-                        itertools.product(pairing, indices),
-                    )
-                )
-            )
-            print(coords)
-            message = [
-                MessageCoords(coords, highlight=1),
-                MessageText("are the only"),
-                MessageNum(num),
-                MessageText(f"s in their {adjacency} so we can remove"),
-                MessageNum(num),
-                MessageText("from all other cells in their columns."),
-            ]
-        elif adjacency == "column":
-            coords = np.array(
-                list(
-                    map(
-                        lambda x: np.array(list(map(np.int8, x))),
-                        itertools.product(indices, pairing),
-                    )
-                )
-            )
-            print(coords)
-            message = [
-                MessageCoords(coords, highlight=1),
-                MessageText("are the only"),
-                MessageNum(num),
-                MessageText(f"s in their {adjacency} so we can remove"),
-                MessageNum(num),
-                MessageText("from all other cells in their rows."),
-            ]
-
-        return message
 
     def _find(self):
         """
@@ -1100,10 +1093,10 @@ class XWing(_TechniqueFinder):
             for num in range(9):
                 # Find rows or columns with 2 occurences of num. Will give 1d arr with ints representing index of row/column.
                 if adjacency == "column":
-                    rows = np.add.reduce(self.candidates[num], axis=0, dtype=np.int8)
+                    rows = np.add.reduce(self._candidates[num], axis=0, dtype=np.int8)
                     potential = npc.argwhere(rows == 2)
                 elif adjacency == "row":
-                    columns = np.add.reduce(self.candidates[num], axis=1, dtype=np.int8)
+                    columns = np.add.reduce(self._candidates[num], axis=1, dtype=np.int8)
                     potential = npc.argwhere(columns == 2)
                 else:
                     assert False, "types has invalid key"
@@ -1114,21 +1107,18 @@ class XWing(_TechniqueFinder):
                 for pairing in combinations(potential, r=2):
                     # print(adjacency, pairing)
                     if adjacency == "column":
-                        arr = self.candidates[num, :, pairing]
+                        arr = self._candidates[num, :, pairing]
                     if adjacency == "row":
-                        arr = self.candidates[num, pairing, :]
+                        arr = self._candidates[num, pairing, :]
 
                     if not np.array_equal(arr[0], arr[1]):
                         continue
 
                     # print(2, adjacency, pairing)
 
-                    yield {
-                        "adjacency": adjacency,
-                        "pairing": pairing,
-                        "num": num,
-                        "arr": arr[0].flatten(),
-                    }
+                    yield _XWingInstance(
+                            adjacency,pairing,num,arr[0].flatten()
+                            )
 
 
 TECHNIQUES = [
