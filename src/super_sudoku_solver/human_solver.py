@@ -2,9 +2,10 @@
 from __future__ import annotations
 import copy
 from collections.abc import Generator
-from typing import Callable, Optional, Protocol, Self, SupportsInt, Type, TypeVar, Union
+from typing import Callable, Optional,  Self, SupportsInt, Type, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
+from abc import ABC
 
 # import sudoku
 import logging
@@ -14,7 +15,7 @@ import super_sudoku_solver.np_candidates as npc
 
 
 # TODO: fix types. Mostly which specific np int type? Also consider non-numpy types being passed in such as int to MessageNum
-class MessagePart(Protocol):
+class MessagePart(ABC):
     """
     Base class for parts of message used by Technique
     This class should not be used directly
