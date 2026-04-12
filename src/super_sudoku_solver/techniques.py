@@ -30,6 +30,7 @@ from super_sudoku_solver.custom_types import (
     Adjacency,
     Coord,
     Cells,
+    Cell,
     CellCandidates,
     Candidates,
 )
@@ -247,7 +248,12 @@ class NakedSingles(_TechniqueFinder):
 class _HiddenSinglesInstance(_TechniqueInstance):
     NAME = "Hidden Singles"
 
-    def __init__(self, coord: npt.NDArray[np.int8], adjacency: Adjacency):
+    def __init__(self, coord: Cell, adjacency: Adjacency):
+        """
+        Args:
+            coord: coordinate of hidden single and its value
+            adjacency: the adjacency in which it is a single
+        """
         self._coord = coord
         self._adjacency = adjacency
 
