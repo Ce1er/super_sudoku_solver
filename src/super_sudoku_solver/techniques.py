@@ -5,7 +5,7 @@ from functools import wraps
 import itertools
 from itertools import combinations
 import abc
-from typing import SupportsInt, Self, Callable
+from typing import SupportsInt, Self, Callable, assert_never
 from collections.abc import Generator
 
 from super_sudoku_solver.custom_types import (
@@ -991,7 +991,6 @@ class _XWingInstance(_TechniqueInstance):
         self.num = num
         self.arr = arr
         self.indices = np.array(npc.argwhere(self.arr).flatten(), dtype=np.int8)
-        print(self.__dict__)
 
     def _generate_action(self):
 
@@ -1017,6 +1016,8 @@ class _XWingInstance(_TechniqueInstance):
         return Action(remove_candidates=remove_candidates)
 
     def _generate_message(self):
+        # Coordinates of all 4 cells
+
         if self.adjacency == "row":
             coords = np.array(
                 list(
@@ -1026,15 +1027,11 @@ class _XWingInstance(_TechniqueInstance):
                     )
                 )
             )
-            print(coords)
-            message = [
-                MessageCoords(coords, highlight=1),
-                MessageText("are the only"),
-                MessageNum(self.num),
-                MessageText(f"s in their {self.adjacency} so we can remove"),
-                MessageNum(self.num),
-                MessageText("from all other cells in their columns."),
-            ]
+            rows = list(set(coords[:, 0]))
+            group_1 = coords[coords[:,0]==rows[0]]
+            group_2 = coords[coords[:,0]==rows[1]]
+            other_adjacency="column"
+
         elif self.adjacency == "column":
             coords = np.array(
                 list(
@@ -1044,18 +1041,24 @@ class _XWingInstance(_TechniqueInstance):
                     )
                 )
             )
-            print(coords)
-            message = [
-                MessageCoords(coords, highlight=1),
+            columns = list(set(coords[:,1]))
+            group_1=coords[coords[:,1]==columns[0]]
+            group_2=coords[coords[:,1]==columns[1]]
+            other_adjacency="row"
+        else:
+            assert_never(self.adjacency)
+
+
+        return [
+                MessageCoords(group_1, highlight=1),
+                MessageText("and"),
+                MessageCoords(group_2,highlight=2),
                 MessageText("are the only"),
                 MessageNum(self.num),
                 MessageText(f"s in their {self.adjacency} so we can remove"),
                 MessageNum(self.num),
-                MessageText("from all other cells in their rows."),
+                MessageText(f"from all other cells in their {other_adjacency}s."),
             ]
-
-        return message
-
 
 class XWing(_TechniqueFinder):
     def __init__(
@@ -1107,8 +1110,6 @@ class XWing(_TechniqueFinder):
                     if not np.array_equal(arr[0], arr[1]):
                         continue
 
-                    # print(2, adjacency, pairing)
-
                     yield _XWingInstance(adjacency, pairing, num, arr[0].flatten())
 
 
@@ -1120,7 +1121,7 @@ TECHNIQUES = [
     LockedCandidates,
     Skyscrapers,
     # PointingPairs,
-    # XWing,
+    XWing,
 ]
 
 # TODO: consider finding more general techniques
