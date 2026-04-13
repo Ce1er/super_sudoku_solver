@@ -4,7 +4,7 @@ EAPI=9
 # python3.14 is the only compatible version
 PYTHON_COMPAT=( python3_14 )
 
-# Tell portage project is PEP517 complient
+# Tell distutils project is PEP517 complient
 DISTUTILS_USE_PEP517=setuptools
 inherit distutils-r1 
 
@@ -80,6 +80,7 @@ src_install() {
 	distutils-r1_src_install
 
   # Install desktop file to /usr/share/applications/
+  # S is the path to the directory Portage unpacks sources
 	domenu "${S}/super-sudoku-solver.desktop"
 }
 
