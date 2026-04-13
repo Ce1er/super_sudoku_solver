@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 from pathlib import Path
-from typing import Any, Literal, Optional, final
+from typing import Any, Literal, Optional
 from collections.abc import Callable
 from super_sudoku_solver.paths import (
     PUZZLE_DATA_DIR,
-    PUZZLE_DIR,
     PUZZLE_JSON,
     GUESSES_SUFFIX,
     CANDIDATES_SUFFIX,
@@ -17,11 +16,10 @@ from super_sudoku_solver.paths import (
 import json
 from jsonschema import ValidationError, validate
 import numpy as np
-import numpy.typing as npt
 from uuid import uuid7, UUID
 import re
 from super_sudoku_solver.custom_types import Candidates, Cells
-from functools import total_ordering, partial
+from functools import total_ordering
 import socket
 from super_sudoku_solver.settings import settings
 import sys

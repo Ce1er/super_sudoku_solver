@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Self, TYPE_CHECKING, Any
+from typing import Callable, Optional, Self
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -25,7 +25,7 @@ from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer, QObject
 import sys
 import logging
 
-from functools import wraps, singledispatchmethod, partial
+from functools import wraps,  partial
 from itertools import product, count, repeat
 from random import choice
 from html import escape
@@ -41,7 +41,7 @@ from super_sudoku_solver.save_manager import Puzzles
 from super_sudoku_solver.techniques import TECHNIQUES
 import super_sudoku_solver.human_solver as human_solver
 
-from super_sudoku_solver.settings import settings
+from super_sudoku_solver.settings import settings, Settings
 
 from super_sudoku_solver.human_solver import (
     MessageCoords,
@@ -50,12 +50,9 @@ from super_sudoku_solver.human_solver import (
     Action,
     MessageNum,
 )
+from super_sudoku_solver.custom_types import Candidates, Coords
+from super_sudoku_solver.custom_types import Cell as CellT
 
-if TYPE_CHECKING:
-    from super_sudoku_solver.settings import Settings
-
-    from super_sudoku_solver.custom_types import Candidates, Coords
-    from super_sudoku_solver.custom_types import Cell as CellT
 
 
 # TODO: pass in font so it is customisable

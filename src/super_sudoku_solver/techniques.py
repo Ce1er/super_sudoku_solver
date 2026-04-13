@@ -1,31 +1,13 @@
-from collections.abc import Generator
-import super_sudoku_solver.utils
-import itertools
-from os import remove
-from dataclasses import dataclass
-
-# from sudoku import Board
-import super_sudoku_solver.sudoku as sudoku
-import copy
-from functools import wraps
 import numpy as np
 import numpy.typing as npt
-from super_sudoku_solver.human_solver import (
-    MessagePart,
-    Technique,
-    Action,
-    MessageCandidates,
-    # MessageCoord,
-    MessageCoords,
-    MessageNums,
-    MessageNum,
-    MessageText,
-)
+
+from functools import wraps
+import itertools
 from itertools import combinations
-import super_sudoku_solver.np_candidates as npc
 import abc
-from typing import Any, SupportsInt, Type, TypedDict, Self, Callable, Literal
-import logging
+from typing import  SupportsInt,   Self, Callable 
+from collections.abc import Generator
+
 from super_sudoku_solver.custom_types import (
     Adjacency,
     Coord,
@@ -33,8 +15,17 @@ from super_sudoku_solver.custom_types import (
     CellCandidates,
     Candidates,
 )
+import super_sudoku_solver.np_candidates as npc
+from super_sudoku_solver.human_solver import (
+    MessagePart,
+    Technique,
+    Action,
+    MessageCoords,
+    MessageNums,
+    MessageNum,
+    MessageText,
+)
 
-# from human_solver import HumanSolver
 
 
 class _TechniqueInstance(abc.ABC):

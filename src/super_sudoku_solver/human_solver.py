@@ -1,16 +1,13 @@
 # import line_profiler
 from __future__ import annotations
-import copy
-from collections.abc import Generator
-from typing import Callable, Optional,  Self, SupportsInt, Type, TypeVar, Union
+from typing import  Optional,   SupportsInt,  TypeVar
+
 import numpy as np
 import numpy.typing as npt
-from abc import ABC
 
-# import sudoku
-import logging
-from functools import reduce, wraps
-from itertools import combinations
+from abc import ABC
+from functools import reduce 
+
 import super_sudoku_solver.np_candidates as npc
 
 
@@ -169,21 +166,6 @@ class MessageNums(MessagePart):
         self.text = tmp
 
 
-class MessageCandidates(MessagePart):
-    """
-    For candidates
-    """
-
-    def __init__(
-        self, candidates: npt.NDArray[np.bool], highlight: Optional[int] = None
-    ) -> None:
-        """
-        Args:
-            candidates: np shape (9,9,9) (num, row, col) all 0-based
-            highlight: highlight group
-        """
-        self.highlight = highlight
-        raise NotImplementedError
 
 
 T = TypeVar("T", bound=MessagePart)

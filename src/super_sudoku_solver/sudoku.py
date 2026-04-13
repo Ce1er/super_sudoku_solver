@@ -1,13 +1,10 @@
-import re
 from super_sudoku_solver.custom_types import Candidates, CellCandidates, Cells, Coord
-import super_sudoku_solver.human_solver as human_solver
-from time import time
 
 # TODO: make techniques work
 # could have some circular import problems so avoid relying on sudoku.py too much in techniques.py
 # import techniques
 
-from typing import Literal, Optional, Generator
+from typing import Literal,  Generator
 import numpy as np
 import numpy.typing as npt
 import super_sudoku_solver.dlx_solver as dlx

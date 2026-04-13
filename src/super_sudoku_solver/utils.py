@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.typing as npt
-from itertools import product
 
 
 def text_board(board: npt.NDArray[np.int8]):
