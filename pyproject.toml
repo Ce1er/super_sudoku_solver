@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest==8.4.1"]
+test = ["pytest==9.0.3"]
 
 [project.gui-scripts]
 # Generate script called super-sudoku-solver that runs main function from super-sudoku-solver.__main__
