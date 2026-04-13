@@ -656,20 +656,32 @@ class _PointingTuples(_TechniqueFinder):
                 npc.argwhere(self._candidates[num]), r=self.count
             ):
                 coords = np.array([*coords])
+                if not (
+                    [6, 6] in coords.tolist()
+                    and [6, 7] in coords.tolist()
+                    and [6, 8] in coords.tolist()
+                ):
+                    continue
+
+                if num != 0:
+                    continue
 
                 # Check exactly the right number of cells with num are in box
                 # And that both coords are in the same box
-                if np.count_nonzero(
+                if (
+                    np.count_nonzero(
                         self._candidates[num] & npc.adjacent_box(coords, -1)
-                        ) != self.count:
+                    )
+                    != self.count
+                ):
                     continue
 
                 columns = np.count_nonzero(npc.adjacent_column(coords)) // 9
                 rows = np.count_nonzero(npc.adjacent_row(coords)) // 9
 
-                if columns == 2 and rows == 1:
+                if columns == self.count and rows == 1:
                     direction = "row"
-                elif rows == 2 and columns == 1:
+                elif rows == self.count and columns == 1:
                     direction = "column"
                 else:
                     continue
@@ -677,39 +689,45 @@ class _PointingTuples(_TechniqueFinder):
                 yield {"coords": coords, "num": num, "direction": direction}
 
 
-class _PointingPairsInstance(_TechniqueInstance):
-    NAME = "Pointing Pairs"
-
+class _PointingTuplesInstance(_TechniqueInstance):
     def __init__(self, coords, num, direction) -> None:
         self.coords = coords
         self.num = num
         self.direction = direction
 
     def _generate_message(self):
-        other_direction = "row" if self.direction == "column" else "column"
         return [
             MessageCoords(self.coords, highlight=1),
             MessageText("are the only cells that can be"),
             MessageNum(self.num),
             MessageText(
-                f"in their box and they share a {other_direction} so we can remove other options from their {self.direction}."
+                f"in their box and they share a {self.direction} so we can remove other options from their {self.direction}."
             ),
         ]
 
     def _generate_action(self):
         removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
         func = npc.adjacent_row if self.direction == "row" else npc.adjacent_column
-        print(func)
 
         removed_candidates[self.num, :, :] |= func(self.coords)
         for coord in self.coords:
             removed_candidates[self.num, coord[0], coord[1]] = False
 
-        from super_sudoku_solver.utils import text_board
-
-        print(removed_candidates)
-        # print(text_board(removed_candidates))
         return Action(remove_candidates=removed_candidates)
+
+
+class _PointingPairsInstance(_PointingTuplesInstance):
+    NAME = "Pointing Pairs"
+
+    def __init__(self, coords, num, direction) -> None:
+        super().__init__(coords, num, direction)
+
+
+class _PointingTriplesInstance(_PointingTuplesInstance):
+    NAME = "Pointing Triples"
+
+    def __init__(self, coords, num, direction) -> None:
+        super().__init__(coords, num, direction)
 
 
 class PointingPairs(_PointingTuples, _TechniqueFinder):
@@ -727,87 +745,25 @@ class PointingPairs(_PointingTuples, _TechniqueFinder):
             coords = pair["coords"]
             num = pair["num"]
             direction = pair["direction"]
-            print(coords, num, direction)
             yield _PointingPairsInstance(coords, num, direction)
 
 
-# class PointingTuples(HumanTechniques):
-#     def __init__(
-#         self,
-#         candidates: npt.NDArray[np.bool],
-#         clues: npt.NDArray[np.int8],
-#         guesses: npt.NDArray[np.int8],
-#     ):
-#         super().__init__(candidates, clues, guesses)
-#
-#     @staticmethod
-#     def get_name():
-#         return "Pointing Tuples"
-#
-#     @staticmethod
-#     def _generate_message():
-#         pass
-#
-#     @staticmethod
-#     def _generate_action():
-#         pass
-#
-#     def find(self):
-#         """
-#         Search for Pointing Tuples
-#         Yields:
-#             Technique
-#         """
+class PointingTriples(_PointingTuples, _TechniqueFinder):
+    def __init__(
+        self,
+        candidates: npt.NDArray[np.bool],
+        clues: npt.NDArray,
+        guesses: npt.NDArray[np.int8],
+    ):
+        _TechniqueFinder.__init__(self, candidates, clues, guesses)
+        _PointingTuples.__init__(self, candidates, clues, guesses, 3)
 
-# seen = []
-# types = {
-#     "column": sudoku.Board.adjacent_column,
-#     "row": sudoku.Board.adjacent_row,
-# }
-# for coord in npc.argwhere(self.candidates):
-#     num, row, column = coord
-#     for adjacency, func in types.items():
-#         if (
-#             x := np.count_nonzero(
-#                 sudoku.Board.adjacent_box((row, column)) & self.candidates[num]
-#             )
-#         ) == np.count_nonzero(
-#             self.candidates[num]
-#             & sudoku.Board.adjacent_box((row, column))
-#             & func((row, column))
-#         ) and np.count_nonzero(
-#             self.candidates[num] & func((row, column))
-#         ) > x:
-#
-#             coords = npc.argwhere(
-#                 sudoku.Board.adjacent_box((row, column))
-#                 & func((row, column))
-#                 & self.candidates[num]
-#             )
-#
-#             if (result := (coords.tobytes(), num)) in seen:
-#                 continue
-#             seen.append(result)
-#
-#             removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-#             removed_candidates[num, :, :] |= func((row, column))
-#             new = np.full((9), True, dtype=np.bool)
-#             new[num] = False
-#             for coord in coords:
-#                 removed_candidates[*coord] = new
-#
-#             yield Technique(
-#                 "Pointing Tuple",
-#                 [
-#                     MessageCoords(coords),
-#                     MessageText("are the only cells that can be"),
-#                     MessageNum(num),
-#                     MessageText(
-#                         f"in their box so we can remove other options from their {adjacency}."
-#                     ),
-#                 ],
-#                 Action(remove_candidates=removed_candidates),
-#             )
+    def _find(self):
+        for pair in self.partially_find():
+            coords = pair["coords"]
+            num = pair["num"]
+            direction = pair["direction"]
+            yield _PointingTriplesInstance(coords, num, direction)
 
 
 class _SkyscraperInstance(_TechniqueInstance):
@@ -1106,7 +1062,6 @@ class XWing(_TechniqueFinder):
                     continue
 
                 for pairing in combinations(potential, r=2):
-                    # print(adjacency, pairing)
                     if adjacency == "column":
                         arr = self._candidates[num, :, pairing]
                     if adjacency == "row":
@@ -1119,42 +1074,13 @@ class XWing(_TechniqueFinder):
 
 
 TECHNIQUES = [
-    # NakedSingles,
-    # HiddenSingles,
-    # NakedPairs,
-    # HiddenPairs,
-    # LockedCandidates,
-    # Skyscrapers,
+    NakedSingles,
+    HiddenSingles,
+    NakedPairs,
+    HiddenPairs,
+    LockedCandidates,
+    Skyscrapers,
     PointingPairs,
-    # XWing,
+    PointingTriples,
+    XWing,
 ]
-
-# TODO: consider finding more general techniques
-# For example finding turbot fishes instead of skyscrapers
-# Then skyscrapers can use that and check it is a special turbot fish that is also a skyscraper
-
-# TODO:define clearly what the dictionaries used by the techniques should consist of
-# probably worth making classes for them instead of using dictionaries
-
-
-# TODO:
-# Pointing Tuples
-# Naked Triple
-# X-Wing - I think it is done. Needs testing.
-# Hidden Triple
-# Naked Quadruple
-# Y-Wing
-# Avoidable Rectangle
-# XYZ Wing
-# Hidden Quadruple
-# Unique Rectangle
-# Hidden Rectangle
-# Pointing Rectangle
-# Swordfish
-# Jellyfish
-# 2-String Kite
-# Empty Rectangle
-# Color Chain
-# Finned X-Wing
-# Finned Swordfish
-# Finned Jellyfish
