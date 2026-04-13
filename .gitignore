@@ -8,3 +8,4 @@ dev*.py
 puzzles/.data/
 profile*
 *.lprof
+src/super_sudoku_solver.egg-info/
