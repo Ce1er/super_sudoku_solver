@@ -264,7 +264,6 @@ class _HiddenSinglesInstance(_TechniqueInstance):
         if self._adjacency not in ("row", "column", "box"):
             raise ValueError("Invalid adjacency value")
 
-
         return [
             MessageCoords(self._coord[1:], highlight=1),
             MessageText("is"),
@@ -652,37 +651,68 @@ class _PointingTuples(_TechniqueFinder):
         self.count = count
 
     def partially_find(self):
-        TYPES = {"column": npc.adjacent_column, "row": npc.adjacent_row}
         for num in range(9):
             for coords in combinations(
                 npc.argwhere(self._candidates[num]), r=self.count
             ):
                 coords = np.array([*coords])
 
-                # Check all coords are in the same box
-                if np.count_nonzero(npc.adjacent_box(coords)) != 9:
+                # Check exactly the right number of cells with num are in box
+                # And that both coords are in the same box
+                if np.count_nonzero(
+                        self._candidates[num] & npc.adjacent_box(coords, -1)
+                        ) != self.count:
                     continue
 
                 columns = np.count_nonzero(npc.adjacent_column(coords)) // 9
                 rows = np.count_nonzero(npc.adjacent_row(coords)) // 9
 
-                if np.count_nonzero(columns) == 1:
-                    direction = "column"
-                elif np.count_nonzero(rows) == 1:
+                if columns == 2 and rows == 1:
                     direction = "row"
+                elif rows == 2 and columns == 1:
+                    direction = "column"
                 else:
-                    continue
-
-                if (
-                    np.count_nonzero(TYPES[direction](coords) & self._candidates[num])
-                    <= self.count
-                ):
                     continue
 
                 yield {"coords": coords, "num": num, "direction": direction}
 
 
-class PointingPairs(_PointingTuples):
+class _PointingPairsInstance(_TechniqueInstance):
+    NAME = "Pointing Pairs"
+
+    def __init__(self, coords, num, direction) -> None:
+        self.coords = coords
+        self.num = num
+        self.direction = direction
+
+    def _generate_message(self):
+        other_direction = "row" if self.direction == "column" else "column"
+        return [
+            MessageCoords(self.coords, highlight=1),
+            MessageText("are the only cells that can be"),
+            MessageNum(self.num),
+            MessageText(
+                f"in their box and they share a {other_direction} so we can remove other options from their {self.direction}."
+            ),
+        ]
+
+    def _generate_action(self):
+        removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
+        func = npc.adjacent_row if self.direction == "row" else npc.adjacent_column
+        print(func)
+
+        removed_candidates[self.num, :, :] |= func(self.coords)
+        for coord in self.coords:
+            removed_candidates[self.num, coord[0], coord[1]] = False
+
+        from super_sudoku_solver.utils import text_board
+
+        print(removed_candidates)
+        # print(text_board(removed_candidates))
+        return Action(remove_candidates=removed_candidates)
+
+
+class PointingPairs(_PointingTuples, _TechniqueFinder):
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -692,38 +722,13 @@ class PointingPairs(_PointingTuples):
         _TechniqueFinder.__init__(self, candidates, clues, guesses)
         _PointingTuples.__init__(self, candidates, clues, guesses, 2)
 
-    @staticmethod
-    def _generate_message(coords, num, direction):
-        return [
-            MessageCoords(coords, highlight=1),
-            MessageText("are the only cells that can be"),
-            MessageNum(num),
-            MessageText(
-                f"in their box so we can remove other options from their {direction}."
-            ),
-        ]
-
-    @staticmethod
-    def _generate_action(coords, num, direction):
-        removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-        func = npc.adjacent_row if direction == "row" else npc.adjacent_column
-
-        # TODO: np_candidates adjacency methods need more options. Like not including coords + and'ing coords instead of or
-        removed_candidates[num, :, :] |= func(coords)
-        for coord in coords:
-            removed_candidates[num, coord[0], coord[1]] = False
-        return Action(remove_candidates=removed_candidates)
-
-    def find(self):
+    def _find(self):
         for pair in self.partially_find():
             coords = pair["coords"]
             num = pair["num"]
             direction = pair["direction"]
-            yield Technique(
-                self.name,
-                self._generate_message(coords, num, direction),
-                self._generate_action(coords, num, direction),
-            )
+            print(coords, num, direction)
+            yield _PointingPairsInstance(coords, num, direction)
 
 
 # class PointingTuples(HumanTechniques):
@@ -1028,9 +1033,9 @@ class _XWingInstance(_TechniqueInstance):
                 )
             )
             rows = list(set(coords[:, 0]))
-            group_1 = coords[coords[:,0]==rows[0]]
-            group_2 = coords[coords[:,0]==rows[1]]
-            other_adjacency="column"
+            group_1 = coords[coords[:, 0] == rows[0]]
+            group_2 = coords[coords[:, 0] == rows[1]]
+            other_adjacency = "column"
 
         elif self.adjacency == "column":
             coords = np.array(
@@ -1041,24 +1046,24 @@ class _XWingInstance(_TechniqueInstance):
                     )
                 )
             )
-            columns = list(set(coords[:,1]))
-            group_1=coords[coords[:,1]==columns[0]]
-            group_2=coords[coords[:,1]==columns[1]]
-            other_adjacency="row"
+            columns = list(set(coords[:, 1]))
+            group_1 = coords[coords[:, 1] == columns[0]]
+            group_2 = coords[coords[:, 1] == columns[1]]
+            other_adjacency = "row"
         else:
             assert_never(self.adjacency)
 
-
         return [
-                MessageCoords(group_1, highlight=1),
-                MessageText("and"),
-                MessageCoords(group_2,highlight=2),
-                MessageText("are the only"),
-                MessageNum(self.num),
-                MessageText(f"s in their {self.adjacency} so we can remove"),
-                MessageNum(self.num),
-                MessageText(f"from all other cells in their {other_adjacency}s."),
-            ]
+            MessageCoords(group_1, highlight=1),
+            MessageText("and"),
+            MessageCoords(group_2, highlight=2),
+            MessageText("are the only"),
+            MessageNum(self.num),
+            MessageText(f"s in their {self.adjacency} so we can remove"),
+            MessageNum(self.num),
+            MessageText(f"from all other cells in their {other_adjacency}s."),
+        ]
+
 
 class XWing(_TechniqueFinder):
     def __init__(
@@ -1114,14 +1119,14 @@ class XWing(_TechniqueFinder):
 
 
 TECHNIQUES = [
-    NakedSingles,
-    HiddenSingles,
-    NakedPairs,
-    HiddenPairs,
-    LockedCandidates,
-    Skyscrapers,
-    # PointingPairs,
-    XWing,
+    # NakedSingles,
+    # HiddenSingles,
+    # NakedPairs,
+    # HiddenPairs,
+    # LockedCandidates,
+    # Skyscrapers,
+    PointingPairs,
+    # XWing,
 ]
 
 # TODO: consider finding more general techniques
