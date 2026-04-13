@@ -200,7 +200,6 @@ def parse_number_input(data: dict[int, list[str]]) -> dict[int, list[QKeySequenc
     for num, seqs in data.items():
         result[int(num)] = parse_sequences(seqs)
 
-    print(result)
     return result
 
 

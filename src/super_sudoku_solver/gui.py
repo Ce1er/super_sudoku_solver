@@ -34,7 +34,7 @@ import super_sudoku_solver.np_candidates as npc
 import numpy as np
 import numpy.typing as npt
 
-from super_sudoku_solver.sudoku import Board as BoardData
+from super_sudoku_solver.sudoku import Board 
 from super_sudoku_solver.sudoku import InvalidBoard
 from super_sudoku_solver.save_manager import Puzzles
 
@@ -50,7 +50,7 @@ from super_sudoku_solver.human_solver import (
     Action,
     MessageNum,
 )
-from super_sudoku_solver.custom_types import Candidates, Coords
+from super_sudoku_solver.custom_types import Candidates, CellCandidates, Coords
 from super_sudoku_solver.custom_types import Cell as CellT
 
 
@@ -72,43 +72,94 @@ class Cell(QGraphicsItem):
         """
         super().__init__()
         self.settings = settings
-        self.row: int = coord[0]
-        self.col: int = coord[1]
-        self.value: int = -1 if coord[2] == -1 else coord[2] + 1
-        self.candidates: npt.NDArray[np.bool] = candidates
-        tmp = []
-        for colour in self.candidates:
-            tmp.append(QPen(settings.colours.candidate))
-        self.candidate_pens = tmp
-        self.highlight: Optional[int] = None
-        self.size: int = settings.sizes.cell
-        self.clue: bool = clue
+        self._row: int = coord[0]
+        self._col: int = coord[1]
+        self._value: int = -1 if coord[2] == -1 else coord[2] + 1
+        self._candidates: npt.NDArray[np.bool] = candidates
+        self._candidate_pen = QPen(settings.colours.candidate)
+        # self.highlight: Optional[int] = None
+        self._size: int = settings.sizes.cell
+        self._is_clue: bool = clue
 
-        self.border_colour = settings.colours.border
-        self.background_colour = settings.colours.background
-        self.highlight_colour = settings.colours.special_candidate
-        self.clue_pen = QPen(
+        self._border_colour = settings.colours.border
+        self._background_colour = settings.colours.background
+        # self.highlight_colour = settings.colours.special_candidate
+        self._clue_pen = QPen(
             settings.colours.clue,
         )
-        self.guess_pen = QPen(
+        self._guess_pen = QPen(
             settings.colours.guess,
         )
         # TODO: improve how I set pen
 
-        self.border_size = settings.sizes.border
+        self._border_size = settings.sizes.border
 
         self.setAcceptedMouseButtons(Qt.LeftButton)
-        self.highlighted = False
+        self._is_highlighted = False
 
-        self._highlight_lock = False
+        self._highlight_locked = False
+
+    @property
+    def highlight_locked(self):
+        """
+        Is the cell's highlight locked?
+        Note:
+            highlight_lock() and highlight_unlock() should be used to set value
+        """
+        return self._highlight_locked
+
+    @property
+    def is_highlighted(self):
+        """Is this cell currently highlighted?"""
+        return self._is_highlighted
+
+    @property
+    def is_clue(self):
+        """Is this cell a clue?"""
+        return self._is_clue
+
+    @property
+    def row(self):
+        """0-based index of Cell's row"""
+        return self._row
+
+    @property
+    def col(self):
+        """0-based index of Cell's column"""
+        return self._col
+
+    @property
+    def value(self):
+        """0-Based value of Cell. -1 if no value."""
+        return self._value
+
+    # GUI update is expensive so property setter feels wrong here
+    def set_value(self, value: int):
+        self._value = -1 if value == -1 else value + 1
+        if value != -1:
+            self._candidates = np.full([9], False)
+        self.update()
+
+    @property
+    def candidates(self):
+        return self._candidates
+
+    def set_candidates(self, value: CellCandidates):
+        if value.shape != (9,):
+            raise ValueError(f"Invalid candidates shape {value.shape}")
+        if value.dtype != np.bool:
+            raise TypeError(f"Invalid candidates dtype {value.dtype}")
+
+        self._candidates = value
+        self.update()
 
     def highlight_lock(self):
-        print("locked")
-        self._highlight_lock = True
+        """Don't allow highlight to change until unlocked"""
+        self._highlight_locked = True
 
     def highlight_unlock(self):
-        print("unlocked")
-        self._highlight_lock = False
+        """Allow highlight to be changed"""
+        self._highlight_locked = False
 
     def highlight_background(self, colour: None | Any):
         """
@@ -116,56 +167,52 @@ class Cell(QGraphicsItem):
         Args:
             colour: None to reset to default. Anything QColor can interpret to set new colour.
         """
-        if self._highlight_lock:
+        if self._highlight_locked:
             return
 
         if colour is None:
-            self.highlighted = False
+            self._is_highlighted = False
             new = self.settings.colours.background
         else:
-            self.highlighted = True
+            self._is_highlighted = True
             new = QColor(colour)
 
         # QColor doesn't raise an error for all invalid inputs
         if not new.isValid():
             raise ValueError("Could not interpret colour for cell background")
 
-        self.background_colour = new
+        self._background_colour = new
         self.update()
 
-    def highlight_candidates(self, candidates: list[int], colour: QColor) -> None:
-        for candidate in candidates:
-            self.candidate_pens[candidate] = QPen(colour)
-
     def boundingRect(self):
-        return QRectF(0, 0, self.size, self.size)
+        return QRectF(0, 0, self._size, self._size)
 
     def paint(self, painter, option, widget):
-        painter.fillRect(self.boundingRect(), QBrush(self.background_colour))
+        painter.fillRect(self.boundingRect(), QBrush(self._background_colour))
 
-        pen = QPen(self.border_colour, self.border_size)
+        pen = QPen(self._border_colour, self._border_size)
         painter.setPen(pen)
         painter.drawRect(self.boundingRect())
 
         # Paint value
-        if self.value != -1:
-            if self.clue:
-                painter.setPen(self.clue_pen)
-                painter.setFont(QFont("Arial", int(self.size * 0.5), QFont.Bold))
-                painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self.value))
+        if self._value != -1:
+            if self.is_clue:
+                painter.setPen(self._clue_pen)
+                painter.setFont(QFont("Arial", int(self._size * 0.5), QFont.Bold))
+                painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self._value))
             else:
-                painter.setPen(self.guess_pen)
-                painter.setFont(QFont("Arial", int(self.size * 0.5)))
-                painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self.value))
+                painter.setPen(self._guess_pen)
+                painter.setFont(QFont("Arial", int(self._size * 0.5)))
+                painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self._value))
 
         # Paint candidates
-        elif np.count_nonzero(self.candidates) != 0:
-            painter.setFont(QFont("Arial", int(self.size * 0.2)))
-            width = self.size / 3
-            height = self.size / 3
+        elif np.count_nonzero(self._candidates) != 0:
+            painter.setFont(QFont("Arial", int(self._size * 0.2)))
+            painter.setPen(self._candidate_pen)
+            width = self._size / 3
+            height = self._size / 3
             for i in range(9):
-                if self.candidates[i]:
-                    painter.setPen(self.candidate_pens[i])
+                if self._candidates[i]:
                     row = i // 3
                     column = i % 3
                     x = column * width
@@ -180,15 +227,7 @@ class Cell(QGraphicsItem):
             scene.cell_clicked(self)
         event.accept()
 
-    def set_value(self, value: int):
-        self.value = -1 if value == -1 else value + 1
-        if value != -1:
-            self.candidates = np.full([9], False)
-        self.update()
 
-    def set_candidates(self, value: npt.NDArray[np.bool]):
-        self.candidates = value
-        self.update()
 
     # def set_highlighted(self, value: bool):
     #     self.highlighted = value
@@ -251,12 +290,9 @@ class HintBox(QGraphicsItem, QObject):
 
         self.text_size = settings.sizes.text
 
-        print(self, self.text, self.width, self.height)
 
     def send_highlights(self):
         for call in self.highlight_cells_calls:
-            print(call)
-            reveal_type(self.highlight_cells_calls)
             self.highlight_cells.emit(call)
 
     def boundingRect(self):
@@ -275,7 +311,7 @@ class HintBox(QGraphicsItem, QObject):
         painter.save()
         # painter.translate(20,40)
         self.text.drawContents(painter)
-        painter.restore
+        painter.restore()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
         """
@@ -289,25 +325,19 @@ class HintBox(QGraphicsItem, QObject):
 
 
 class PuzzleSelector(QListWidget):
-    data = Signal(BoardData)
+    data = Signal(Board)
 
     def __init__(self, settings: Settings):
         super().__init__()
         self.settings = settings
 
         self.puzzles = Puzzles().puzzle_map
-        names = self.puzzles.keys()
-        print(list(names))
-        self.addItems(list(self.puzzles.keys()))
+        puzzle_names = list(self.puzzles.keys())
+        self.addItems(puzzle_names)
 
         self.itemClicked.connect(self.puzzle_selected)
 
-        # self.data = Signal(BoardData)
-
     def puzzle_selected(self, item):
-        print("Selected:", item.text())
-        # scene = self.scene()
-        # scene.set_puzzle(self.puzzles[item.text()])
         self.data.emit((self.puzzles[item.text()]))
         # TODO: use signals in the other classes
 
@@ -326,7 +356,7 @@ class ErrorBox(QLabel):
         self.settings = settings
 
 
-class Board(QGraphicsScene):
+class MainScene(QGraphicsScene):
     def _auto_note(func: Callable[[Self], None]) -> Callable[[Self], None]:
         """
         Decorator to run self.auto_note() after execution if desired
@@ -468,7 +498,6 @@ class Board(QGraphicsScene):
         # self.addItem(hint)
         return
 
-        print(text)
         self.puzzle_message_box.setText(text)
         # await asyncio.sleep(timeout)
         # time.sleep(timeout)
@@ -479,10 +508,8 @@ class Board(QGraphicsScene):
 
     @_auto_note
     def set_puzzle(self, puzzle: Puzzle):
-        print(puzzle.uuid)
-        print(type(puzzle))
         self.puzzle = puzzle
-        self.data = BoardData(puzzle)
+        self.data = Board(puzzle)
 
         self.selected_cell = None
         # self.cells: list[list[Cell]] = []
@@ -502,7 +529,8 @@ class Board(QGraphicsScene):
             raise ValueError("Board has no solution")
         self.solution = solution
 
-        self.removeItem(self.hint)
+        if self.hint is not None:
+            self.removeItem(self.hint)
         del self.hint
         self.hint = None
 
@@ -514,8 +542,6 @@ class Board(QGraphicsScene):
             self.board_painted = True
 
     def paint_board(self):
-        print("painting")
-        # print("pb", text_hints(self.data.candidates))
         self.cells = []
         x = -1
         for row, col in product(range(9), repeat=2):
@@ -573,7 +599,6 @@ class Board(QGraphicsScene):
 
         # TODO: Avoid repainting stuff
         # This will increase every time a new puzzle is selected
-        print(len(self.items()))
 
     def update_candidates(self):
         """
@@ -617,14 +642,12 @@ class Board(QGraphicsScene):
         coords = npc.normalise_coords(cells)
         for coord in coords:
             row, col = coord
-            print("foo")
             self.cells[row][col].highlight_background(colour)
             if lock:
                 self.cells[row][col].highlight_lock()
 
     def clear_highlight(self, hint_highlight=True, adjacent_highlight=True):
         # FIXME: clears adjacent when doing hint stuff
-        print(hint_highlight, adjacent_highlight)
         for row in self.cells:
             for cell in row:
                 if hint_highlight:
@@ -636,7 +659,6 @@ class Board(QGraphicsScene):
     def show_hint(self):
         def get_techniques():
             for technique in TECHNIQUES:
-                # print(technique)
                 x = technique(
                     self.data.candidates,
                     self.data.clues,
@@ -665,7 +687,6 @@ class Board(QGraphicsScene):
                 # Will go to fallback technique
                 technique = None
 
-        print(technique)
 
         self.clear_highlight(adjacent_highlight=False)
 
@@ -692,18 +713,13 @@ class Board(QGraphicsScene):
             num = self.data.solution[*coord]
             new_cells[*coord] = num
 
-            print(coord)
             technique = Technique(
                 name,
                 [MessageCoords(coord, highlight=1), MessageText("is"), MessageNum(num)],
                 Action(add_cells=new_cells),
             )
 
-        print("hint")
-        print(technique.message)
         action = technique.action
-        print(action.cells)
-        print(action.candidates)
 
         if self.hint is not None:
             self.removeItem(self.hint)
@@ -711,14 +727,12 @@ class Board(QGraphicsScene):
         hint = HintBox(technique, self.settings)
         hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
         self.hint = hint
-        print("poo")
 
         # Highlight cells
         highlight_hint_cells = partial(self.highlight_cells, lock=True)
         self.hint.highlight_cells.connect(highlight_hint_cells)
         self.hint.send_highlights()
         self.addItem(hint)
-        print("pao")
 
     @_update_candidates
     @_auto_note
@@ -728,7 +742,7 @@ class Board(QGraphicsScene):
         Will only work for guesses.
         """
         # Do not let user remove clues
-        if self.selected_cell.clue:
+        if self.selected_cell.is_clue:
             return
 
         self.data.remove_cell(self.selected_cell.row, self.selected_cell.col)
@@ -748,7 +762,6 @@ class Board(QGraphicsScene):
         """
         # if self.solution[self.selected_cell.row, self.selected_cell.col] != value:
         #     # TODO: dialog to show this
-        #     print("Incorrect")
         #     return
 
         new_cells = np.full((9, 9), -1, dtype=np.int8)
@@ -802,15 +815,12 @@ class Board(QGraphicsScene):
         Remove candidates if they are adjacent to a cell with their value.
         """
         self.data.auto_normal()
-        print("aosdfi")
-        print(self.data.candidates)
 
     @_update_candidates
     def apply_action(self, action: Action):
         """
         Apply the current hint to the board
         """
-        print("aply")
         # TODO: somewhere I need to check if the action is actually valid
         # This should always be the case but a failsafe is worth adding
         try:
@@ -841,8 +851,9 @@ class Board(QGraphicsScene):
         """
         Solve the puzzle automatically
         """
-        self.removeItem(self.hint)
-        del self.hint
+        if self.hint is not None:
+            self.removeItem(self.hint)
+            del self.hint
         self.hint = None
 
         self.clear_highlight()
@@ -856,11 +867,8 @@ class Board(QGraphicsScene):
         """
         Resets the puzzle to its initial state
         """
-        print("a")
         self.puzzle.reset()
-        print("b")
         self.reload()
-        print("c")
 
     def keyPressEvent(self, event) -> None:
         if self.data is None:
@@ -939,7 +947,7 @@ class Board(QGraphicsScene):
 def main():
     app = QApplication()
 
-    scene = Board(settings)
+    scene = MainScene(settings)
     view = QGraphicsView(scene)
     view.setFocusPolicy(Qt.StrongFocus)
 

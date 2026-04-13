@@ -119,7 +119,6 @@ class Board:
 
     def remove_cell(self, row, col):
         new = self._puzzle.guesses.copy()
-        print(new)
         new[row, col] = -1
         self._puzzle.guesses = new
 
@@ -172,13 +171,11 @@ class Board:
         for coord in np.argwhere(self._puzzle.clues != -1):
             new[:, *coord] = False
         self._puzzle.candidates = new
-        print(text_hints(self._puzzle.candidates))
 
     def auto_normal(self) -> None:
         """
         Remove candidates from cells if they have a number adjacent to them
         """
-        print(text_hints(self._puzzle.candidates))
         mask = np.full((9, 9, 9), False, dtype=bool)
         cells = self._puzzle.cells
         for cell in np.argwhere(cells != -1):
@@ -188,7 +185,6 @@ class Board:
             # Remove all hints if a cell is there
             mask[:, cell[0], cell[1]] = True
 
-        print(text_hints(mask))
         # If candidates have already been removed keep them that way
         self._puzzle.candidates = (~mask) & self._puzzle.candidates
 

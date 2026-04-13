@@ -180,10 +180,9 @@ class Puzzle:
 
         return np.load(self._guesses_file)
 
+    # TODO: this probably shouldn't be a property setter. File IO is expensive.
     @guesses.setter
     def guesses(self, new: Cells) -> None:
-        # TODO: consider using a copy instead.
-        # If not warn against mutating array
         self._guesses = new
         # I don't want to wait for an atomic save here because that extra time would be noticable to user
         # Corruption is very unlikely and would only affect one puzzle anyway

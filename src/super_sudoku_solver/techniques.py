@@ -264,7 +264,6 @@ class _HiddenSinglesInstance(_TechniqueInstance):
         if self._adjacency not in ("row", "column", "box"):
             raise ValueError("Invalid adjacency value")
 
-        # print(coord)
 
         return [
             MessageCoords(self._coord[1:], highlight=1),
