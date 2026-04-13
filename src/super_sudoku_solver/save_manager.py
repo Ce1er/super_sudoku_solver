@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from pathlib import Path
 from typing import Any, Literal, Optional
 from collections.abc import Callable
