@@ -19,6 +19,7 @@ from PySide6.QtGui import (
     QFont,
     QColor,
     QTextDocument,
+    QPainter
 )
 from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer, QObject
 
@@ -34,7 +35,7 @@ import super_sudoku_solver.np_candidates as npc
 import numpy as np
 import numpy.typing as npt
 
-from super_sudoku_solver.sudoku import Board 
+from super_sudoku_solver.sudoku import Board
 from super_sudoku_solver.sudoku import InvalidBoard
 from super_sudoku_solver.save_manager import Puzzles
 
@@ -54,9 +55,6 @@ from super_sudoku_solver.custom_types import Candidates, CellCandidates, Coords
 from super_sudoku_solver.custom_types import Cell as CellT
 
 
-# TODO: pass in font so it is customisable
-# Also all these colours and sizes and stuff is getting excessive
-# Should be part of settings
 class Cell(QGraphicsItem):
     def __init__(
         self,
@@ -72,32 +70,28 @@ class Cell(QGraphicsItem):
         """
         super().__init__()
         self.settings = settings
+
         self._row: int = coord[0]
         self._col: int = coord[1]
+
         self._value: int = -1 if coord[2] == -1 else coord[2] + 1
         self._candidates: npt.NDArray[np.bool] = candidates
-        self._candidate_pen = QPen(settings.colours.candidate)
-        # self.highlight: Optional[int] = None
-        self._size: int = settings.sizes.cell
         self._is_clue: bool = clue
+
+        self._size: int = settings.sizes.cell
+        self._border_size = settings.sizes.border
 
         self._border_colour = settings.colours.border
         self._background_colour = settings.colours.background
-        # self.highlight_colour = settings.colours.special_candidate
-        self._clue_pen = QPen(
-            settings.colours.clue,
-        )
-        self._guess_pen = QPen(
-            settings.colours.guess,
-        )
-        # TODO: improve how I set pen
 
-        self._border_size = settings.sizes.border
+        self._candidate_pen = QPen(settings.colours.candidate)
+        self._clue_pen = QPen(settings.colours.clue)
+        self._guess_pen = QPen(settings.colours.guess)
+
+        self._is_highlighted = False
+        self._highlight_locked = False
 
         self.setAcceptedMouseButtons(Qt.LeftButton)
-        self._is_highlighted = False
-
-        self._highlight_locked = False
 
     @property
     def highlight_locked(self):
@@ -135,6 +129,9 @@ class Cell(QGraphicsItem):
 
     # GUI update is expensive so property setter feels wrong here
     def set_value(self, value: int):
+        if not -1 <= value <= 8:
+            raise ValueError(f"Cannot set cell value to {value}, not in range [0,8]")
+
         self._value = -1 if value == -1 else value + 1
         if value != -1:
             self._candidates = np.full([9], False)
@@ -188,13 +185,15 @@ class Cell(QGraphicsItem):
         return QRectF(0, 0, self._size, self._size)
 
     def paint(self, painter, option, widget):
+        # Draw background
         painter.fillRect(self.boundingRect(), QBrush(self._background_colour))
 
+        # Draw border
         pen = QPen(self._border_colour, self._border_size)
         painter.setPen(pen)
         painter.drawRect(self.boundingRect())
 
-        # Paint value
+        # Draw value
         if self._value != -1:
             if self.is_clue:
                 painter.setPen(self._clue_pen)
@@ -205,7 +204,7 @@ class Cell(QGraphicsItem):
                 painter.setFont(QFont("Arial", int(self._size * 0.5)))
                 painter.drawText(self.boundingRect(), Qt.AlignCenter, str(self._value))
 
-        # Paint candidates
+        # Draw candidates
         elif np.count_nonzero(self._candidates) != 0:
             painter.setFont(QFont("Arial", int(self._size * 0.2)))
             painter.setPen(self._candidate_pen)
@@ -225,16 +224,13 @@ class Cell(QGraphicsItem):
         scene = self.scene()
         if hasattr(scene, "cell_clicked"):
             scene.cell_clicked(self)
+        else:
+            raise RuntimeError("Scene does not have method cell_clicked")
         event.accept()
 
 
-
-    # def set_highlighted(self, value: bool):
-    #     self.highlighted = value
-    #     self.update(self.boundingRect())
-
-
-# This class is mostly a QGraphicsItem, QObject is only needed for Signal
+# This class is mostly a QGraphicsItem but QObject is needed for Signal.
+# So inherit both.
 class HintBox(QGraphicsItem, QObject):
     # Coords  of cells to highlight
     highlight_cells = Signal(object)
@@ -243,15 +239,10 @@ class HintBox(QGraphicsItem, QObject):
         self,
         technique: Technique,
         settings: Settings,
-    ):  # TODO: take colours and stuff as well. Probably should implement Action before trying to get cell highlighting working but the message box part can be done at any time.
+    ):  
 
         QObject.__init__(self)
         QGraphicsItem.__init__(self)
-
-        # TODO: Width and height set based on text length.
-        # Also need to handle multiline text.
-        # Split into lines based on the width.
-        # Maybe look at redbot formatting pagify
 
         self.technique = technique
 
@@ -261,11 +252,16 @@ class HintBox(QGraphicsItem, QObject):
 
         # Values should be both html and QColor compatible
         colours = {1: "#a50510", 2: "#aabb00", 3: "#0000bb"}
+
+        # Title / technique name
         html = "<b>" + escape(self.technique.technique) + "</b><br>"
+
+        # Technique description with optional highlighting
         for message_part in self.technique.message_parts:
             if message_part.highlight is not None:
                 html += f'<span style="background-color: {colours[message_part.highlight]};"><b>{escape(message_part.text)}</b></span>'
 
+                # Save data about cells which should be highlighted 
                 if isinstance(message_part, human_solver.MessageCoords):
                     self.highlight_cells_calls.append(
                         (message_part.coords, colours[message_part.highlight])
@@ -279,16 +275,28 @@ class HintBox(QGraphicsItem, QObject):
                     html += escape(message_part.text)
 
             html += " "
-            # TODO: check if resulting html has trailing space after it is loaded
 
-        self.width = 200
-        self.text = QTextDocument()
-        self.text.setHtml(html)
-        self.text.setTextWidth(self.width)
+        # FIXME: hardcoded
+        self._width = 200
+        self._text = QTextDocument()
+        self._text.setHtml(html)
+        self._text.setTextWidth(self._width)
         self.settings = settings
-        self.height = self.text.size().height()
+        self._height = self._text.size().height()
 
-        self.text_size = settings.sizes.text
+        self._text_size = settings.sizes.text
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
+
+    @property
+    def text(self):
+        return self._text
 
 
     def send_highlights(self):
@@ -296,21 +304,21 @@ class HintBox(QGraphicsItem, QObject):
             self.highlight_cells.emit(call)
 
     def boundingRect(self):
-        return QRectF(0, 0, self.width, self.height)
+        return QRectF(0, 0, self._width, self._height)
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter: QPainter, option, widget):
+        # Draw background
         painter.fillRect(self.boundingRect(), QBrush(settings.colours.background))
+
+        # Draw border
         pen = QPen(self.settings.colours.border, self.settings.sizes.border)
         painter.setPen(pen)
         painter.drawRect(self.boundingRect())
 
-        painter.setFont(QFont("Arial", self.text_size))
-        # TODO: handle special text highlighting and stuff.
-        # painter.drawText(self.boundingRect(), Qt.AlignCenter, self.text)
-
+        # Draw text
+        painter.setFont(QFont("Arial", self._text_size))
         painter.save()
-        # painter.translate(20,40)
-        self.text.drawContents(painter)
+        self._text.drawContents(painter)
         painter.restore()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
@@ -320,7 +328,10 @@ class HintBox(QGraphicsItem, QObject):
         # TODO: somehow this action needs to be passed back up to Board
         # and it should handle it by applying the action
         scene = self.scene()
-        scene.apply_action(self.technique.action)
+        if hasattr(scene, "apply_action"):
+            scene.apply_action(self.technique.action)
+        else:
+            raise RuntimeError("Scene does not have method apply_action")
         event.accept()
 
 
@@ -331,14 +342,14 @@ class PuzzleSelector(QListWidget):
         super().__init__()
         self.settings = settings
 
-        self.puzzles = Puzzles().puzzle_map
-        puzzle_names = list(self.puzzles.keys())
+        self._puzzles = Puzzles().puzzle_map
+        puzzle_names = list(self._puzzles.keys())
         self.addItems(puzzle_names)
 
         self.itemClicked.connect(self.puzzle_selected)
 
     def puzzle_selected(self, item):
-        self.data.emit((self.puzzles[item.text()]))
+        self.data.emit((self._puzzles[item.text()]))
         # TODO: use signals in the other classes
 
 
@@ -686,7 +697,6 @@ class MainScene(QGraphicsScene):
             except StopIteration:
                 # Will go to fallback technique
                 technique = None
-
 
         self.clear_highlight(adjacent_highlight=False)
 

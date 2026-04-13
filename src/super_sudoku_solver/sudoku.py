@@ -42,7 +42,8 @@ class Board:
         Args:
             candidates: candidates to add (True means add)
         """
-        self._puzzle.candidates |= candidates
+        new = candidates | self._puzzle.candidates
+        self._puzzle.set_candidates(new)
 
     def remove_candidates(self, candidates: Candidates) -> None:
         """
@@ -115,12 +116,12 @@ class Board:
             else:
                 raise NotImplementedError
 
-        self._puzzle.candidates = new
+        self._puzzle.set_candidates(new)
 
     def remove_cell(self, row, col):
         new = self._puzzle.guesses.copy()
         new[row, col] = -1
-        self._puzzle.guesses = new
+        self._puzzle.guesses.set_guesses(new)
 
     @property
     def cells(self):
@@ -161,7 +162,7 @@ class Board:
             else:
                 # TODO: Do I even want multiple solution support?
                 raise NotImplementedError
-        self._puzzle.guesses = new
+        self._puzzle.set_guesses(new)
 
     def all_normal(self) -> None:
         """
@@ -170,7 +171,7 @@ class Board:
         new: Candidates = np.full((9, 9, 9), True, dtype=np.bool)
         for coord in np.argwhere(self._puzzle.clues != -1):
             new[:, *coord] = False
-        self._puzzle.candidates = new
+        self._puzzle.set_candidates(new)
 
     def auto_normal(self) -> None:
         """
@@ -186,7 +187,7 @@ class Board:
             mask[:, cell[0], cell[1]] = True
 
         # If candidates have already been removed keep them that way
-        self._puzzle.candidates = (~mask) & self._puzzle.candidates
+        self._puzzle.set_candidates((~mask) & self._puzzle.candidates)
 
     @staticmethod
     def _row_add(column: int, row: int, value: int) -> list[int]:
@@ -303,7 +304,7 @@ class Board:
         """
         Set the cells to the values they should be when solved
         """
-        self._puzzle.guesses = np.where(
-            self._puzzle.clues != -1, self._puzzle.clues, self.solution
+        self._puzzle.set_guesses(
+            np.where(self._puzzle.clues != -1, self._puzzle.clues, self.solution)
         )
-        self._puzzle.candidates = np.full((9, 9, 9), False, dtype=np.bool)
+        self._puzzle.set_candidates(np.full((9, 9, 9), False, dtype=np.bool))

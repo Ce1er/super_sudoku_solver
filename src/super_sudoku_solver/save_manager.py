@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal, NoReturn, Optional
 from collections.abc import Callable
 from super_sudoku_solver.paths import (
     PUZZLE_DATA_DIR,
@@ -180,12 +180,11 @@ class Puzzle:
 
         return np.load(self._guesses_file)
 
-    # TODO: this probably shouldn't be a property setter. File IO is expensive.
-    @guesses.setter
-    def guesses(self, new: Cells) -> None:
-        self._guesses = new
-        # I don't want to wait for an atomic save here because that extra time would be noticable to user
-        # Corruption is very unlikely and would only affect one puzzle anyway
+    # I don't want to use a property setter here because file IO is more expensive than assignment suggests
+    def set_guesses(self, new: Cells) -> None:
+        self._guesses = new.copy()
+        # Atomic save isn't worth it here.
+        # Data saved frequently, user would notice extra time, data small so corruption unlikely and consequence would be small (only one puzzle affected).
         np.save(self._guesses_file, new)
 
     @property
@@ -198,13 +197,10 @@ class Puzzle:
 
         return np.load(self._candidates_file)
 
-    @candidates.setter
-    def candidates(self, new: Candidates) -> None:
-        self._candidates = new
+    def set_candidates(self, new: Candidates) -> None:
+        self._candidates = new.copy()
         np.save(self._candidates_file, new)
 
-    # Could maybe use functools.singledispatchmethod instead but that may be less clear
-    # Worth trying though
     @property
     def clues(self) -> Cells:
         if isinstance(self._clues, str):
