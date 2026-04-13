@@ -1,7 +1,7 @@
 # Version of ebuild to use
 EAPI=9
 
-# python3_14 is the only compatible version
+# python3.14 is the only compatible version
 PYTHON_COMPAT=( python3_14 )
 
 # Tell portage project is PEP517 complient
@@ -65,7 +65,7 @@ BDEPEND="
 "
 
 # The above would be sufficient to install the program as distutils-r1 handles PEP517 
-# projects very well. But there's a couple extra things I want portage to do.
+# projects very well. But there's a couple extra things I want Portage to do.
 
 # If "test" FEATURE is enabled run tests and only install program if they all pass
 distutils_enable_tests pytest
@@ -73,6 +73,10 @@ distutils_enable_tests pytest
 
 src_install() {
   # This would usually be ran by default but since I'm overwriting src_install it must be called directly
+  # It will install super_sudoku_solver as a module in /usr/lib/python3.14/site-packages/super_sudoku_solver/
+  # and byte compile it to improve performance.
+  # It will also install /usr/bin/super-sudoku-solver which is defined as a gui-script in pyproject.toml.
+  # As this is in $PATH and is executable it can be ran directly with the command `super-sudoku-solver`.
 	distutils-r1_src_install
 
   # Install desktop file to /usr/share/applications/
