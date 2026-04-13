@@ -1,3 +1,4 @@
+# Allows program to be ran using an application launcher that supports .desktop files
 [Desktop Entry]
 Type=Application
 Version=1.0
