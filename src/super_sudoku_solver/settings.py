@@ -7,8 +7,13 @@ from super_sudoku_solver.paths import SETTINGS
 from dataclasses import dataclass, field
 
 
-@dataclass
+# These should be immutable because hot config reloading is not supported
+@dataclass(frozen=True)
 class Keybinds:
+    _DEFAULT_NUMBERS = {
+        k: [QKeySequence(str(k)), QKeySequence(f"Num+{k}")] for k in range(1, 10)
+    }
+
     auto_note: list[QKeySequence] = field(default_factory=list)
     hint: list[QKeySequence] = field(default_factory=list)
     apply_hint: list[QKeySequence] = field(default_factory=list)
@@ -22,18 +27,23 @@ class Keybinds:
     right: list[QKeySequence] = field(default_factory=list)
 
     # Maps each of the 9 numbers to the key sequence needed to input them
-    # Default set in __post_init__ so user can overwrite some but not all values
-    numbers: dict[int, list[QKeySequence]] = field(default_factory=dict)
+    _numbers: dict[int, list[QKeySequence]] = field(default_factory=dict)
 
     puzzle_menu: list[QKeySequence] = field(default_factory=list)
 
     toggle_mode: list[QKeySequence] = field(default_factory=list)
 
+    @property
+    def numbers(self):
+        # Allows user to override some number keybinds without losing defaults
+        # for any that weren't overwritten
+        return self._DEFAULT_NUMBERS | self._numbers
+
     def __post_init__(self):
         keys = []
 
         for name, val in self.__dict__.items():
-            if name == "numbers":
+            if name == "_numbers":
                 if not isinstance(val, dict):
                     raise ValueError("Number keybinds must be under [keybinds.numbers]")
                 for k, v in val.items():
@@ -71,13 +81,9 @@ class Keybinds:
         if len(keys) > len(set(keys)):
             raise ValueError("Duplicate keybindings detected")
 
-        default_numbers = {
-            k: [QKeySequence(str(k)), QKeySequence(f"Num+{k}")] for k in range(1, 10)
-        }
-        self.numbers = default_numbers | self.numbers
 
 
-@dataclass
+@dataclass(frozen=True)
 class Colours:
     clue: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
     guess: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
@@ -104,7 +110,7 @@ class Colours:
                 )
 
 
-@dataclass
+@dataclass(frozen=True)
 class Sizes:
     border: int = field(default=1)
     big_border: int = field(default=3)
@@ -124,7 +130,7 @@ class Sizes:
                 )
 
 
-@dataclass
+@dataclass(frozen=True)
 class Gameplay:
     auto_note: bool = field(default=True)
     start_full: bool = field(default=True)
@@ -137,7 +143,7 @@ class Gameplay:
                 )
 
 
-@dataclass
+@dataclass(frozen=True)
 class Developer:
     port: int = field(default=46215)
 
@@ -155,7 +161,7 @@ class Developer:
             )
 
 
-@dataclass
+@dataclass(frozen=True)
 class Settings:
     keybinds: Keybinds = field(default_factory=lambda: Keybinds())
     colours: Colours = field(default_factory=lambda: Colours())
@@ -230,7 +236,7 @@ def load_settings(path: Optional[Path] = None) -> Settings:
                         filter(lambda x: x[0] != "numbers", data["keybindings"].items())
                     )
                 ),
-                numbers=parse_number_input(data["keybindings"]["numbers"]),
+                _numbers=parse_number_input(data["keybindings"]["numbers"]),
             ),
             colours=Colours(**parse_colours(data["colours"])),
             sizes=Sizes(**data["sizes"]),
