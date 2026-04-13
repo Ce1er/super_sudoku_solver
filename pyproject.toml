@@ -20,4 +20,4 @@ test = ["pytest==9.0.3"]
 [project.gui-scripts]
 # Generate script called super-sudoku-solver that runs main function from super-sudoku-solver.__main__
 # As an alternative to running module directly with `python -m super_sudoku_solver`
-super-sudoku-solver = "super_sudoku_solver.__main__:main"
+super-sudoku-solver = "super_sudoku_solver.entry_points:main"
