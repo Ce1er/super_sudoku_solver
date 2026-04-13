@@ -1,12 +1,12 @@
 # import line_profiler
 from __future__ import annotations
-from typing import  Optional,   SupportsInt,  TypeVar
+from typing import Optional, SupportsInt, TypeVar
 
 import numpy as np
 import numpy.typing as npt
 
 from abc import ABC
-from functools import reduce 
+from functools import reduce
 
 import super_sudoku_solver.np_candidates as npc
 
@@ -164,8 +164,6 @@ class MessageNums(MessagePart):
         for num in nums:
             tmp += " " + str(num.reshape(1)[0] + 1)
         self.text = tmp
-
-
 
 
 T = TypeVar("T", bound=MessagePart)

@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Self
+from typing import Callable, Optional, Self, Any
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -25,7 +25,7 @@ from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer, QObject
 import sys
 import logging
 
-from functools import wraps,  partial
+from functools import wraps, partial
 from itertools import product, count, repeat
 from random import choice
 from html import escape
@@ -52,7 +52,6 @@ from super_sudoku_solver.human_solver import (
 )
 from super_sudoku_solver.custom_types import Candidates, Coords
 from super_sudoku_solver.custom_types import Cell as CellT
-
 
 
 # TODO: pass in font so it is customisable
@@ -111,9 +110,9 @@ class Cell(QGraphicsItem):
         print("unlocked")
         self._highlight_lock = False
 
-    def highlight_background(self, colour):
+    def highlight_background(self, colour: None | Any):
         """
-        Change background colour for the cell.
+        Change background colour for the cell. Unless highlight lock is enabled.
         Args:
             colour: None to reset to default. Anything QColor can interpret to set new colour.
         """
@@ -198,9 +197,8 @@ class Cell(QGraphicsItem):
 
 # This class is mostly a QGraphicsItem, QObject is only needed for Signal
 class HintBox(QGraphicsItem, QObject):
-    # Coords or Coord of cells to highlight
+    # Coords  of cells to highlight
     highlight_cells = Signal(object)
-    highlight_candidates = Signal(object)
 
     def __init__(
         self,
@@ -218,19 +216,16 @@ class HintBox(QGraphicsItem, QObject):
 
         self.technique = technique
 
-        self.highlight_cells_calls = []
+        self.highlight_cells_calls: list[tuple[Coords, str]] = []
 
         # TODO: move to settings
+
+        # Values should be both html and QColor compatible
         colours = {1: "#a50510", 2: "#aabb00", 3: "#0000bb"}
         html = "<b>" + escape(self.technique.technique) + "</b><br>"
         for message_part in self.technique.message_parts:
             if message_part.highlight is not None:
                 html += f'<span style="background-color: {colours[message_part.highlight]};"><b>{escape(message_part.text)}</b></span>'
-
-                # if isinstance(message_part, human_solver.MessageCoord):
-                #     self.highlight_cells_calls.append(
-                #         (message_part.coord, colours[message_part.highlight])
-                #     )
 
                 if isinstance(message_part, human_solver.MessageCoords):
                     self.highlight_cells_calls.append(
@@ -261,6 +256,7 @@ class HintBox(QGraphicsItem, QObject):
     def send_highlights(self):
         for call in self.highlight_cells_calls:
             print(call)
+            reveal_type(self.highlight_cells_calls)
             self.highlight_cells.emit(call)
 
     def boundingRect(self):
@@ -717,6 +713,7 @@ class Board(QGraphicsScene):
         self.hint = hint
         print("poo")
 
+        # Highlight cells
         highlight_hint_cells = partial(self.highlight_cells, lock=True)
         self.hint.highlight_cells.connect(highlight_hint_cells)
         self.hint.send_highlights()

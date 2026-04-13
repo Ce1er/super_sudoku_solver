@@ -4,7 +4,7 @@ from super_sudoku_solver.custom_types import Candidates, CellCandidates, Cells, 
 # could have some circular import problems so avoid relying on sudoku.py too much in techniques.py
 # import techniques
 
-from typing import Literal,  Generator
+from typing import Literal, Generator
 import numpy as np
 import numpy.typing as npt
 import super_sudoku_solver.dlx_solver as dlx

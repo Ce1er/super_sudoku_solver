@@ -3,7 +3,7 @@ Module defining file and directory locations based on operating system's convent
 """
 
 from pathlib import Path
-from appdirs import user_data_dir, user_config_dir,  user_log_dir,  user_cache_dir
+from appdirs import user_data_dir, user_config_dir, user_log_dir, user_cache_dir
 import shutil
 
 APP_NAME = "super-sudoku-solver"
@@ -31,7 +31,7 @@ SETTINGS = CONFIG_DIR / _SETTINGS_NAME
 LOG_DIR = Path(user_log_dir(APP_NAME))
 
 # TODO: this will mess with permissions
-for dir in (PUZZLE_DATA_DIR, CACHE_DIR): #CONFIG_DIR, LOG_DIR):
+for dir in (PUZZLE_DATA_DIR, CACHE_DIR):  # CONFIG_DIR, LOG_DIR):
     dir.mkdir(parents=True, exist_ok=True)
 
 # rm -rf ${CACHE_DIR}/*

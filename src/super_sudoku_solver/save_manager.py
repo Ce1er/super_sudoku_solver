@@ -67,8 +67,8 @@ def atomic_write(
     fsync_dir: bool = True,
 ):
     """
-    Write binary data to a file atomically (as long as os.replace is atomic on the system). This will prevent partially 
-    written files caused by kernel panics, power outages, SIGKILL, etc. at the cost of some performance. Best used with 
+    Write binary data to a file atomically (as long as os.replace is atomic on the system). This will prevent partially
+    written files caused by kernel panics, power outages, SIGKILL, etc. at the cost of some performance. Best used with
     important data that gets written infrequently and/or large data.
     Args:
         data: bytes data to save

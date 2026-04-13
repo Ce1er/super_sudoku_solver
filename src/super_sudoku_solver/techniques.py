@@ -5,7 +5,7 @@ from functools import wraps
 import itertools
 from itertools import combinations
 import abc
-from typing import  SupportsInt,   Self, Callable 
+from typing import SupportsInt, Self, Callable
 from collections.abc import Generator
 
 from super_sudoku_solver.custom_types import (
@@ -25,7 +25,6 @@ from super_sudoku_solver.human_solver import (
     MessageNum,
     MessageText,
 )
-
 
 
 class _TechniqueInstance(abc.ABC):
@@ -983,13 +982,15 @@ class Skyscrapers(_TechniqueFinder):
                         self._candidates,
                     )
 
+
 class _XWingInstance(_TechniqueInstance):
-    NAME= "X-Wing"
-    def __init__(self,adjacency,pairing,num,arr) -> None:
-        self.adjacency=adjacency
-        self.pairing=np.array(pairing).flatten()
-        self.num=num
-        self.arr=arr
+    NAME = "X-Wing"
+
+    def __init__(self, adjacency, pairing, num, arr) -> None:
+        self.adjacency = adjacency
+        self.pairing = np.array(pairing).flatten()
+        self.num = num
+        self.arr = arr
         self.indices = np.array(npc.argwhere(self.arr).flatten(), dtype=np.int8)
         print(self.__dict__)
 
@@ -1056,6 +1057,7 @@ class _XWingInstance(_TechniqueInstance):
 
         return message
 
+
 class XWing(_TechniqueFinder):
     def __init__(
         self,
@@ -1064,7 +1066,6 @@ class XWing(_TechniqueFinder):
         guesses: npt.NDArray[np.int8],
     ):
         super().__init__(candidates, clues, guesses)
-
 
     def _find(self):
         """
@@ -1087,7 +1088,9 @@ class XWing(_TechniqueFinder):
                     rows = np.add.reduce(self._candidates[num], axis=0, dtype=np.int8)
                     potential = npc.argwhere(rows == 2)
                 elif adjacency == "row":
-                    columns = np.add.reduce(self._candidates[num], axis=1, dtype=np.int8)
+                    columns = np.add.reduce(
+                        self._candidates[num], axis=1, dtype=np.int8
+                    )
                     potential = npc.argwhere(columns == 2)
                 else:
                     assert False, "types has invalid key"
@@ -1107,9 +1110,7 @@ class XWing(_TechniqueFinder):
 
                     # print(2, adjacency, pairing)
 
-                    yield _XWingInstance(
-                            adjacency,pairing,num,arr[0].flatten()
-                            )
+                    yield _XWingInstance(adjacency, pairing, num, arr[0].flatten())
 
 
 TECHNIQUES = [
