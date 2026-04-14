@@ -3097,6 +3097,11 @@ skyscrapers_board_2 = {
     ],
 }
 
+# TODO:
+# Pointing pairs
+# Pointing triples
+# XWing
+
 tests = [
     naked_singles_board_1,
     hidden_singles_board_1,
