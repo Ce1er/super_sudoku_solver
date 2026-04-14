@@ -61,6 +61,9 @@ class Board:
         Args:
             candidates: candidates to remove (True means remove)
         """
+        # HACK:
+        self._puzzle.set_candidates(self._puzzle.candidates)
+
         # Remove candidates
         new = (~candidates) & self._puzzle.candidates
 
@@ -124,7 +127,7 @@ class Board:
     def remove_cell(self, row, col):
         new = self._puzzle.guesses.copy()
         new[row, col] = -1
-        self._puzzle.guesses.set_guesses(new)
+        self._puzzle.set_guesses(new)
 
     @property
     def cells(self):
@@ -151,26 +154,29 @@ class Board:
             cells: 9x9 array where each element is between 0 and 8 inclusive. -1 to not add anything.
         """
         # Keep current guesses and add new ones
-        new = np.where(self._puzzle.guesses != -1, self._puzzle.guesses, cells)
-        print(new)
+        new_guesses = np.where(self._puzzle.guesses != -1, self._puzzle.guesses, cells)
 
         # Any coord where new != -1 must be equal to solution
         # When new == -1 it isn't a guess so that coord is always valid
         x = np.logical_or.reduce(
-            np.array([new == -1, new == self._solution]), axis=0, dtype=np.bool
+            np.array([new_guesses == -1, new_guesses == self._solution]), axis=0, dtype=np.bool
         )
         if not x.all():
-            print("hi")
             raise InvalidBoard("Added cells leads to unsolvable board state.")
 
-        self._puzzle.set_guesses(new)
+        # Set candidates to False where there are guesses
+
+        self._puzzle.set_guesses(new_guesses)
+
+        # Will remove candidates where guess is
+        self._puzzle.set_candidates(self._puzzle.candidates)
 
     def all_normal(self) -> None:
         """
         Sets all normal hints to True
         """
         new: Candidates = np.full((9, 9, 9), True, dtype=np.bool)
-        for coord in np.argwhere(self._puzzle.clues != -1):
+        for coord in np.argwhere(self._puzzle.cells != -1):
             new[:, *coord] = False
         self._puzzle.set_candidates(new)
 

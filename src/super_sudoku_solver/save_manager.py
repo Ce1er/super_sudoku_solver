@@ -172,7 +172,7 @@ class Puzzle:
     @property
     def guesses(self) -> Cells:
         if self._guesses is not None:
-            return self._guesses
+            return self._guesses.copy()
 
         # Default if there is no save data
         if not self._guesses_file.is_file():
@@ -190,16 +190,18 @@ class Puzzle:
     @property
     def candidates(self) -> Candidates:
         if self._candidates is not None:
-            return self._candidates
+            return self._candidates.copy()
 
         if not self._candidates_file.is_file():
-            return np.full((9, 9, 9), False, dtype=np.int8)
+            return np.full((9, 9, 9), False, dtype=np.bool)
 
-        return np.load(self._candidates_file)
+        self._candidates = np.load(self._candidates_file)
+        return self._candidates.copy()
 
     def set_candidates(self, new: Candidates) -> None:
         self._candidates = new.copy()
-        np.save(self._candidates_file, new)
+        self._candidates[:, self.cells != -1] = False
+        np.save(self._candidates_file, self._candidates)
 
     @property
     def clues(self) -> Cells:
@@ -208,11 +210,10 @@ class Puzzle:
             self._clues: Cells = np.array(values, dtype=np.int8).reshape((9, 9))
             self._clues.flags.writeable = False
 
-        return self._clues
+        return self._clues.copy()
 
     @property
     def cells(self) -> Cells:
-        # TODO: check this works
         return np.where(self.clues != -1, self.clues, self.guesses)
 
     @property

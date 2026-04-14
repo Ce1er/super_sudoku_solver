@@ -377,13 +377,9 @@ class _NakedPairsInstance(_TechniqueInstance):
 
         removed_candidates &= self._candidates
 
-        # FIXME: Pretty sure the problem is it is removing candidates from cell1 and cell2.
-        # This should fix it but will break tests :(
         removed_candidates[:, self._cell1[0], self._cell1[1]] = False
         removed_candidates[:, self._cell2[0], self._cell2[1]] = False
 
-        if np.count_nonzero(removed_candidates) == 0:
-            return Action()
 
         return Action(remove_candidates=removed_candidates)
 
@@ -802,17 +798,21 @@ class _SkyscraperInstance(_TechniqueInstance):
     def _generate_action(self):
         removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
 
+        current = np.full((9,9),False,dtype=np.bool)
+        current[*self._cell1] = True
+        current[*self._cell2] = True
+
         # Remove candidates that can see both cell1 and cell2
         removed_candidates[self._num] = (
             self._candidates[self._num]
-            # & npc.adjacent(self._cell1)
-            # & npc.adjacent(self._cell2)
             & npc.adjacent(np.array([self._cell1, self._cell2]), -1)
+            & ~ current
         )
 
-        # If nothing actually gets removed then the Technique is kinda useless
-        if np.count_nonzero(removed_candidates) == 0:
-            return Action()
+
+        # # If nothing actually gets removed then the Technique is kinda useless
+        # if np.count_nonzero(removed_candidates) == 0:
+        #     return Action()
 
         return Action(remove_candidates=removed_candidates)
 
