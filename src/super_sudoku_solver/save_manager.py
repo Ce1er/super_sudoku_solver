@@ -213,6 +213,14 @@ class Puzzle:
         return self._clues.copy()
 
     @property
+    def has_candidates(self) -> bool:
+        return self._candidates_file.is_file()
+
+    @property
+    def has_guesses(self) -> bool:
+        return self._guesses_file.is_file()
+
+    @property
     def cells(self) -> Cells:
         return np.where(self.clues != -1, self.clues, self.guesses)
 

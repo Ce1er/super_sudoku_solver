@@ -173,10 +173,14 @@ class Board:
         # Will remove candidates where guess is
         self._puzzle.set_candidates(self._puzzle.candidates)
 
-    def all_normal(self) -> None:
+    def all_normal(self, override:bool=False) -> None:
         """
         Sets all normal hints to True
+        Args:
+            override: whether or not to override save data if it exists.
         """
+        if self._puzzle.has_candidates:
+            return
         new: Candidates = np.full((9, 9, 9), True, dtype=np.bool)
         for coord in np.argwhere(self._puzzle.cells != -1):
             new[:, *coord] = False
