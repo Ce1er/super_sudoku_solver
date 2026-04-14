@@ -18,7 +18,6 @@ class Keybinds:
     hint: list[QKeySequence] = field(default_factory=list)
     apply_hint: list[QKeySequence] = field(default_factory=list)
     solve: list[QKeySequence] = field(default_factory=list)
-    remove: list[QKeySequence] = field(default_factory=list)
     reset: list[QKeySequence] = field(default_factory=list)
 
     up: list[QKeySequence] = field(default_factory=list)
@@ -28,8 +27,6 @@ class Keybinds:
 
     # Maps each of the 9 numbers to the key sequence needed to input them
     _numbers: dict[int, list[QKeySequence]] = field(default_factory=dict)
-
-    puzzle_menu: list[QKeySequence] = field(default_factory=list)
 
     toggle_mode: list[QKeySequence] = field(default_factory=list)
 
@@ -87,11 +84,18 @@ class Colours:
     clue: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
     guess: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
     candidate: QColor = field(default_factory=lambda: QColor(30, 50, 78, 255))
-    special_candidate: QColor = field(default_factory=lambda: QColor(25, 1, 98, 255))
-    rejected_candidate: QColor = field(default_factory=lambda: QColor(255, 0, 0, 255))
     border: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
     big_border: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
     background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
+    board_background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
+    menu_background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
+    button_background: QColor = field(
+        default_factory=lambda: QColor(255, 255, 255, 255)
+    )
+    hint_background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
+    message_background: QColor = field(
+        default_factory=lambda: QColor(255, 255, 255, 255)
+    )
     text: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
 
     selected: QColor = field(default_factory=lambda: QColor(0, 0, 255, 100))
@@ -140,6 +144,11 @@ class Gameplay:
                 raise ValueError(
                     f"Value for key {key} under [gameplay] is invalid. Must be bool."
                 )
+
+        if not self.start_full:
+            raise NotImplementedError(
+                "Board must start full so candidates contain solution"
+            )
 
 
 @dataclass(frozen=True)
@@ -190,7 +199,7 @@ def parse_sequences(seq_list: list[str]) -> list[QKeySequence]:
     return [QKeySequence(x) for x in seq_list]
 
 
-def parse_normal_input(data: dict[str, list[str]]) -> dict[str, list[QKeySequence]]:
+def parse_keybind_input(data: dict[str, list[str]]) -> dict[str, list[QKeySequence]]:
     result = {}
 
     for key, seqs in data.items():
@@ -228,20 +237,25 @@ def load_settings(path: Optional[Path] = None) -> Settings:
         return Settings()
 
     try:
-        return Settings(
-            keybinds=Keybinds(
-                **parse_normal_input(
+        user_settings = {}
+        # NOTE: Sizes() settings cannot be overwritten by user
+        if "keybindings" in data:
+            user_settings["keybinds"] = Keybinds(
+                **parse_keybind_input(
                     dict(
                         filter(lambda x: x[0] != "numbers", data["keybindings"].items())
                     )
                 ),
                 _numbers=parse_number_input(data["keybindings"]["numbers"]),
-            ),
-            colours=Colours(**parse_colours(data["colours"])),
-            sizes=Sizes(**data["sizes"]),
-            gameplay=Gameplay(**data["gameplay"]),
-            developer=Developer(**data["developer"]),
-        )
+            )
+        if "colours" in data:
+            user_settings["colours"] = Colours(**parse_colours(data["colours"]))
+        if "gameplay" in data:
+            user_settings["gameplay"] = Gameplay(**data["gameplay"])
+        if "developer" in data:
+            user_settings["developer"] = Developer(**data["developer"])
+
+        return Settings(**user_settings)
     except Exception as e:
         # Catches missing settings keys, invalid settings keys and anything that fails the parsing funcs
         raise e from ValueError("Invalid settings file")

@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QPushButton,
     QCheckBox,
+    QStyle,
 )
 from PySide6.QtGui import (
     QKeySequence,
@@ -83,7 +84,7 @@ class Cell(QGraphicsItem):
         self._border_size = settings.sizes.border
 
         self._border_colour = settings.colours.border
-        self._background_colour = settings.colours.background
+        self._background_colour = settings.colours.board_background
 
         self._candidate_pen = QPen(settings.colours.candidate)
         self._clue_pen = QPen(settings.colours.clue)
@@ -174,7 +175,7 @@ class Cell(QGraphicsItem):
 
         if colour is None:
             self._is_highlighted = False
-            new = self.settings.colours.background
+            new = self.settings.colours.board_background
         else:
             self._is_highlighted = True
             new = QColor(colour)
@@ -255,6 +256,8 @@ class HintBox(QGraphicsItem, QObject):
         QObject.__init__(self)
         QGraphicsItem.__init__(self)
 
+        self.settings=settings
+
         self.technique = technique
 
         self.highlight_cells_calls: list[tuple[Coords, QColor]] = []
@@ -267,12 +270,13 @@ class HintBox(QGraphicsItem, QObject):
         }
 
         # Title / technique name
-        html = "<b>" + escape(self.technique.technique) + "</b><br>"
+        html = f'<span style="color: {self.settings.colours.text.name()};"'
+        html += "<b>" + escape(self.technique.technique) + "</b><br>"
 
         # Technique description with optional highlighting
         for message_part in self.technique.message_parts:
             if message_part.highlight is not None:
-                html += f'<span style="background-color: {colours[message_part.highlight].name()};"><b>{escape(message_part.text)}</b></span>'
+                html += f'<span style="background-color: {colours[message_part.highlight].name()}"><b>{escape(message_part.text)}</b></span>'
 
                 # Save data about cells which should be highlighted
                 if isinstance(message_part, human_solver.MessageCoords):
@@ -288,6 +292,7 @@ class HintBox(QGraphicsItem, QObject):
             html += " "
 
         html += r"<br><b>Click to apply<\b>"
+        html += r"<\span>"
 
         # FIXME: hardcoded
         self._width = 200
@@ -320,7 +325,7 @@ class HintBox(QGraphicsItem, QObject):
 
     def paint(self, painter: QPainter, option, widget):
         # Draw background
-        painter.fillRect(self.boundingRect(), QBrush(settings.colours.background))
+        painter.fillRect(self.boundingRect(), QBrush(settings.colours.hint_background))
 
         # Draw border
         pen = QPen(self.settings.colours.border, self.settings.sizes.border)
@@ -370,20 +375,6 @@ class PuzzleSelector(QListWidget):
         # TODO: use signals in the other classes
 
 
-class ErrorBox(QLabel):
-    """
-    To show the user warning messages
-    These warnings aren't fatal but are useful for the user
-    """
-
-    # TODO: I prefer HintBox
-    # Make a base class for that and have both HintBox and ErrorBox inherit from it
-
-    def __init__(self, settings: Settings):
-        super().__init__()
-        self.settings = settings
-
-
 class MainScene(QGraphicsScene):
     def _auto_note(func: Callable[[Self], None]) -> Callable[[Self], None]:
         """
@@ -412,6 +403,12 @@ class MainScene(QGraphicsScene):
 
     def paint_menu(self):
         self.puzzle_menu = PuzzleSelector(self.settings)
+        self.puzzle_menu.setStyleSheet(f"""
+                                       QListWidget {{ 
+                                         color: {self.settings.colours.text.name()}; 
+                                         background-color: {self.settings.colours.menu_background.name()};
+                                       }}
+                                       """)
         self.menu_proxy = QGraphicsProxyWidget()
         self.menu_proxy.setWidget(self.puzzle_menu)
         self.addItem(self.menu_proxy)
@@ -454,29 +451,37 @@ class MainScene(QGraphicsScene):
 
             return wrapped
 
+        def button(text):
+            x = QPushButton(text)
+            x.setStyleSheet(f"""
+                            color: {self.settings.colours.text.name()}; 
+                            background-color: {self.settings.colours.button_background.name()};
+                            """)
+            return x
+
         buttons = [
             {
                 "x": next(x),
                 "y": next(y),
-                "widget": QPushButton("Auto Note"),
+                "widget": button("Auto Note"),
                 "func": wrap(self.auto_note),
             },
             {
                 "x": next(x),
                 "y": next(y),
-                "widget": QPushButton("Hint"),
+                "widget": button("Hint"),
                 "func": wrap(self.show_hint),
             },
             {
                 "x": next(x),
                 "y": next(y),
-                "widget": QPushButton("Solve"),
+                "widget": button("Solve"),
                 "func": wrap(self.solve),
             },
             {
                 "x": next(x),
                 "y": next(y),
-                "widget": QPushButton("Reset"),
+                "widget": button("Reset"),
                 # self.reset would delete the button while signal is being executed
                 # This would cause a seg fault. Timer lets signal finish before running
                 # reset method on the next event loop cycle.
@@ -489,6 +494,10 @@ class MainScene(QGraphicsScene):
             button["widget"].clicked.connect(button["func"])
 
         switch = QCheckBox("Toggle Mode")
+        switch.setStyleSheet(f"""
+                             color: {self.settings.colours.text.name()};
+                             background-color: {self.settings.colours.button_background.name()};
+                             """)
         paint_button(switch, next(x), next(y))
         switch.stateChanged.connect(self.set_mode)
         self.cell_mode_widget = switch
@@ -549,31 +558,13 @@ class MainScene(QGraphicsScene):
                                  {}
                                  <\span>
                                  """.format(
-                self.settings.colours.background.name(),
+                self.settings.colours.message_background.name(),
                 self.settings.colours.text.name(),
                 escape(text),
             )
         )
         self.message_box.show()
         QTimer.singleShot(timeout, self.message_box.hide)
-
-        # TODO: HintBox should inherit from base class
-        # This will probably just use that base or maybe different child
-        # Just need a box to show some text that can disapear on click and maybe on timer
-
-        # hint = HintBox(technique, self.settings)
-        # hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
-        # self.hint = hint
-        # self.addItem(hint)
-        return
-
-        self.puzzle_message_box.setText(text)
-        # await asyncio.sleep(timeout)
-        # time.sleep(timeout)
-        # self.puzzle_message_box.clear()
-        # TODO: steal some of the code I wrote to interact with imageboard APIs.
-        # downloader_api.py rate limiter
-        # that might be a good way to clear after certain time
 
     @_auto_note
     def set_puzzle(self, puzzle: Puzzle):
@@ -711,7 +702,6 @@ class MainScene(QGraphicsScene):
                 self.cells[row][col].highlight_lock()
 
     def clear_highlight(self, hint_highlight=True, adjacent_highlight=True):
-        print(hint_highlight, adjacent_highlight)
         for row in self.cells:
             for cell in row:
                 if cell.highlight_locked:
@@ -805,25 +795,6 @@ class MainScene(QGraphicsScene):
         self.hint.send_highlights()
         self.addItem(hint)
 
-    @_update_candidates
-    @_auto_note
-    def remove_cell(self):
-        """
-        Remove the value for the currently selected cell.
-        Will only work for guesses.
-        """
-        # Do not let user remove clues
-        if self.selected_cell.is_clue:
-            return
-
-        self.data.remove_cell(self.selected_cell.row, self.selected_cell.col)
-
-        # Restore all notes for the cell if auto_note is enabled
-        if self.do_auto_note:
-            new: Candidates = np.full((9, 9, 9), False, dtype=np.bool)
-            new[:, self.selected_cell.row, self.selected_cell.col] = True
-            self.data.add_candidates(new)
-
     @_auto_note
     def add_cell(self, value: int):
         """
@@ -840,6 +811,8 @@ class MainScene(QGraphicsScene):
             raise InvalidBoard("Could not add cell as no cell is selected")
         if self.selected_cell.is_clue:
             raise InvalidBoard("Could not add cell as it would override a clue")
+        if self.selected_cell.value != -1:
+            raise RuntimeWarning("Could not add cell as it would override a guess")
 
         new_cells: Cells = np.full((9, 9), -1, dtype=np.int8)
         new_cells[
@@ -984,10 +957,6 @@ class MainScene(QGraphicsScene):
         number_keys = [i for s in binds.numbers.values() for i in s]
         try:
             if seq in number_keys:
-                # self.clear_highlight()
-
-                # TODO: maybe move somewhere else
-                # Like as a decorator to add_cell and toggle_candidate
                 if self.hint is not None:
                     self.removeItem(self.hint)
                     self.hint = None
@@ -1012,9 +981,6 @@ class MainScene(QGraphicsScene):
                     # e.g. there isn't a board selected
                     pass
 
-            elif seq in binds.remove:
-                # FIXME: doesn't persist after auto normal
-                self.remove_cell()
             elif seq in binds.auto_note:
                 self.auto_note()
             elif seq in binds.solve:
@@ -1061,6 +1027,7 @@ def main():
     app = QApplication()
 
     scene = MainScene(settings)
+    scene.setBackgroundBrush(QBrush(settings.colours.background))
     view = QGraphicsView(scene)
     view.setFocusPolicy(Qt.StrongFocus)
 

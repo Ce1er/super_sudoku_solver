@@ -1,43 +1,45 @@
-# Headings must be kept but all key/value pairs are optional 
-# Default settings will be used if not set
+# All these settings are optional
 
+# If not set will default to simple light theme
 [colours]
-# rgba values
-# clue = [0, 0, 0, 255]
-# guess = [0, 0, 0, 255]
-# candidate = [30, 50, 78, 255]
-# special_candidate = [25, 1, 98, 255]
-# rejected_candidate = [255, 0, 0, 255]
+# All colours use rgba values
+# This example is mostly based on Catppuccin's Frappe palette
+
+# clue = [198, 208, 245, 255]
+# guess = [198, 208, 245, 255]
+# candidate = [198, 208, 245, 255]
 #
-# border = [0, 0, 0, 255]
-# big_border = [0, 0, 0, 255]
-# background = [255, 255, 255, 255]
-# text = [0, 0, 0, 255]
+# selected = [140, 170, 238, 130]
+# adjacent = [140, 170, 238, 50]
+#
+# border = [24, 24, 37, 255]
+# big_border = [17, 17, 27, 255]
+#
+# board_background = [48, 52, 70, 255]
+# menu_background = [98, 104, 128, 255]
+# button_background = [81, 87, 109, 255]
+# hint_background = [81, 87, 109, 255]
+# message_background = [81, 87, 109, 255]
+# background = [48, 52, 70, 255]
+#
+# text = [198, 208, 245, 255]
 
-[sizes]
-# sizes in pixels
-# border = 1
-# big_border = 3
-# cell = 60
-# text = 11
-
+# None of these will be set by default
 [keybindings]
-# Optional but if not set there won't be any way to use those features
-auto_note = ["Ctrl+A"]
-hint = ["Ctrl+H"]
-apply_hint = ["Ctrl+O"]
-solve = ["Ctrl+S"]
-puzzle_menu = ["Ctrl+P"]
-remove = ["backspace", "ctrl+backspace"]
-reset=["Ctrl+R"]
+# auto_note = ["Ctrl+A"]
+# hint = ["Ctrl+H"]
+# apply_hint = ["Ctrl+O"]
+# solve = ["Ctrl+S"]
+# reset=["Ctrl+R"]
+#
+# up = ["w", "k"]
+# down = ["s", "j"]
+# left = ["a", "l"]
+# right = ["d", "h"]
+#
+# toggle_mode = ["Ctrl+T"]
 
-up = ["w", "k"]
-down = ["s", "j"]
-left = ["a", "l"]
-right = ["d", "h"]
-
-toggle_mode = ["Ctrl+T"]
-
+# All of these will be set to 1 and numpad 1 by default
 [keybindings.numbers]
 # 1 = ["1", "Num+1"]
 # 2 = ["2", "Num+2"]
@@ -50,12 +52,12 @@ toggle_mode = ["Ctrl+T"]
 # 9 = ["9", "Num+9"]
 
 # Gameplay settings to use by default
+# auto_note is true by default
 [gameplay]
 # auto_note = true
-# start_full = true
 
-# Should not be touched by most users
+# port is 46215 by default
 [developer]
-# Port should not be used by any other applications
-# If it is app won't launch
+# Should be a valid port number that is not used by any other applications
+# This port will only be used on localhost and is only used to prevent multiple instances of app running
 # port = 46215
