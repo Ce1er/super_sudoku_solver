@@ -562,9 +562,13 @@ class _LockedCandidatesInstance(_TechniqueInstance):
                 else MessageText("is the only cell that can be")
             ),
             MessageNums(self._num),
-            MessageText(f"in {'their' if self._coords.size > 2 else 'its'} {self._adjacency} so"),
+            MessageText(
+                f"in {'their' if self._coords.size > 2 else 'its'} {self._adjacency} so"
+            ),
             MessageNums(self._num),
-            MessageText("can be removed as a candidate from the other cells in their house."),
+            MessageText(
+                "can be removed as a candidate from the other cells in their house."
+            ),
         ]
 
     def _generate_action(self):
@@ -774,9 +778,9 @@ class _SkyscraperInstance(_TechniqueInstance):
             MessageCoords(np.array([self._cell1, self._cell2]), highlight=1),
             MessageText("must be"),
             MessageNums(self._num),
-            MessageText(
-                f"because they are the only {self._num + 1} in their {self._adjacency} except these"
-            ),
+            MessageText("because they are the only"),
+            MessageNums(self._num),
+            MessageText(f"in their {self._adjacency} except these"),
             MessageCoords(np.array([self._cell3, self._cell4]), highlight=2),
             MessageText(
                 f"which share a {self._other_adjacency}. That means any cells that see both"
@@ -1007,7 +1011,9 @@ class _XWingInstance(_TechniqueInstance):
             MessageNums(self.num),
             MessageText(f"s in their {self.adjacency}s so"),
             MessageNums(self.num),
-            MessageText(f"can be removed as a candidate from all other cells in their {other_adjacency}s."),
+            MessageText(
+                f"can be removed as a candidate from all other cells in their {other_adjacency}s."
+            ),
         ]
 
 
