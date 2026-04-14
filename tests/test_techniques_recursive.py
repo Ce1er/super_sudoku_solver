@@ -32,7 +32,6 @@ def test_apply_all_techniques(board):
     """
     Apply all available techniques then apply all available techniques on each new board recursively.
     If any technique applied creates an invalid board this will fail.
-
     """
     technique_applications = defaultdict(int)
 
@@ -41,12 +40,13 @@ def test_apply_all_techniques(board):
         max_depth=sys.getrecursionlimit(),
         depth=0,
         seen=None,
-        max_technique_applications=500,
+        max_technique_applications=100,
     ):
         """
         Args:
             max_technique_applications: maximum number of times to test a specific technique.
                 There is no guarantee any technique ever gets ran, it will depend on the board. This is just a maximum.
+                Higher will test techniques in more situations but it will also take longer to run.
         """
         if depth > max_depth:
             return

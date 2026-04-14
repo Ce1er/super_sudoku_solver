@@ -1095,13 +1095,13 @@ class XWing(_TechniqueFinder):
 
 
 TECHNIQUES = [
-    # NakedSingles, #
-    # HiddenSingles, #
-    # NakedPairs, #
-    # HiddenPairs, #
-    # LockedCandidates, #
+    NakedSingles, 
+    HiddenSingles, 
+    NakedPairs, 
+    HiddenPairs, 
+    LockedCandidates, 
     Skyscrapers,
-    # PointingPairs,
-    # PointingTriples,
-    # XWing, #
+    PointingPairs,
+    PointingTriples,
+    XWing,
 ]
