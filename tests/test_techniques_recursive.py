@@ -1,13 +1,12 @@
+import pytest
+from uuid import uuid7
+import copy
+from collections import defaultdict
+import sys
+
 from super_sudoku_solver.save_manager import Puzzle
 from super_sudoku_solver.sudoku import Board
 from super_sudoku_solver.paths import CACHE_DIR
-from uuid import uuid7
-import copy
-import pytest
-from collections import defaultdict
-from super_sudoku_solver.utils import text_hints
-from super_sudoku_solver.utils import text_board
-import sys
 
 
 # Fixture represents all of these boards
