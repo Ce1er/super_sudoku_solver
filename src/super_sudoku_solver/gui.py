@@ -736,15 +736,6 @@ class MainScene(QGraphicsScene):
         if self.data.is_solved:
             raise RuntimeWarning("Board is solved, no reason to give hint")
 
-        def get_techniques():
-            for technique in TECHNIQUES:
-                x = technique(
-                    self.data.candidates,
-                    self.data.clues,
-                    self.data.guesses,
-                )
-                yield from x.find()
-
         valid = False
         technique = None
         if self.techniques is not None:
@@ -758,7 +749,7 @@ class MainScene(QGraphicsScene):
                 pass
 
         if not valid:
-            self.techniques = get_techniques()
+            self.techniques = self.data.hint()
             try:
                 technique = next(self.techniques)
             except StopIteration:

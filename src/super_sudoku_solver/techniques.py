@@ -562,9 +562,9 @@ class _LockedCandidatesInstance(_TechniqueInstance):
                 else MessageText("is the only cell that can be")
             ),
             MessageNums(self._num),
-            MessageText(f"in their {self._adjacency} so we can remove"),
+            MessageText(f"in {'their' if self._coords.size > 2 else 'its'} {self._adjacency} so"),
             MessageNums(self._num),
-            MessageText("from the other cells in their house."),
+            MessageText("can be removed as a candidate from the other cells in their house."),
         ]
 
     def _generate_action(self):
@@ -650,15 +650,6 @@ class _PointingTuples(_TechniqueFinder):
                 npc.argwhere(self._candidates[num]), r=self.count
             ):
                 coords = np.array([*coords])
-                if not (
-                    [6, 6] in coords.tolist()
-                    and [6, 7] in coords.tolist()
-                    and [6, 8] in coords.tolist()
-                ):
-                    continue
-
-                if num != 0:
-                    continue
 
                 # Check exactly the right number of cells with num are in box
                 # And that both coords are in the same box
@@ -668,6 +659,7 @@ class _PointingTuples(_TechniqueFinder):
                     )
                     != self.count
                 ):
+                    print("d")
                     continue
 
                 columns = np.count_nonzero(npc.adjacent_column(coords)) // 9
@@ -678,6 +670,7 @@ class _PointingTuples(_TechniqueFinder):
                 elif rows == self.count and columns == 1:
                     direction = "column"
                 else:
+                    print("e")
                     continue
 
                 yield {"coords": coords, "num": num, "direction": direction}
@@ -1012,9 +1005,9 @@ class _XWingInstance(_TechniqueInstance):
             MessageCoords(group_2, highlight=2),
             MessageText("are the only"),
             MessageNums(self.num),
-            MessageText(f"s in their {self.adjacency} so we can remove"),
+            MessageText(f"s in their {self.adjacency}s so"),
             MessageNums(self.num),
-            MessageText(f"from all other cells in their {other_adjacency}s."),
+            MessageText(f"can be removed as a candidate from all other cells in their {other_adjacency}s."),
         ]
 
 
@@ -1071,13 +1064,13 @@ class XWing(_TechniqueFinder):
 
 
 TECHNIQUES = [
-    NakedSingles,
-    HiddenSingles,
-    NakedPairs,
-    HiddenPairs,
-    LockedCandidates,
+    # NakedSingles, #
+    # HiddenSingles, #
+    # NakedPairs, #
+    # HiddenPairs, #
+    # LockedCandidates, #
     Skyscrapers,
     PointingPairs,
     PointingTriples,
-    XWing,
+    # XWing, #
 ]
