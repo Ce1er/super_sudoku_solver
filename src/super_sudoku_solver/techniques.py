@@ -5,7 +5,7 @@ from functools import wraps
 import itertools
 from itertools import combinations
 import abc
-from typing import SupportsInt, Self, Callable, assert_never
+from typing import Literal, SupportsInt, Self, Callable, assert_never
 from collections.abc import Generator
 
 from super_sudoku_solver.custom_types import (
@@ -663,7 +663,6 @@ class _PointingTuples(_TechniqueFinder):
                     )
                     != self.count
                 ):
-                    print("d")
                     continue
 
                 columns = np.count_nonzero(npc.adjacent_column(coords)) // 9
@@ -674,7 +673,6 @@ class _PointingTuples(_TechniqueFinder):
                 elif rows == self.count and columns == 1:
                     direction = "column"
                 else:
-                    print("e")
                     continue
 
                 yield {"coords": coords, "num": num, "direction": direction}
@@ -761,12 +759,29 @@ class _SkyscraperInstance(_TechniqueInstance):
     NAME = "Skyscraper"
 
     def __init__(
-        self, cell1, cell2, cell3, cell4, num, adjacency, other_adjacency, candidates
+        self,
+        non_shared_cell1,
+        non_shared_cell2,
+        shared_cell1,
+        shared_cell2,
+        num,
+        adjacency,
+        other_adjacency,
+        candidates,
     ):
-        self._cell1 = cell1
-        self._cell2 = cell2
-        self._cell3 = cell3
-        self._cell4 = cell4
+        """
+        Args:
+            non_shared_cell{1,2}: the two cells which don't share a row/column
+            shared_cell{1,2}: the two cells which share a row/column
+            num: the number skyscraper will remove candidates for
+            adjacency: the adjacency shared cells don't share
+            other_adjacency: the adjacency shared cells do share
+            candidates: candidates of board
+        """
+        self._non_shared_cell1 = non_shared_cell1
+        self._non_shared_cell2 = non_shared_cell2
+        self._shared_cell1 = shared_cell1
+        self._shared_cell2 = shared_cell2
         self._num = num
         self._adjacency = adjacency
         self._other_adjacency = other_adjacency
@@ -775,17 +790,23 @@ class _SkyscraperInstance(_TechniqueInstance):
     def _generate_message(self):
         return [
             MessageText("At least one of"),
-            MessageCoords(np.array([self._cell1, self._cell2]), highlight=1),
+            MessageCoords(
+                np.array([self._non_shared_cell1, self._non_shared_cell2]), highlight=1
+            ),
             MessageText("must be"),
             MessageNums(self._num),
             MessageText("because they are the only"),
             MessageNums(self._num),
             MessageText(f"in their {self._adjacency} except these"),
-            MessageCoords(np.array([self._cell3, self._cell4]), highlight=2),
+            MessageCoords(
+                np.array([self._shared_cell1, self._shared_cell2]), highlight=2
+            ),
             MessageText(
                 f"which share a {self._other_adjacency}. That means any cells that see both"
             ),
-            MessageCoords(np.array([self._cell1, self._cell2]), highlight=1),
+            MessageCoords(
+                np.array([self._non_shared_cell1, self._non_shared_cell2]), highlight=1
+            ),
             MessageText("can't be"),
             MessageNums(self._num),
             MessageText("."),
@@ -795,19 +816,17 @@ class _SkyscraperInstance(_TechniqueInstance):
         removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
 
         current = np.full((9, 9), False, dtype=np.bool)
-        current[*self._cell1] = True
-        current[*self._cell2] = True
+        current[*self._non_shared_cell1] = True
+        current[*self._non_shared_cell2] = True
 
-        # Remove candidates that can see both cell1 and cell2
+        # Remove candidates that can see both non-shared cells
         removed_candidates[self._num] = (
             self._candidates[self._num]
-            & npc.adjacent(np.array([self._cell1, self._cell2]), -1)
+            & npc.adjacent(
+                np.array([self._non_shared_cell1, self._non_shared_cell2]), -1
+            )
             & ~current
         )
-
-        # # If nothing actually gets removed then the Technique is kinda useless
-        # if np.count_nonzero(removed_candidates) == 0:
-        #     return Action()
 
         return Action(remove_candidates=removed_candidates)
 
@@ -821,63 +840,69 @@ class Skyscrapers(_TechniqueFinder):
     ):
         super().__init__(candidates, clues, guesses)
 
-    def _find(self):
+    def _find(self: Self):
         """
         Search for skyscrapers based on candidates
         Yields:
             Technique
         """
-        types = {
-            "column": npc.adjacent_column,
-            "row": npc.adjacent_row,
-        }
+        types = ["column", "row"]
 
-        for adjacency, func in types.items():
+        for adjacency in types:
             for num in range(9):
-                # Find rows or columns with 2 occurences of num. Will give 1d arr with ints representing index of row/column.
+                # Find rows or columns with 2 occurences of num.
                 if adjacency == "column":
-                    rows = np.add.reduce(self._candidates[num], axis=0, dtype=np.int8)
-                    potential = npc.argwhere(rows == 2)
-                elif adjacency == "row":
+                    # List of all columns where each item is the number of occurences of num
                     columns = np.add.reduce(
-                        self._candidates[num], axis=1, dtype=np.int8
+                        self._candidates[num], axis=0, dtype=np.int8
                     )
+
+                    # Convert to boolean array representing valid columns
                     potential = npc.argwhere(columns == 2)
+                elif adjacency == "row":
+                    # List all rows where each item is the number of occurences of num
+                    rows = np.add.reduce(self._candidates[num], axis=1, dtype=np.int8)
+
+                    # Convert to boolean array representing valid rows
+                    potential = npc.argwhere(rows == 2)
                 else:
                     assert False, "types has invalid key"
 
-                if len(potential) < 2:
+                # There must be at least 2 rows/columns
+                if potential.size < 2:
                     continue
 
+                # Try every pairing of row or column
                 for pairing in combinations(potential, r=2):
-                    # Check that one of the candidates in pairing[0] in same row/column to one of the candidates in pairing[0]
-                    # The adjacency to check should be the opposite to adjacency
-                    # So the check below is actually checking row adjacency not column
-                    totals = None
+                    totals: np.ndarray[tuple[Literal[1], Literal[9]], np.dtype[np.int8]]
                     if adjacency == "column":
-                        totals = np.add.reduce(
-                            self._candidates[num, :, pairing], axis=0, dtype=np.int8
-                        )
-                    elif adjacency == "row":
-                        totals = np.add.reduce(
-                            self._candidates[num, pairing, :], axis=0, dtype=np.int8
-                        )
+                        columns = self._candidates[num, :, pairing]
 
-                    assert totals is not None
+                        # The total occurences of num in each row
+                        # Only counting occurences in either column in pairing
+                        totals = np.add.reduce(columns, axis=0, dtype=np.int8)
+                    elif adjacency == "row":
+                        rows = self._candidates[num, pairing, :]
+
+                        # The total occurences of num in each column
+                        # Only counting occurences in either row in pairing
+                        totals = np.add.reduce(rows, axis=0, dtype=np.int8)
+                    else:
+                        raise AssertionError
 
                     shared = totals == 2
                     non_shared = totals == 1
 
                     # Check that one pair of candidates share a row/column
+                    # And the other pair doesn't
                     if not (
                         np.count_nonzero(non_shared) == 2
                         and np.count_nonzero(shared) == 1
                     ):
                         continue
 
-                    # Find cells that see both of the instances of num in the row/column in pairing which do not share a row/column
+                    # Find cells that see both of the cells in the non_shared rows/columns
                     # Any cells that do see both can have num removed as a candidate
-                    # These checks are actually checking the adjacency in the condition
                     if adjacency == "column":
                         rows = self._candidates[num, :, pairing] & ~shared
                         row1 = rows[0][0]
@@ -885,51 +910,51 @@ class Skyscrapers(_TechniqueFinder):
                         cell1_row = npc.argwhere(row1)[0][0]
                         cell2_row = npc.argwhere(row2)[0][0]
 
-                        cell1 = np.array([cell1_row, pairing[0][0]])
-                        cell2 = np.array([cell2_row, pairing[1][0]])
+                        non_shared_cell1 = np.array([cell1_row, pairing[0][0]])
+                        non_shared_cell2 = np.array([cell2_row, pairing[1][0]])
 
                         # Will be the same for the other 2 because they have to share a row
                         shared_row = self._candidates[num, :, pairing] & ~non_shared
                         shared_row = npc.argwhere(shared_row[0][0])[0][0]
 
-                        cell3 = np.array([shared_row, pairing[0][0]])
-                        cell4 = np.array([shared_row, pairing[1][0]])
-
-                        # cell3 and cell4 must be the only cells in the column
-                        if np.count_nonzero(self._candidates[num, shared_row, :]) != 2:
-                            continue
+                        shared_cell1 = np.array([shared_row, pairing[0][0]])
+                        shared_cell2 = np.array([shared_row, pairing[1][0]])
 
                     elif adjacency == "row":
-                        cols = self._candidates[num, pairing, :] & ~shared
-                        col1 = cols[0][0]
-                        col2 = cols[1][0]
-                        cell1_col = npc.argwhere(col1)[0][0]
-                        cell2_col = npc.argwhere(col2)[0][0]
+                        non_shared_columns = self._candidates[num, pairing, :] & ~shared
+                        col1 = non_shared_columns[0][0]
+                        col2 = non_shared_columns[1][0]
 
-                        cell1 = np.array([pairing[0][0], cell1_col])
-                        cell2 = np.array([pairing[1][0], cell2_col])
+                        non_shared_cell1_col = npc.argwhere(col1)[0][0]
+                        non_shared_cell2_col = npc.argwhere(col2)[0][0]
+
+                        # Cells which must be a certain number
+                        non_shared_cell1 = np.array(
+                            [pairing[0][0], non_shared_cell1_col]
+                        )
+                        non_shared_cell2 = np.array(
+                            [pairing[1][0], non_shared_cell2_col]
+                        )
 
                         # Will be the same for the other 2 because they have to share a column
-                        other_col = npc.argwhere(
-                            (self._candidates[num, pairing, :] & ~(non_shared))[0][0]
-                        )[0][0]
+                        shared_column = self._candidates[num, pairing, :] & ~(
+                            non_shared
+                        )
+                        shared_column = npc.argwhere((shared_column)[0][0])[0][0]
 
-                        cell3 = np.array([pairing[0][0], other_col])
-                        cell4 = np.array([pairing[1][0], other_col])
-
-                        # cell3 and cell4 must be the only cells in the column
-                        if np.count_nonzero(self._candidates[num, :, other_col]) != 2:
-                            continue
+                        # Cells which share a column
+                        shared_cell1 = np.array([pairing[0][0], shared_column])
+                        shared_cell2 = np.array([pairing[1][0], shared_column])
                     else:
                         assert False, "types has invalid key"
 
                     other_adjacency = "row" if adjacency == "column" else "column"
 
                     yield _SkyscraperInstance(
-                        cell1,
-                        cell2,
-                        cell3,
-                        cell4,
+                        non_shared_cell1,
+                        non_shared_cell2,
+                        shared_cell1,
+                        shared_cell2,
                         num,
                         adjacency,
                         other_adjacency,
