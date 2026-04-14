@@ -113,6 +113,10 @@ class Cell(QGraphicsItem):
         """Is this cell a clue?"""
         return self._is_clue
 
+    @is_clue.setter
+    def is_clue(self, value:bool):
+        self._is_clue = value
+
     @property
     def row(self):
         """0-based index of Cell's row"""
@@ -520,7 +524,7 @@ class MainScene(QGraphicsScene):
 
         self.techniques = None
 
-        self.message_time = 5000
+        self.message_time = 2500
 
     def set_mode(self):
         # self.cell_mode = not self.cell_mode
@@ -583,16 +587,6 @@ class MainScene(QGraphicsScene):
 
         if self.settings.gameplay.start_full:
             self.data.all_normal()
-
-        solution = None
-        for n, value in enumerate(self.data.solve()):
-            if n > 1:
-                raise ValueError("Board has multiple solutions")
-
-            solution = value
-        if solution is None:
-            raise ValueError("Board has no solution")
-        self.solution = solution
 
         if self.hint is not None:
             self.removeItem(self.hint)
@@ -680,6 +674,7 @@ class MainScene(QGraphicsScene):
         for row, col in product(range(9), repeat=2):
             self.cells[row][col].set_candidates((self.data.candidates[:, row, col]))
             self.cells[row][col].set_value(self.data.cells[row, col])
+            self.cells[row][col].is_clue = self.data.is_clue(np.array([row,col]))
 
     def cell_clicked(self, cell: Cell):
         self.clear_highlight(hint_highlight=False)
@@ -716,13 +711,15 @@ class MainScene(QGraphicsScene):
                 self.cells[row][col].highlight_lock()
 
     def clear_highlight(self, hint_highlight=True, adjacent_highlight=True):
-        # FIXME: clears adjacent when doing hint stuff
+        print(hint_highlight, adjacent_highlight)
         for row in self.cells:
             for cell in row:
-                if hint_highlight:
-                    cell.highlight_unlock()
-                elif not adjacent_highlight:
-                    continue
+                if cell.highlight_locked:
+                    if hint_highlight:
+                        cell.highlight_unlock()
+                else:
+                    if not adjacent_highlight:
+                        continue
                 cell.highlight_background(None)
 
     def show_hint(self):
@@ -834,17 +831,15 @@ class MainScene(QGraphicsScene):
         Args:
             value: value to set the cell. Between 0 and 8 inclusive.
         Raises:
-            RuntimeError: cell could not be added
-            RuntimeWarning: there is no board to add cell for
-            InvalidBoard: adding cell is a mistake and allow mistakes is disabled
-
+            RuntimeWarning: cell could not be added, warn user 
+            InvalidBoard: cell could not be added, no warning needed
         """
         if self.data is None:
-            raise RuntimeWarning("Add cell called without board active")
+            raise InvalidBoard("Add cell called without board active")
         if self.selected_cell is None:
-            raise RuntimeError("Could not add cell as no cell is selected")
+            raise InvalidBoard("Could not add cell as no cell is selected")
         if self.selected_cell.is_clue:
-            raise RuntimeError("Could not add cell as it would override a clue")
+            raise InvalidBoard("Could not add cell as it would override a clue")
 
         new_cells: Cells = np.full((9, 9), -1, dtype=np.int8)
         new_cells[
@@ -1006,10 +1001,16 @@ class MainScene(QGraphicsScene):
                         break
 
                 assert value is not None
-                if self.cell_mode:
-                    self.add_cell(value)
-                else:
-                    self.toggle_candidate(value)
+                try:
+                    if self.cell_mode:
+                        self.add_cell(value)
+                    else:
+                        self.toggle_candidate(value)
+
+                except InvalidBoard:
+                    # Action couldn't be performed for a reason that doesn't need a message
+                    # e.g. there isn't a board selected
+                    pass
 
             elif seq in binds.remove:
                 # FIXME: doesn't persist after auto normal
@@ -1047,8 +1048,13 @@ class MainScene(QGraphicsScene):
                 )
             # If it isn't a recognised keybind do nothing
 
+        # User did an invalid action
         except RuntimeWarning as e:
             self.send_message(str(e))
+
+        # Same as before
+        except RuntimeError:
+            pass
 
 
 def main():
