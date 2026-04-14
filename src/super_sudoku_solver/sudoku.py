@@ -150,6 +150,7 @@ class Board:
         # Keep current guesses and add new ones
         new = np.where(self._puzzle.guesses != -1, self._puzzle.guesses, cells)
 
+        # TODO: even if mistakes are allowed don't let user override clues
         if not self.allow_mistakes:
             if self.one_solution:
                 # Any coord where new != -1 must be eq to self.solution
@@ -308,3 +309,7 @@ class Board:
             np.where(self._puzzle.clues != -1, self._puzzle.clues, self.solution)
         )
         self._puzzle.set_candidates(np.full((9, 9, 9), False, dtype=np.bool))
+
+    @property
+    def is_solved(self):
+        return np.array_equal(self.cells, self.solution)

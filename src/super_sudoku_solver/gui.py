@@ -1,8 +1,9 @@
-from typing import Callable, Optional, Self, Any
+from typing import Callable, Optional, Self, Any, SupportsInt
 
 from PySide6.QtWidgets import (
     QApplication,
     QGraphicsProxyWidget,
+    QGraphicsTextItem,
     QGraphicsView,
     QGraphicsScene,
     QGraphicsItem,
@@ -19,7 +20,7 @@ from PySide6.QtGui import (
     QFont,
     QColor,
     QTextDocument,
-    QPainter
+    QPainter,
 )
 from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer, QObject
 
@@ -47,11 +48,11 @@ from super_sudoku_solver.settings import settings, Settings
 from super_sudoku_solver.human_solver import (
     MessageCoords,
     MessageText,
+    MessageNums,
     Technique,
     Action,
-    MessageNum,
 )
-from super_sudoku_solver.custom_types import Candidates, CellCandidates, Coords
+from super_sudoku_solver.custom_types import Candidates, CellCandidates, Cells, Coords
 from super_sudoku_solver.custom_types import Cell as CellT
 
 
@@ -232,26 +233,34 @@ class Cell(QGraphicsItem):
 # This class is mostly a QGraphicsItem but QObject is needed for Signal.
 # So inherit both.
 class HintBox(QGraphicsItem, QObject):
-    # Coords  of cells to highlight
-    highlight_cells = Signal(object)
+    """
+    Signals:
+        highlight_cells:
+            Sends the cells to highlight based on technique
+            Emits: tuple[Coords, QColor]
+    """
+
+    highlight_cells = Signal(tuple)
 
     def __init__(
         self,
         technique: Technique,
         settings: Settings,
-    ):  
+    ):
 
         QObject.__init__(self)
         QGraphicsItem.__init__(self)
 
         self.technique = technique
 
-        self.highlight_cells_calls: list[tuple[Coords, str]] = []
+        self.highlight_cells_calls: list[tuple[Coords, QColor]] = []
 
         # TODO: move to settings
-
-        # Values should be both html and QColor compatible
-        colours = {1: "#a50510", 2: "#aabb00", 3: "#0000bb"}
+        colours: dict[int, QColor] = {
+            1: QColor("#a50510"),
+            2: QColor("#aabb00"),
+            3: QColor("#0000bb"),
+        }
 
         # Title / technique name
         html = "<b>" + escape(self.technique.technique) + "</b><br>"
@@ -259,22 +268,24 @@ class HintBox(QGraphicsItem, QObject):
         # Technique description with optional highlighting
         for message_part in self.technique.message_parts:
             if message_part.highlight is not None:
-                html += f'<span style="background-color: {colours[message_part.highlight]};"><b>{escape(message_part.text)}</b></span>'
+                html += f'<span style="background-color: {colours[message_part.highlight].name()};"><b>{escape(message_part.text)}</b></span>'
 
-                # Save data about cells which should be highlighted 
+                # Save data about cells which should be highlighted
                 if isinstance(message_part, human_solver.MessageCoords):
                     self.highlight_cells_calls.append(
                         (message_part.coords, colours[message_part.highlight])
                     )
             else:
-                if isinstance(message_part, human_solver.MessageNum) or isinstance(
-                    message_part, human_solver.MessageNums
+                if isinstance(
+                    message_part, MessageNums
                 ):
                     html += "<b>" + escape(message_part.text) + "</b>"
                 else:
                     html += escape(message_part.text)
 
             html += " "
+
+        html += r"<br><b>Click to apply<\b>"
 
         # FIXME: hardcoded
         self._width = 200
@@ -297,7 +308,6 @@ class HintBox(QGraphicsItem, QObject):
     @property
     def text(self):
         return self._text
-
 
     def send_highlights(self):
         for call in self.highlight_cells_calls:
@@ -336,6 +346,11 @@ class HintBox(QGraphicsItem, QObject):
 
 
 class PuzzleSelector(QListWidget):
+    """
+    Signals:
+        data: the Board of the puzzle selected
+    """
+
     data = Signal(Board)
 
     def __init__(self, settings: Settings):
@@ -403,12 +418,16 @@ class MainScene(QGraphicsScene):
         self.puzzle_menu.data.connect(self.set_puzzle)
 
     def paint_message_box(self):
-        self.puzzle_message_box = ErrorBox(self.settings)
-        self.message_proxy = QGraphicsProxyWidget()
-        self.message_proxy.setWidget(self.puzzle_message_box)
-        self.addItem(self.message_proxy)
-        # TODO: chose this position based on sizes
-        self.message_proxy.setPos(-300, 150)
+        self.message_box = QGraphicsTextItem()
+        self.message_box.setPos(-300, -100)
+        self.message_box.hide()
+        self.addItem(self.message_box)
+        # self.puzzle_message_box = ErrorBox(self.settings)
+        # self.message_proxy = QGraphicsProxyWidget()
+        # self.message_proxy.setWidget(self.puzzle_message_box)
+        # self.addItem(self.message_proxy)
+        # # TODO: chose this position based on sizes
+        # self.message_proxy.setPos(-300, 150)
 
     def paint_buttons(self):
         def paint_button(widget, x, y):
@@ -420,24 +439,37 @@ class MainScene(QGraphicsScene):
         x = count(35, 100)  # Set start x & x spacing
         y = repeat(-80)
 
+        def wrap(func):
+            @wraps(func)
+            def wrapped(*args, **kwargs):
+                try:
+                    result = func(*args, **kwargs)
+                except RuntimeWarning as e:
+                    self.send_message(str(e))
+                    return
+
+                return result
+
+            return wrapped
+
         buttons = [
             {
                 "x": next(x),
                 "y": next(y),
                 "widget": QPushButton("Auto Note"),
-                "func": self.auto_note,
+                "func": wrap(self.auto_note),
             },
             {
                 "x": next(x),
                 "y": next(y),
                 "widget": QPushButton("Hint"),
-                "func": self.show_hint,
+                "func": wrap(self.show_hint),
             },
             {
                 "x": next(x),
                 "y": next(y),
                 "widget": QPushButton("Solve"),
-                "func": self.solve,
+                "func": wrap(self.solve),
             },
             {
                 "x": next(x),
@@ -446,7 +478,7 @@ class MainScene(QGraphicsScene):
                 # self.reset would delete the button while signal is being executed
                 # This would cause a seg fault. Timer lets signal finish before running
                 # reset method on the next event loop cycle.
-                "func": lambda: QTimer.singleShot(0, self.reset),
+                "func": lambda: QTimer.singleShot(0, wrap(self.reset)),
             },
         ]
 
@@ -470,7 +502,7 @@ class MainScene(QGraphicsScene):
         self.settings = settings
         self.hint = None
 
-        # self.paint_message_box()
+        self.paint_message_box()
         self.paint_menu()
         # TODO: hint should be tracked so it can be handled better
         # hint should be printed in paint_board instead. I think?
@@ -490,15 +522,39 @@ class MainScene(QGraphicsScene):
 
         self.techniques = None
 
+        self.message_time = 10000
+
     def set_mode(self):
         # self.cell_mode = not self.cell_mode
         self.cell_mode = not self.cell_mode_widget.isChecked()
         # TODO: display this somewhere
 
-    def send_message(self, text: str, timeout: float):
+    def send_message(self, text: str, timeout: Optional[int] = None):
         """
         Show a message in the error box
+        Args:
+            text: text to show
+            timeout: time to display (in ms)
         """
+        if timeout is None:
+            timeout = self.message_time
+        self.message_box.setHtml(
+            r"""
+                                 <span style="
+                                    background-color: {};
+                                    color: {};
+                                 ">
+                                 {}
+                                 <\span>
+                                 """.format(
+                self.settings.colours.background.name(),
+                self.settings.colours.text.name(),
+                escape(text),
+            )
+        )
+        self.message_box.show()
+        QTimer.singleShot(timeout, self.message_box.hide)
+
         # TODO: HintBox should inherit from base class
         # This will probably just use that base or maybe different child
         # Just need a box to show some text that can disapear on click and maybe on timer
@@ -542,7 +598,6 @@ class MainScene(QGraphicsScene):
 
         if self.hint is not None:
             self.removeItem(self.hint)
-        del self.hint
         self.hint = None
 
         if self.board_painted:
@@ -614,7 +669,12 @@ class MainScene(QGraphicsScene):
     def update_candidates(self):
         """
         Updates candidates and cells
+        Raises:
+            RuntimeWarning: called without active board
         """
+        if self.data is None:
+            raise RuntimeWarning("Update candidates called without active board")
+
         # Techniques should be recalculated if candidates change
         self.techniques = None
 
@@ -668,6 +728,16 @@ class MainScene(QGraphicsScene):
                 cell.highlight_background(None)
 
     def show_hint(self):
+        """
+        Raises:
+            RuntimeWarning: no reason to show hint
+            RuntimeError: failed to generate hint
+        """
+        if self.data is None:
+            raise RuntimeWarning("Show hint called without board active")
+        if self.data.is_solved:
+            raise RuntimeWarning("Board is solved, no reason to give hint")
+
         def get_techniques():
             for technique in TECHNIQUES:
                 x = technique(
@@ -677,47 +747,47 @@ class MainScene(QGraphicsScene):
                 )
                 yield from x.find()
 
-        valid = True
+        valid = False
+        technique = None
         if self.techniques is not None:
             try:
                 technique = next(self.techniques)
+                valid = True
             except StopIteration:
-                technique = None
-
-                # If there isn't a technique it is worth trying get_techniques again
-                # In case all techniques have been seen this can wrap around to start
-                valid = False
-        else:
-            valid = False
+                # This error just means the end of the self.techniques iterator
+                # has been reached. There may still be valid techniques for board
+                # as they may have all been iterated over.
+                pass
 
         if not valid:
             self.techniques = get_techniques()
             try:
                 technique = next(self.techniques)
             except StopIteration:
-                # Will go to fallback technique
-                technique = None
-
-        self.clear_highlight(adjacent_highlight=False)
+                # There are no valid techniques for board
+                pass
 
         # Fallback hint
         # Give solution to random cell
         if technique is None:
-            name = "Fallback Hint"
             try:
-                # Pick random coordinate without cell
-                coord = choice(np.argwhere(self.data.cells == -1))
+                coord = choice(
+                    np.argwhere(
+                        np.logical_and(
+                            self.data.cells != self.data.solution, self.data.cells != -1
+                        )
+                    )
+                )
+                name = "Incorrect Cell"
 
-            # All cells have a value
+            # There are no incorrect cells
             except IndexError:
                 try:
-                    coord = choice(np.argwhere(self.data.cells != self.data.solution))
-                except IndexError:
-                    # All cells have correct value
-                    # Board is solved
-                    return
-
-                name = "Incorrect Cell"
+                    # Pick random coordinate without cell
+                    coord = choice(np.argwhere(self.data.cells == -1))
+                    name = "Fallback Technique"
+                except IndexError as e:
+                    raise RuntimeError("Failed to generate fallback technique") from e
 
             new_cells = np.full((9, 9), -1, dtype=np.int8)
             num = self.data.solution[*coord]
@@ -725,11 +795,9 @@ class MainScene(QGraphicsScene):
 
             technique = Technique(
                 name,
-                [MessageCoords(coord, highlight=1), MessageText("is"), MessageNum(num)],
+                [MessageCoords(coord, highlight=1), MessageText("is"), MessageNums(num)],
                 Action(add_cells=new_cells),
             )
-
-        action = technique.action
 
         if self.hint is not None:
             self.removeItem(self.hint)
@@ -737,6 +805,9 @@ class MainScene(QGraphicsScene):
         hint = HintBox(technique, self.settings)
         hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
         self.hint = hint
+
+        # Clear any previous hint highlights
+        self.clear_highlight(adjacent_highlight=False)
 
         # Highlight cells
         highlight_hint_cells = partial(self.highlight_cells, lock=True)
@@ -769,12 +840,20 @@ class MainScene(QGraphicsScene):
         Sets the value at the currently selected cell
         Args:
             value: value to set the cell. Between 0 and 8 inclusive.
-        """
-        # if self.solution[self.selected_cell.row, self.selected_cell.col] != value:
-        #     # TODO: dialog to show this
-        #     return
+        Raises:
+            RuntimeError: cell could not be added
+            RuntimeWarning: there is no board to add cell for
+            InvalidBoard: adding cell is a mistake and allow mistakes is disabled
 
-        new_cells = np.full((9, 9), -1, dtype=np.int8)
+        """
+        if self.data is None:
+            raise RuntimeWarning("Add cell called without board active")
+        if self.selected_cell is None:
+            raise RuntimeError("Could not add cell as no cell is selected")
+        if self.selected_cell.is_clue:
+            raise RuntimeError("Could not add cell as it would override a clue")
+
+        new_cells: Cells = np.full((9, 9), -1, dtype=np.int8)
         new_cells[
             self.selected_cell.row,
             self.selected_cell.col,
@@ -784,10 +863,8 @@ class MainScene(QGraphicsScene):
             self.data.add_cells(new_cells)
         except InvalidBoard:
             # TODO: some kind of dialog message to show this
-            self.send_message(
-                "Cannot add cell as it would make puzzle unsolvable.", 10.0
-            )
-            return
+            self.send_message("Cannot add cell as it would make puzzle unsolvable.")
+            raise
 
         self.selected_cell.set_value(value)
 
@@ -797,7 +874,20 @@ class MainScene(QGraphicsScene):
         Toggles whether value is a candidate at focused cell
         Args:
             value: value to set the cell. Between 0 and 8 inclusive.
+        Raises:
+            RuntimeError: candidate could not be toggled
+            RuntimeWarning: there is no board to toggle candidate for
+            InvalidBoard: toggling candidate is a mistake and allow mistakes is disabled
         """
+        if self.data is None:
+            raise RuntimeWarning("Toggle candidate called without board active")
+        if self.selected_cell is None:
+            raise RuntimeError("Could not toggle candidate as no cell is selected")
+        if self.selected_cell.value != -1:
+            raise RuntimeError(
+                "Could not toggle candidate for cell as it already has a value"
+            )
+
         delta_candidates: Candidates = np.full((9, 9, 9), False, dtype=np.bool)
         delta_candidates[
             value,
@@ -811,10 +901,8 @@ class MainScene(QGraphicsScene):
                 self.data.remove_candidates(delta_candidates)
             except InvalidBoard:
                 # TODO: some kind of dialog message to show this
-                self.send_message(
-                    "Cannot add cell as it would make puzzle unsolvable.", 10.0
-                )
-                return
+                self.send_message("Cannot add cell as it would make puzzle unsolvable.")
+                raise
         # Add
         else:
             self.data.add_candidates(delta_candidates)
@@ -823,27 +911,40 @@ class MainScene(QGraphicsScene):
     def auto_note(self):
         """
         Remove candidates if they are adjacent to a cell with their value.
+        Raises:
+            RuntimeWarning: there is no board to auto note
         """
+        if self.data is None:
+            raise RuntimeWarning("Auto note called without board active")
+
         self.data.auto_normal()
 
     @_update_candidates
-    def apply_action(self, action: Action):
+    def apply_action(self, action: Action, from_hint: bool = True):
         """
-        Apply the current hint to the board
+        Apply an Action to the board.
+        Args:
+            action: Action to apply
+            from_hint: whether the Action came from a hint. If True will delete hint after application.
+        Raises:
+            RuntimeError: action could not be applied to board
+            RuntimeWarning: there is no board to apply action to
         """
-        # TODO: somewhere I need to check if the action is actually valid
-        # This should always be the case but a failsafe is worth adding
+        if self.data is None:
+            raise RuntimeWarning("Apply action called without board active")
+        if from_hint and self.hint is None:
+            raise RuntimeError(
+                "Action to be applied claims to come from hint but self.hint is None"
+            )
+
         try:
             self.data.apply_action(action)
-        except InvalidBoard:
-            # Very bad
-            # Means technique is broken
-            logging.error("Illegal action generated")
-            return
+        except InvalidBoard as e:
+            raise RuntimeError("Illegal action generated") from e
 
-        self.removeItem(self.hint)
-        del self.hint
-        self.hint = None
+        if from_hint:
+            self.removeItem(self.hint)
+            self.hint = None
 
         self.clear_highlight(adjacent_highlight=False)
         if self.do_auto_note:
@@ -851,6 +952,7 @@ class MainScene(QGraphicsScene):
 
     @_auto_note
     def apply_hint(self):
+        # Handles user using apply hint keybind without active hint.
         if self.hint is None:
             return
 
@@ -863,7 +965,6 @@ class MainScene(QGraphicsScene):
         """
         if self.hint is not None:
             self.removeItem(self.hint)
-            del self.hint
         self.hint = None
 
         self.clear_highlight()
@@ -893,65 +994,68 @@ class MainScene(QGraphicsScene):
         binds = self.settings.keybinds
 
         number_keys = [i for s in binds.numbers.values() for i in s]
-        if seq in number_keys:
-            # self.clear_highlight()
+        try:
+            if seq in number_keys:
+                # self.clear_highlight()
 
-            # TODO: maybe move somewhere else
-            # Like as a decorator to add_cell and toggle_candidate
-            if self.hint is not None:
-                self.removeItem(self.hint)
-                del self.hint
-                self.hint = None
+                # TODO: maybe move somewhere else
+                # Like as a decorator to add_cell and toggle_candidate
+                if self.hint is not None:
+                    self.removeItem(self.hint)
+                    self.hint = None
 
-                self.clear_highlight(adjacent_highlight=False)
+                    self.clear_highlight(adjacent_highlight=False)
 
-            value = None
-            for k, v in binds.numbers.items():
-                if key in v:
-                    value = k - 1
-                    break
+                value = None
+                for k, v in binds.numbers.items():
+                    if key in v:
+                        value = k - 1
+                        break
 
-            assert value is not None
-            if self.cell_mode:
-                self.add_cell(value)
-            else:
-                self.toggle_candidate(value)
+                assert value is not None
+                if self.cell_mode:
+                    self.add_cell(value)
+                else:
+                    self.toggle_candidate(value)
 
-        elif seq in binds.remove:
-            # FIXME: doesn't persist after auto normal
-            self.remove_cell()
-        elif seq in binds.auto_note:
-            self.auto_note()
-        elif seq in binds.solve:
-            self.solve()
-        elif seq in binds.hint:
-            self.show_hint()
-        elif seq in binds.apply_hint:
-            self.apply_hint()
-        elif seq in binds.reset:
-            self.reset()
-        elif seq in binds.toggle_mode:
-            self.cell_mode_widget.toggle()
+            elif seq in binds.remove:
+                # FIXME: doesn't persist after auto normal
+                self.remove_cell()
+            elif seq in binds.auto_note:
+                self.auto_note()
+            elif seq in binds.solve:
+                self.solve()
+            elif seq in binds.hint:
+                self.show_hint()
+            elif seq in binds.apply_hint:
+                self.apply_hint()
+            elif seq in binds.reset:
+                self.reset()
+            elif seq in binds.toggle_mode:
+                self.cell_mode_widget.toggle()
 
-        # Python's negative indexing will handle wrap around for L and U
-        elif seq in binds.left:
-            self.cell_clicked(
-                self.cells[self.selected_cell.row][self.selected_cell.col - 1]
-            )
-        elif seq in binds.up:
-            self.cell_clicked(
-                self.cells[self.selected_cell.row - 1][self.selected_cell.col]
-            )
+            # Python's negative indexing will handle wrap around for L and U
+            elif seq in binds.left:
+                self.cell_clicked(
+                    self.cells[self.selected_cell.row][self.selected_cell.col - 1]
+                )
+            elif seq in binds.up:
+                self.cell_clicked(
+                    self.cells[self.selected_cell.row - 1][self.selected_cell.col]
+                )
 
-        elif seq in binds.right:
-            self.cell_clicked(
-                self.cells[self.selected_cell.row][(self.selected_cell.col + 1) % 9]
-            )
-        elif seq in binds.down:
-            self.cell_clicked(
-                self.cells[(self.selected_cell.row + 1) % 9][self.selected_cell.col]
-            )
-        # If it isn't a recognised keybind do nothing
+            elif seq in binds.right:
+                self.cell_clicked(
+                    self.cells[self.selected_cell.row][(self.selected_cell.col + 1) % 9]
+                )
+            elif seq in binds.down:
+                self.cell_clicked(
+                    self.cells[(self.selected_cell.row + 1) % 9][self.selected_cell.col]
+                )
+            # If it isn't a recognised keybind do nothing
+
+        except RuntimeWarning as e:
+            self.send_message(str(e))
 
 
 def main():

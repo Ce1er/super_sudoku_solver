@@ -1,6 +1,6 @@
 # import line_profiler
 from __future__ import annotations
-from typing import Optional, SupportsInt, TypeVar
+from typing import Literal, Optional, SupportsInt, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -118,33 +118,6 @@ class MessageCoords(MessagePart):
         return self._coords
 
 
-class MessageNum(MessagePart):
-    """
-    For a single number
-    """
-
-    def __init__(
-        self,
-        num: npt.NDArray[np.integer] | SupportsInt,
-        highlight: Optional[int] = None,
-    ) -> None:
-        """
-        Args:
-            num: np array size 1, any ndim. 0-based
-            highlight: highlight group
-        """
-        self.highlight = highlight
-
-        if isinstance(num, np.ndarray):
-            num.flatten()[0]
-
-        try:
-            num = int(num)
-        except ValueError:
-            raise ValueError("MessageNum num could not be interpreted as int")
-
-        self.text = str(num + 1)
-
 
 class MessageNums(MessagePart):
     """
@@ -152,18 +125,27 @@ class MessageNums(MessagePart):
     """
 
     def __init__(
-        self, nums: npt.NDArray[np.signedinteger], highlight: Optional[int] = None
+        self,
+        nums: np.ndarray[tuple[int, Literal[1]], np.dtype[np.integer]] | SupportsInt,
+        highlight: Optional[int] = None,
     ) -> None:
         """
         Args:
-            nums: np array shape (..., 1). Num preceeding 1 can be anything. Anything preceeding that is optional and has to be 1.
+            nums: numpy array of nums or a single number
             highlight: highlight group
         """
+        if not isinstance(nums, np.ndarray):
+            nums = np.array([int(nums)])
+
         self.highlight = highlight
-        tmp = "numbers"
-        for num in nums:
-            tmp += " " + str(num.reshape(1)[0] + 1)
-        self.text = tmp
+
+        if nums.size == 1:
+            self.text = "number " + str(nums.reshape(1)[0] + 1)
+        else:
+            tmp = "numbers"
+            for num in nums:
+                tmp += " " + str(num.reshape(1)[0] + 1)
+            self.text = tmp
 
 
 T = TypeVar("T", bound=MessagePart)

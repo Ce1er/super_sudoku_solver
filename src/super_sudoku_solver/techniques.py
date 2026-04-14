@@ -22,7 +22,6 @@ from super_sudoku_solver.human_solver import (
     Action,
     MessageCoords,
     MessageNums,
-    MessageNum,
     MessageText,
 )
 
@@ -201,7 +200,7 @@ class _NakedSinglesInstance(_TechniqueInstance):
         return [
             MessageCoords(self._coord, highlight=1),
             MessageText("is"),
-            MessageNum(self._num),
+            MessageNums(self._num),
             MessageText("because it is the only candidate for the cell."),
         ]
 
@@ -267,9 +266,9 @@ class _HiddenSinglesInstance(_TechniqueInstance):
         return [
             MessageCoords(self._coord[1:], highlight=1),
             MessageText("is"),
-            MessageNum(self._coord[0]),
+            MessageNums(self._coord[0]),
             MessageText("because there are no others cells that can be"),
-            MessageNum(self._coord[0]),
+            MessageNums(self._coord[0]),
             MessageText(f"in the {self._adjacency}."),
         ]
 
@@ -567,9 +566,9 @@ class _LockedCandidatesInstance(_TechniqueInstance):
                 if self._coords.size > 2
                 else MessageText("is the only cell that can be")
             ),
-            MessageNum(self._num),
+            MessageNums(self._num),
             MessageText(f"in their {self._adjacency} so we can remove"),
-            MessageNum(self._num),
+            MessageNums(self._num),
             MessageText("from the other cells in their house."),
         ]
 
@@ -699,7 +698,7 @@ class _PointingTuplesInstance(_TechniqueInstance):
         return [
             MessageCoords(self.coords, highlight=1),
             MessageText("are the only cells that can be"),
-            MessageNum(self.num),
+            MessageNums(self.num),
             MessageText(
                 f"in their box and they share a {self.direction} so we can remove other options from their {self.direction}."
             ),
@@ -786,7 +785,7 @@ class _SkyscraperInstance(_TechniqueInstance):
             MessageText("At least one of"),
             MessageCoords(np.array([self._cell1, self._cell2]), highlight=1),
             MessageText("must be"),
-            MessageNum(self._num),
+            MessageNums(self._num),
             MessageText(
                 f"because they are the only {self._num + 1} in their {self._adjacency} except these"
             ),
@@ -796,7 +795,7 @@ class _SkyscraperInstance(_TechniqueInstance):
             ),
             MessageCoords(np.array([self._cell1, self._cell2]), highlight=1),
             MessageText("can't be"),
-            MessageNum(self._num),
+            MessageNums(self._num),
             MessageText("."),
         ]
 
@@ -1014,9 +1013,9 @@ class _XWingInstance(_TechniqueInstance):
             MessageText("and"),
             MessageCoords(group_2, highlight=2),
             MessageText("are the only"),
-            MessageNum(self.num),
+            MessageNums(self.num),
             MessageText(f"s in their {self.adjacency} so we can remove"),
-            MessageNum(self.num),
+            MessageNums(self.num),
             MessageText(f"from all other cells in their {other_adjacency}s."),
         ]
 
