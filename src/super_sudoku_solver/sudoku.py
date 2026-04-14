@@ -159,7 +159,9 @@ class Board:
         # Any coord where new != -1 must be equal to solution
         # When new == -1 it isn't a guess so that coord is always valid
         x = np.logical_or.reduce(
-            np.array([new_guesses == -1, new_guesses == self._solution]), axis=0, dtype=np.bool
+            np.array([new_guesses == -1, new_guesses == self._solution]),
+            axis=0,
+            dtype=np.bool,
         )
         if not x.all():
             raise InvalidBoard("Added cells leads to unsolvable board state.")

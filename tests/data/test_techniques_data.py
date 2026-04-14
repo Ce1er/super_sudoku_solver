@@ -313,7 +313,6 @@ naked_singles_board_1 = {
         {
             "add_cells":
             # 6 at r2c8
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, 5, -1],
@@ -325,14 +324,12 @@ naked_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(2, 8\)", "number 6"],
         },
         {
             "add_cells":
             # 6 at r7c7
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -344,14 +341,12 @@ naked_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: off
             "removed_candidates": None,
             "message_has": [r"\(7, 7\)", "number 6"],
         },
         {
             "add_cells":
             # 8 at r8c7
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -363,7 +358,6 @@ naked_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, 7, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(8, 7\)", "number 8"],
         },
@@ -380,7 +374,6 @@ hidden_singles_board_1 = {
         {
             "add_cells":
             # 1 at r4c3 because column, box
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -392,14 +385,12 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(4, 3\)", "number 1", "column|box"],
         },
         {
             "add_cells":
             # 1 at r6c8 because row
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -411,14 +402,12 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(6, 8\)", "number 1", "row"],
         },
         {
             "add_cells":
             # 2 at r7c4 because row, box
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -430,14 +419,12 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(7, 4\)", "number 2", "row|box"],
         },
         {
             "add_cells":
             # 4 at r8c5 because row, box
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -449,14 +436,12 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, 3, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(8, 5\)", "number 4", "row|box"],
         },
         {
             "add_cells":
             # 5 at r1c7 because column, box
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, 4, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -468,14 +453,12 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(1, 7\)", "number 5", "column|box"],
         },
         {
             "add_cells":
             # 7 at r3c6 because row, box
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -487,14 +470,12 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(3, 6\)", "number 7", "row|box"],
         },
         {
             "add_cells":
             # 8 at r2c9 because row, box
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, 7],
@@ -506,14 +487,12 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(2, 9\)", "number 8", "row|box"],
         },
         {
             "add_cells":
             # 8 at r4c5 because row, column, box
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -525,14 +504,12 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(4, 5\)", "number 8", "row|column|box"],
         },
         {
             "add_cells":
             # 9 at r1c4 because column, box
-            # fmt: off
             [
                 [-1, -1, -1, 8, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -544,14 +521,12 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(1, 4\)", "number 9", "column|box"],
         },
         {
             "add_cells":
             # 9 at r4c8 because column
-            # fmt: off
             [
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -563,7 +538,6 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
-            # fmt: on
             "removed_candidates": None,
             "message_has": [r"\(4, 8\)", "number9", " column"],
         },

@@ -82,7 +82,6 @@ class Keybinds:
             raise ValueError("Duplicate keybindings detected")
 
 
-
 @dataclass(frozen=True)
 class Colours:
     clue: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))

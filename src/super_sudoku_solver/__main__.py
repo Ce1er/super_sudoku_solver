@@ -1,5 +1,5 @@
 """
-File to allow module to be ran with `python -m super_sudoku_solver` as 
+File to allow module to be ran with `python -m super_sudoku_solver` as
 alternative to gui-script generated after installation.
 """
 

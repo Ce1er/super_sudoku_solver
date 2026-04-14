@@ -118,7 +118,6 @@ class MessageCoords(MessagePart):
         return self._coords
 
 
-
 class MessageNums(MessagePart):
     """
     For several numbers

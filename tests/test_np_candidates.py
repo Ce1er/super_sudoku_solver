@@ -63,8 +63,7 @@ class TestAdjacent:
 
     def test_adjacent_column(self, normal_args, adjacent_column, null):
         assert (
-            npc.adjacent_column(*normal_args).tolist()
-            == adjacent_column.tolist()
+            npc.adjacent_column(*normal_args).tolist() == adjacent_column.tolist()
         ), "adjacent_column returned wrong array"
 
     def test_adjacent_box(self, normal_args, adjacent_box, null):

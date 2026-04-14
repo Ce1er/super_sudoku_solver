@@ -276,9 +276,7 @@ class HintBox(QGraphicsItem, QObject):
                         (message_part.coords, colours[message_part.highlight])
                     )
             else:
-                if isinstance(
-                    message_part, MessageNums
-                ):
+                if isinstance(message_part, MessageNums):
                     html += "<b>" + escape(message_part.text) + "</b>"
                 else:
                     html += escape(message_part.text)
@@ -795,7 +793,11 @@ class MainScene(QGraphicsScene):
 
             technique = Technique(
                 name,
-                [MessageCoords(coord, highlight=1), MessageText("is"), MessageNums(num)],
+                [
+                    MessageCoords(coord, highlight=1),
+                    MessageText("is"),
+                    MessageNums(num),
+                ],
                 Action(add_cells=new_cells),
             )
 
@@ -862,7 +864,9 @@ class MainScene(QGraphicsScene):
         try:
             self.data.add_cells(new_cells)
         except InvalidBoard as e:
-            raise RuntimeWarning("Cannot add cell as it would make puzzle unsolvable.") from e
+            raise RuntimeWarning(
+                "Cannot add cell as it would make puzzle unsolvable."
+            ) from e
 
         self.selected_cell.set_value(value)
 
@@ -898,7 +902,9 @@ class MainScene(QGraphicsScene):
             try:
                 self.data.remove_candidates(delta_candidates)
             except InvalidBoard as e:
-                raise RuntimeWarning("Cannot remove candidate as it would make puzzle unsolvable.") from e
+                raise RuntimeWarning(
+                    "Cannot remove candidate as it would make puzzle unsolvable."
+                ) from e
         # Add
         else:
             self.data.add_candidates(delta_candidates)

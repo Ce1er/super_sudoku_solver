@@ -64,6 +64,7 @@ def test_apply_all_techniques(board):
         seen.add(i)
 
         for technique in board.hint():
+            print(technique.technique)
             nonlocal technique_applications
             if (
                 technique_applications[technique.technique]
@@ -71,7 +72,6 @@ def test_apply_all_techniques(board):
             ):
                 continue
             technique_applications[technique.technique] += 1
-            print(technique_applications)
 
             new = copy.deepcopy(board)
             new.apply_action(technique.action)

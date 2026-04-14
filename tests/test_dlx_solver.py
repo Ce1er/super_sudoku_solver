@@ -4,6 +4,7 @@ from super_sudoku_solver.save_manager import Puzzle
 import super_sudoku_solver.dlx_solver as dlx_solver
 from uuid import uuid7
 
+
 @pytest.fixture
 def node():
     return dlx_solver.Node()
@@ -87,6 +88,7 @@ def test_dlx_board_solve(board):
 def test_no_solutions_board(invalid_puzzle):
     with pytest.raises(InvalidBoard):
         Board(invalid_puzzle)
+
 
 def test_multiple_solutions_board(multiple_solutions_puzzle):
     with pytest.raises(InvalidBoard):
