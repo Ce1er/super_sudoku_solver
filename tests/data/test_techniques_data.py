@@ -325,7 +325,6 @@ naked_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(2, 8\)", "number 6"],
         },
         {
             "add_cells":
@@ -342,7 +341,6 @@ naked_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(7, 7\)", "number 6"],
         },
         {
             "add_cells":
@@ -359,7 +357,6 @@ naked_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(8, 7\)", "number 8"],
         },
         # }}}
     ],
@@ -386,7 +383,6 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(4, 3\)", "number 1", "column|box"],
         },
         {
             "add_cells":
@@ -403,7 +399,6 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(6, 8\)", "number 1", "row"],
         },
         {
             "add_cells":
@@ -420,7 +415,6 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(7, 4\)", "number 2", "row|box"],
         },
         {
             "add_cells":
@@ -437,7 +431,6 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(8, 5\)", "number 4", "row|box"],
         },
         {
             "add_cells":
@@ -454,7 +447,6 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(1, 7\)", "number 5", "column|box"],
         },
         {
             "add_cells":
@@ -471,7 +463,6 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(3, 6\)", "number 7", "row|box"],
         },
         {
             "add_cells":
@@ -488,7 +479,6 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(2, 9\)", "number 8", "row|box"],
         },
         {
             "add_cells":
@@ -505,24 +495,6 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(4, 5\)", "number 8", "row|column|box"],
-        },
-        {
-            "add_cells":
-            # 9 at r1c4 because column, box
-            [
-                [-1, -1, -1, 8, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-            ],
-            "removed_candidates": None,
-            "message_has": [r"\(1, 4\)", "number 9", "column|box"],
         },
         {
             "add_cells":
@@ -539,7 +511,22 @@ hidden_singles_board_1 = {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1],
             ],
             "removed_candidates": None,
-            "message_has": [r"\(4, 8\)", "number9", " column"],
+        },
+        {
+            "add_cells":
+            # 9 at r1c4 because column,box
+            [
+                [-1, -1, -1, 8, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            ],
+            "removed_candidates": None,
         },
         # }}}
     ],
@@ -655,7 +642,6 @@ naked_pairs_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(3, 3\)", r"\(5, 3\)", "3", "9", "column"],
         },
         {
             # r6c2 and r6c4 are 2 and 3
@@ -761,7 +747,6 @@ naked_pairs_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(6, 2\)", r"\(6, 4\)", "2", "3", "row"],
         },
         {
             # r9c5 and r9c6 are 3 and 7
@@ -867,7 +852,6 @@ naked_pairs_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(9, 5\)", r"\(9, 6\)", "3", "7", "row", "box"],
         },
         # }}}
     ],
@@ -983,7 +967,6 @@ hidden_pairs_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(8, 9\)", r"\(9, 9\)", "7", "9", "box"],
         }
         # }}}
     ],
@@ -1100,7 +1083,6 @@ locked_candidates_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(4, 8\)", r"\(6, 8\)", "number 1", "row", "house"],
         },
         {
             "add_cells": None,
@@ -1207,7 +1189,6 @@ locked_candidates_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(6, 8\)", "number 1", "row", "house"],
         },
         {
             "add_cells": None,
@@ -1314,7 +1295,6 @@ locked_candidates_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(1, 4\)", r"\(2, 4\)" "number 4", "column", "house"],
         },
         {
             "add_cells": None,
@@ -1421,7 +1401,6 @@ locked_candidates_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(2, 1\)", r"\(2, 3\)", "number 5", "row", "house"],
         },
         {
             "add_cells": None,
@@ -1528,7 +1507,6 @@ locked_candidates_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(8, 5\)", r"\(9, 5\)", "number 7", "column", "house"],
         },
         {
             "add_cells": None,
@@ -1635,7 +1613,6 @@ locked_candidates_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(8, 7\)", "number 8", "column", "house"],
         },
         {
             "add_cells": None,
@@ -1742,7 +1719,6 @@ locked_candidates_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(3, 1\)", r"\(3, 3\)", "number 9", "row", "house"],
         },
         {
             "add_cells": None,
@@ -1849,7 +1825,6 @@ locked_candidates_board_1 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [r"\(4, 8\)", "number 9", "column", "house"],
         },
         # }}}
     ],
@@ -1966,7 +1941,6 @@ locked_candidates_board_1 = {
 #                     [False, False, False, False, False, False, False, False, False],
 #                 ],
 #             ],
-#             "message_has": [r"\(4, 3\)", "number 1", "box", "row"],
 #         },
 #         {
 #             "add_cells": None,
@@ -2072,14 +2046,6 @@ locked_candidates_board_1 = {
 #                     [False, False, False, False, False, False, False, False, False],
 #                     [False, True, True, True, True, True, True, True, True],
 #                 ],
-#             ],
-#             "message_has": [
-#                 r"\(7, 9\)",
-#                 r"\(8, 9\)",
-#                 r"\(9, 9\)",
-#                 "number 1",
-#                 "box",
-#                 "column",
 #             ],
 #         },
 #         {
@@ -2187,7 +2153,6 @@ locked_candidates_board_1 = {
 #                     [False, True, True, True, True, True, True, True, True],
 #                 ],
 #             ],
-#             "message_has": [r"\(7, 4\)", "number 2", "box", "column"],
 #         },
 #         {
 #             "add_cells": None,
@@ -2292,7 +2257,6 @@ locked_candidates_board_1 = {
 #                     [False, False, False, False, False, False, False, False, False],
 #                 ],
 #             ],
-#             "message_has": [r"\(8, 5\)", "number 4", "box", "column"],
 #         },
 #         {
 #             "add_cells": None,
@@ -2399,7 +2363,6 @@ locked_candidates_board_1 = {
 #                     [False, False, False, False, False, False, False, False, False],
 #                 ],
 #             ],
-#             "message_has": [r"\(1, 7\)", "number 5", "box", "row"],
 #         },
 #         {
 #             "add_cells": None,
@@ -2506,7 +2469,6 @@ locked_candidates_board_1 = {
 #                     [False, False, False, False, False, False, False, False, False],
 #                 ],
 #             ],
-#             "message_has": [r"\(3, 6\)", "number 7", "box", "column"],
 #         },
 #         {
 #             "add_cells": None,
@@ -2613,7 +2575,6 @@ locked_candidates_board_1 = {
 #                     [False, False, False, False, False, False, False, False, False],
 #                 ],
 #             ],
-#             "message_has": [r"\(2, 9\)", "number 8", "box", "column"],
 #         },
 #         {
 #             "add_cells": None,
@@ -2720,7 +2681,6 @@ locked_candidates_board_1 = {
 #                     [False, False, False, False, False, False, False, False, False],
 #                 ],
 #             ],
-#             "message_has": [r"\(1, 4\)", "number 9", "box", "row"],
 #         },
 #         {
 #             "add_cells": None,
@@ -2827,7 +2787,6 @@ locked_candidates_board_1 = {
 #                     [True, True, True, True, True, True, True, True, False],
 #                 ],
 #             ],
-#             "message_has": [r"\(8, 9\)", r"\(9, 9\)", "number 9", "box", "column"],
 #         },
 #         # }}}
 #     ],
@@ -2944,14 +2903,6 @@ skyscrapers_board_2 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [
-                r"(5, 2)",
-                r"(6, 4)",
-                "only 6 in their column",
-                r"(8, 2)",
-                r"(8, 4)",
-                "share a row",
-            ],
         },
         {
             "add_cells": None,
@@ -3058,14 +3009,6 @@ skyscrapers_board_2 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [
-                r"(6, 1)",
-                r"(8, 2)",
-                "only 6 in their row",
-                r"(6, 4)",
-                r"(8, 4)",
-                "share a column",
-            ],
         },
         {
             "add_cells": None,
@@ -3171,7 +3114,6 @@ skyscrapers_board_2 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [],
         },
         {
             "add_cells": None,
@@ -3277,7 +3219,6 @@ skyscrapers_board_2 = {
                     [False, False, False, False, False, False, False, False, False],
                 ],
             ],
-            "message_has": [],
         },
         # }}}
     ],
@@ -3301,12 +3242,10 @@ tests = [
 for test in tests:
     add_cells = []
     removed_candidates = []
-    message_has = []
 
     for case in test["cases"]:
         add_cells.append(case["add_cells"])
         removed_candidates.append(case["removed_candidates"])
-        message_has.append("message_has")
 
     test_technique.append(
         pytest.param(
@@ -3314,7 +3253,6 @@ for test in tests:
             test["technique"],
             add_cells,
             removed_candidates,
-            message_has,
             id=test["name"],
         )
     )

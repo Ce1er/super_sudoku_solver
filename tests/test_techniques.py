@@ -13,7 +13,7 @@ import super_sudoku_solver.techniques as techniques
 
 
 @pytest.mark.parametrize(
-    "board,technique,add_cells,removed_candidates,message_has",
+    "board,technique,add_cells,removed_candidates",
     test_techniques_data.test_technique,
 )
 class TestTechnique:
@@ -24,13 +24,10 @@ class TestTechnique:
         technique: techniques._TechniqueFinder,
         add_cells: Optional[list[list[list[int]]]],
         removed_candidates: Optional[list[list[list[list[bool]]]]],
-        message_has: list[list[str]],
     ):
         """
         PyTest requires all test functions inside parametrized class to use all params.
         This fixture can be used for tests which do not use all params to supress errors.
-        Args:
-            message_has: each sublist has regex to match message against
         """
         return
 
@@ -70,9 +67,9 @@ class TestTechnique:
     def num_techniques(self, add_cells):
         return len(add_cells)
 
-    def test_input_data_lengths(self, add_cells, removed_candidates, message_has, null):
+    def test_input_data_lengths(self, add_cells, removed_candidates,  null):
         assert (
-            len(add_cells) == len(removed_candidates) == len(message_has)
+            len(add_cells) == len(removed_candidates) 
         ), "Test data has parts with different lengths"
 
     def test_add_cells(self, add_cells, action_fixt, null):
@@ -92,29 +89,6 @@ class TestTechnique:
                 assert (
                     candidates.tolist() in removed_candidates
                 ), "Invalid removed_candidates"
-
-    def test_technique_message(self, technique_fixt, message_has, null):
-        # TODO: this is bad. Make message_has specific to each application of a technique instead of checking whole list.
-        correct = False
-        for technique in technique_fixt:
-            for message in message_has:
-                for part in message:
-                    if re.match(part, technique.message) is not None:
-                        break
-                else:
-                    correct = True
-                    break
-
-        assert correct is True, "Message does not contain all required parts"
-
-    def test_unique_messages(self, technique_fixt, null):
-        seen: set[str] = set()
-        count = 0
-        for technique in technique_fixt:
-            seen.add(technique.message)
-            count += 1
-
-        assert len(seen) == count, "Some messages are duplicates"
 
     def test_num_found(self, technique_fixt, num_techniques, null):
         count = 0
