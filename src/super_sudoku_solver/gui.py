@@ -522,7 +522,7 @@ class MainScene(QGraphicsScene):
 
         self.techniques = None
 
-        self.message_time = 10000
+        self.message_time = 5000
 
     def set_mode(self):
         # self.cell_mode = not self.cell_mode
@@ -861,10 +861,8 @@ class MainScene(QGraphicsScene):
 
         try:
             self.data.add_cells(new_cells)
-        except InvalidBoard:
-            # TODO: some kind of dialog message to show this
-            self.send_message("Cannot add cell as it would make puzzle unsolvable.")
-            raise
+        except InvalidBoard as e:
+            raise RuntimeWarning("Cannot add cell as it would make puzzle unsolvable.") from e
 
         self.selected_cell.set_value(value)
 
@@ -899,10 +897,8 @@ class MainScene(QGraphicsScene):
         if self.cells[self.selected_cell.row][self.selected_cell.col].candidates[value]:
             try:
                 self.data.remove_candidates(delta_candidates)
-            except InvalidBoard:
-                # TODO: some kind of dialog message to show this
-                self.send_message("Cannot add cell as it would make puzzle unsolvable.")
-                raise
+            except InvalidBoard as e:
+                raise RuntimeWarning("Cannot remove candidate as it would make puzzle unsolvable.") from e
         # Add
         else:
             self.data.add_candidates(delta_candidates)
