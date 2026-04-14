@@ -115,7 +115,7 @@ class Cell(QGraphicsItem):
         return self._is_clue
 
     @is_clue.setter
-    def is_clue(self, value:bool):
+    def is_clue(self, value: bool):
         self._is_clue = value
 
     @property
@@ -256,7 +256,7 @@ class HintBox(QGraphicsItem, QObject):
         QObject.__init__(self)
         QGraphicsItem.__init__(self)
 
-        self.settings=settings
+        self.settings = settings
 
         self.technique = technique
 
@@ -665,7 +665,7 @@ class MainScene(QGraphicsScene):
         for row, col in product(range(9), repeat=2):
             self.cells[row][col].set_candidates((self.data.candidates[:, row, col]))
             self.cells[row][col].set_value(self.data.cells[row, col])
-            self.cells[row][col].is_clue = self.data.is_clue(np.array([row,col]))
+            self.cells[row][col].is_clue = self.data.is_clue(np.array([row, col]))
 
     def cell_clicked(self, cell: Cell):
         self.clear_highlight(hint_highlight=False)
@@ -802,7 +802,7 @@ class MainScene(QGraphicsScene):
         Args:
             value: value to set the cell. Between 0 and 8 inclusive.
         Raises:
-            RuntimeWarning: cell could not be added, warn user 
+            RuntimeWarning: cell could not be added, warn user
             InvalidBoard: cell could not be added, no warning needed
         """
         if self.data is None:

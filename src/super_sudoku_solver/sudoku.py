@@ -173,7 +173,7 @@ class Board:
         # Will remove candidates where guess is
         self._puzzle.set_candidates(self._puzzle.candidates)
 
-    def all_normal(self, override:bool=False) -> None:
+    def all_normal(self, override: bool = False) -> None:
         """
         Sets all normal hints to True
         Args:
