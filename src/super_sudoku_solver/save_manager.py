@@ -247,6 +247,9 @@ class Puzzle:
         self._guesses = None
         self._candidates = None
 
+    def __str__(self) -> str:
+        return f'Puzzle(uuid: {self._uuid}, clues: {self._str_clues}, difficulty: {self._difficulty})'
+
     # To allow sorting
     # Maybe a sorting function is better than operator overloading?
     # Consider https://docs.python.org/3/howto/sorting.html#sortinghowto
@@ -456,6 +459,10 @@ def main(args):
     if args.delete:
         for puzzle in args.delete:
             puzzles.delete_puzzle(puzzle)
+
+    if args.list:
+        for puzzle in puzzles.puzzle_map.values():
+            print(str(puzzle))
 
     if args.reset_puzzle_data:
         if not confirm(

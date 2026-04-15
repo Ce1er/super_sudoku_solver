@@ -49,10 +49,6 @@ text = [198, 208, 245, 255]
 # 8 = ["8", "Num+8"]
 # 9 = ["9", "Num+9"]
 
-# Gameplay settings to use by default
-[gameplay]
-# auto_note = true
-
 # Should not be touched by most users
 [developer]
 # Port should not be used by any other applications

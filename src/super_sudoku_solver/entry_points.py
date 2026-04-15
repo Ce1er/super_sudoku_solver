@@ -40,6 +40,12 @@ def main():
         help="Add a puzzle",
     )
     save_manager_parser.add_argument(
+        "-l",
+        "--list",
+        action="store_true",
+        help="List installed puzzles.",
+    )
+    save_manager_parser.add_argument(
         "--reset-puzzle-data",
         action="store_true",
         help="Revert all puzzles to their starting state.",
