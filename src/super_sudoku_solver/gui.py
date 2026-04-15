@@ -265,8 +265,8 @@ class HintBox(QGraphicsItem, QObject):
         # TODO: move to settings
         colours: dict[int, QColor] = {
             1: QColor("#dc8a78"),
-            2: QColor("#dd7878"),
-            3: QColor("#ea76cb"),
+            2: QColor("#8839ef"),
+            3: QColor("#d20f39"),
         }
 
         # Title / technique name
