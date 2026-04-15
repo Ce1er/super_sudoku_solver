@@ -1,31 +1,30 @@
-# All these settings are optional
+# Headings must be kept but all key/value pairs are optional 
+# Default settings will be used if not set
 
-# If not set will default to simple light theme
 [colours]
-# All colours use rgba values
+# rgba values
 # This example is mostly based on Catppuccin's Frappe palette
+clue = [198, 208, 245, 255]
+guess = [198, 208, 245, 255]
+candidate = [198, 208, 245, 255]
 
-# clue = [198, 208, 245, 255]
-# guess = [198, 208, 245, 255]
-# candidate = [198, 208, 245, 255]
-#
-# selected = [140, 170, 238, 130]
-# adjacent = [140, 170, 238, 50]
-#
-# border = [24, 24, 37, 255]
-# big_border = [17, 17, 27, 255]
-#
-# board_background = [48, 52, 70, 255]
-# menu_background = [98, 104, 128, 255]
-# button_background = [81, 87, 109, 255]
-# hint_background = [81, 87, 109, 255]
-# message_background = [81, 87, 109, 255]
-# background = [48, 52, 70, 255]
-#
-# text = [198, 208, 245, 255]
+selected = [140, 170, 238, 130]
+adjacent = [140, 170, 238, 50]
 
-# None of these will be set by default
+border = [24, 24, 37, 255]
+big_border = [17, 17, 27, 255]
+
+board_background = [48, 52, 70, 255]
+menu_background = [98, 104, 128, 255]
+button_background = [81, 87, 109, 255]
+hint_background = [81, 87, 109, 255]
+message_background = [81, 87, 109, 255]
+background = [48, 52, 70, 255]
+
+text = [198, 208, 245, 255]
+
 [keybindings]
+# Optional but if not set there won't be any way to use those features
 # auto_note = ["Ctrl+A"]
 # hint = ["Ctrl+H"]
 # apply_hint = ["Ctrl+O"]
@@ -39,7 +38,6 @@
 #
 # toggle_mode = ["Ctrl+T"]
 
-# All of these will be set to 1 and numpad 1 by default
 [keybindings.numbers]
 # 1 = ["1", "Num+1"]
 # 2 = ["2", "Num+2"]
@@ -52,12 +50,11 @@
 # 9 = ["9", "Num+9"]
 
 # Gameplay settings to use by default
-# auto_note is true by default
 [gameplay]
 # auto_note = true
 
-# port is 46215 by default
+# Should not be touched by most users
 [developer]
-# Should be a valid port number that is not used by any other applications
-# This port will only be used on localhost and is only used to prevent multiple instances of app running
+# Port should not be used by any other applications
+# If it is app won't launch
 # port = 46215
