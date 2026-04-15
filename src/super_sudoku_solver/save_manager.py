@@ -51,7 +51,7 @@ def ensure_single_instance():
 
 
 # Prevents save files from being accessed by multiple processes
-lock_socket = ensure_single_instance()
+__lock_socket = ensure_single_instance()
 
 # TODO: work out how this should interact with sudoku.Board
 # Right now I think that Board should get things from here
@@ -248,7 +248,7 @@ class Puzzle:
         self._candidates = None
 
     def __str__(self) -> str:
-        return f'Puzzle(uuid: {self._uuid}, clues: {self._str_clues}, difficulty: {self._difficulty})'
+        return f"Puzzle(uuid: {self._uuid}, clues: {self._str_clues}, difficulty: {self._difficulty})"
 
     # To allow sorting
     # Maybe a sorting function is better than operator overloading?
