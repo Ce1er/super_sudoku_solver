@@ -180,7 +180,7 @@ class _TechniqueFinder(abc.ABC):
 
 
 class _NakedSinglesInstance(_TechniqueInstance):
-    NAME = "Naked Single"
+    NAME = "Naked Singles"
 
     def __init__(self, coord: Coord, num: SupportsInt):
         """
@@ -756,7 +756,7 @@ class PointingTriples(_PointingTuples, _TechniqueFinder):
 
 
 class _SkyscraperInstance(_TechniqueInstance):
-    NAME = "Skyscraper"
+    NAME = "Skyscrapers"
 
     def __init__(
         self,
@@ -963,7 +963,7 @@ class Skyscrapers(_TechniqueFinder):
 
 
 class _XWingInstance(_TechniqueInstance):
-    NAME = "X-Wing"
+    NAME = "X-Wings"
 
     def __init__(self, adjacency, pairing, num, arr) -> None:
         self.adjacency = adjacency
