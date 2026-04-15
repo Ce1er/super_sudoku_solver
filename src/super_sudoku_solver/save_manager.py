@@ -458,7 +458,7 @@ def main(args):
 
     if args.delete:
         for puzzle in args.delete:
-            puzzles.delete_puzzle(puzzle)
+            puzzles.delete_puzzle(puzzle[0])
 
     if args.list:
         for puzzle in puzzles.puzzle_map.values():
