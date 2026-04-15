@@ -23,6 +23,10 @@ background = [48, 52, 70, 255]
 
 text = [198, 208, 245, 255]
 
+[colours.hint-highlights]
+# 1 = [220, 138, 120, 255]
+# 2 = [136, 57, 239, 255]
+
 [keybindings]
 # Optional but if not set there won't be any way to use those features
 # auto_note = ["Ctrl+A"]

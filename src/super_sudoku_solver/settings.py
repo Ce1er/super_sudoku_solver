@@ -81,6 +81,10 @@ class Keybinds:
 
 @dataclass(frozen=True)
 class Colours:
+    _DEFAULT_HINT_HIGHLIGHT = {
+        1: QColor("#dc8a78"),
+        2: QColor("#8839ef"),
+    }
     clue: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
     guess: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
     candidate: QColor = field(default_factory=lambda: QColor(30, 50, 78, 255))
@@ -101,16 +105,31 @@ class Colours:
     selected: QColor = field(default_factory=lambda: QColor(0, 0, 255, 100))
     adjacent: QColor = field(default_factory=lambda: QColor(0, 0, 170, 50))
 
+    _hint_highlight: dict[int, list[QColor]] = field(default_factory=dict)
+
+    @property
+    def hint_highlight(self):
+        # Allows user to override some hint highlights without losing defaults
+        # for any that weren't overwritten
+        print("foo", self._DEFAULT_HINT_HIGHLIGHT|self._hint_highlight)
+        return self._DEFAULT_HINT_HIGHLIGHT | self._hint_highlight
+
     def __post_init__(self):
         for name, val in self.__dict__.items():
-            if not isinstance(val, QColor):
-                raise ValueError(
-                    f"Value for key {name} under [colours] is invalid. Failed to convert to QColor."
-                )
-            elif not val.isValid():
-                raise ValueError(
-                    f"Value for key {name} under [colours] is invalid. Failed to convert to valid QColor."
-                )
+            if name == "_hint_highlight":
+                if not isinstance(val, dict):
+                    raise ValueError(
+                        "Hint highlights must be under [colours.hint-highlights]"
+                    )
+            else:
+                if not isinstance(val, QColor):
+                    raise ValueError(
+                        f"Value for key {name} under [colours] is invalid. Failed to convert to QColor."
+                    )
+                if not val.isValid():
+                    raise ValueError(
+                        f"Value for key {name} under [colours] is invalid. Failed to convert to valid QColor."
+                    )
 
 
 @dataclass(frozen=True)
@@ -218,6 +237,15 @@ def parse_number_input(data: dict[int, list[str]]) -> dict[int, list[QKeySequenc
 
     return result
 
+def parse_hint_highlight(data: dict[int, list[int]]) -> dict[int, list[QColor]]:
+    result = {}
+
+    for num, colour in data.items():
+        print(num,colour)
+        result[int(num)] = QColor(*colour)
+
+    return result
+
 
 def parse_colours(data: dict[str, list[int]]) -> dict[str, QColor]:
     result = {}
@@ -242,16 +270,31 @@ def load_settings(path: Optional[Path] = None) -> Settings:
         user_settings = {}
         # NOTE: Sizes() settings cannot be overwritten by user
         if "keybindings" in data:
-            user_settings["keybinds"] = Keybinds(
-                **parse_keybind_input(
-                    dict(
-                        filter(lambda x: x[0] != "numbers", data["keybindings"].items())
-                    )
-                ),
-                _numbers=parse_number_input(data["keybindings"]["numbers"]),
+            args = parse_keybind_input(
+                dict(filter(lambda x: x[0] != "numbers", data["keybindings"].items()))
             )
+            if "numbers" in data["keybindings"]:
+                args.update(
+                    {"_numbers": parse_number_input(data["keybindings"]["numbers"])}
+                )
+
+            user_settings["keybinds"] = Keybinds(**args)
         if "colours" in data:
-            user_settings["colours"] = Colours(**parse_colours(data["colours"]))
+            args = parse_colours(
+                dict(
+                    filter(lambda x: x[0] != "hint-highlights", data["colours"].items())
+                )
+            )
+            if "hint-highlights" in data["colours"]:
+                args.update(
+                    {
+                        "_hint_highlight": parse_hint_highlight(
+                            data["colours"]["hint-highlights"]
+                        )
+                    }
+                )
+            print(args)
+            user_settings["colours"] = Colours(**args)
         if "gameplay" in data:
             user_settings["gameplay"] = Gameplay(**data["gameplay"])
         if "developer" in data:

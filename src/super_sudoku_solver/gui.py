@@ -263,11 +263,12 @@ class HintBox(QGraphicsItem, QObject):
         self.highlight_cells_calls: list[tuple[Coords, QColor]] = []
 
         # TODO: move to settings
-        colours: dict[int, QColor] = {
-            1: QColor("#dc8a78"),
-            2: QColor("#8839ef"),
-            3: QColor("#d20f39"),
-        }
+        # colours: dict[int, QColor] = {
+        #     1: QColor("#dc8a78"),
+        #     2: QColor("#8839ef"),
+        #     3: QColor("#d20f39"),
+        # }
+        colours = self.settings.colours.hint_highlight
 
         # Title / technique name
         html = f'<span style="color: {self.settings.colours.text.name()};"'
