@@ -1100,8 +1100,8 @@ TECHNIQUES = [
     NakedPairs, 
     HiddenPairs, 
     LockedCandidates, 
-    Skyscrapers,
     PointingPairs,
     PointingTriples,
     XWing,
+    Skyscrapers,
 ]
