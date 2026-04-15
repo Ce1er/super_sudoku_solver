@@ -633,6 +633,7 @@ class LockedCandidates(_TechniqueFinder):
 
 
 class _PointingTuples(_TechniqueFinder):
+    """Helper class. Not usable directly."""
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],

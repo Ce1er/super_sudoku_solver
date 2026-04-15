@@ -79,3 +79,4 @@ def test_apply_all_techniques(board):
             helper(new, max_depth, depth + 1, seen)
 
     helper(board)
+    print(technique_applications)
