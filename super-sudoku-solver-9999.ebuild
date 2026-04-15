@@ -1,12 +1,12 @@
 # Version of ebuild to use
-EAPI=9
+EAPI=8
 
 # python3.14 is the only compatible version
 PYTHON_COMPAT=( python3_14 )
 
 # Tell distutils project is PEP517 complient
 DISTUTILS_USE_PEP517=setuptools
-inherit distutils-r1 
+inherit distutils-r1
 
 # Provides domenu command
 inherit desktop
@@ -20,7 +20,7 @@ inherit git-r3
 EGIT_REPO_URI="https://github.com/Ce1er/super_sudoku_solver.git"
 
 # Unstable on amd64 (AKA x86_64) (all unofficial gentoo packages are typically marked unstable)
-# At the time of writing this Gentoo officially supports 10 other CPU architectures 
+# At the time of writing this Gentoo officially supports 10 other CPU architectures
 # https://wiki.gentoo.org/wiki/Handbook:Main_Page#Architectures
 # Since I haven't tested my program on any other architectures it is bad practice to list them as supported.
 KEYWORDS="~amd64"
@@ -64,7 +64,7 @@ BDEPEND="
 	')
 "
 
-# The above would be sufficient to install the program as distutils-r1 handles PEP517 
+# The above would be sufficient to install the program as distutils-r1 handles PEP517
 # projects very well. But there's a couple extra things I want Portage to do.
 
 # If "test" FEATURE is enabled run tests and only install program if they all pass
