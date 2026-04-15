@@ -180,7 +180,7 @@ class _TechniqueFinder(abc.ABC):
 
 
 class _NakedSinglesInstance(_TechniqueInstance):
-    NAME = "Naked Singles"
+    NAME = "Naked Single"
 
     def __init__(self, coord: Coord, num: SupportsInt):
         """
@@ -234,7 +234,7 @@ class NakedSingles(_TechniqueFinder):
 
 
 class _HiddenSinglesInstance(_TechniqueInstance):
-    NAME = "Hidden Singles"
+    NAME = "Hidden Single"
 
     def __init__(self, coord: Cell, adjacency: Adjacency):
         """
@@ -325,7 +325,7 @@ class HiddenSingles(_TechniqueFinder):
 
 
 class _NakedPairsInstance(_TechniqueInstance):
-    NAME = "Naked Pairs"
+    NAME = "Naked Pair"
 
     def _get_remove_from(self):
         """
@@ -433,7 +433,7 @@ class NakedPairs(_TechniqueFinder):
 
 
 class _HiddenPairsInstance(_TechniqueInstance):
-    NAME = "Hidden Pairs"
+    NAME = "Hidden Pair"
 
     def __init__(self, cells, num_pair, adjacent_by):
         self._cells = cells
@@ -706,14 +706,14 @@ class _PointingTuplesInstance(_TechniqueInstance):
 
 
 class _PointingPairsInstance(_PointingTuplesInstance):
-    NAME = "Pointing Pairs"
+    NAME = "Pointing Pair"
 
     def __init__(self, coords, num, direction) -> None:
         super().__init__(coords, num, direction)
 
 
 class _PointingTriplesInstance(_PointingTuplesInstance):
-    NAME = "Pointing Triples"
+    NAME = "Pointing Triple"
 
     def __init__(self, coords, num, direction) -> None:
         super().__init__(coords, num, direction)
@@ -756,7 +756,7 @@ class PointingTriples(_PointingTuples, _TechniqueFinder):
 
 
 class _SkyscraperInstance(_TechniqueInstance):
-    NAME = "Skyscrapers"
+    NAME = "Skyscraper"
 
     def __init__(
         self,
@@ -963,7 +963,7 @@ class Skyscrapers(_TechniqueFinder):
 
 
 class _XWingInstance(_TechniqueInstance):
-    NAME = "X-Wings"
+    NAME = "X-Wing"
 
     def __init__(self, adjacency, pairing, num, arr) -> None:
         self.adjacency = adjacency
