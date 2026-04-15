@@ -149,6 +149,8 @@ class Gameplay:
             raise NotImplementedError(
                 "Board must start full so candidates contain solution"
             )
+        if not self.auto_note:
+            raise NotImplementedError
 
 
 @dataclass(frozen=True)
