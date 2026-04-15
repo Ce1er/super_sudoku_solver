@@ -460,12 +460,12 @@ class MainScene(QGraphicsScene):
             return x
 
         buttons = [
-            {
-                "x": next(x),
-                "y": next(y),
-                "widget": button("Auto Note"),
-                "func": wrap(self.auto_note),
-            },
+            # {
+            #     "x": next(x),
+            #     "y": next(y),
+            #     "widget": button("Auto Note"),
+            #     "func": wrap(self.auto_note),
+            # },
             {
                 "x": next(x),
                 "y": next(y),
