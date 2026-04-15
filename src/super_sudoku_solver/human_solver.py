@@ -108,10 +108,10 @@ class MessageCoords(MessagePart):
         if len(coords) > 1:
             tmp = "Cells"
             for coord in coords:
-                tmp += " ({}, {})".format(*coord)
+                tmp += " r{}c{}".format(*coord)
             self.text = tmp
         else:
-            self.text = "Cell ({}, {})".format(*coords[0])
+            self.text = "Cell r{}c{}".format(*coords[0])
 
     @property
     def coords(self):
