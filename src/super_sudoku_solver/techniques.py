@@ -5,7 +5,7 @@ from functools import wraps
 import itertools
 from itertools import combinations
 import abc
-from typing import Literal, SupportsInt, Self, Callable, assert_never
+from typing import Literal, SupportsInt, Self, Callable, assert_never, override
 from collections.abc import Generator
 
 from super_sudoku_solver.custom_types import (
@@ -214,6 +214,7 @@ class NakedSingles(_TechniqueFinder):
     ):
         super().__init__(candidates, clues, guesses)
 
+    @override
     def _find(self):
         """
         Iterator of all Naked Singles based on self.candidates.
@@ -245,6 +246,7 @@ class _HiddenSinglesInstance(_TechniqueInstance):
         self._coord = coord
         self._adjacency = adjacency
 
+    @override
     def _generate_message(self):
         """
         Args:
@@ -272,6 +274,7 @@ class _HiddenSinglesInstance(_TechniqueInstance):
             MessageText(f"in the {self._adjacency}."),
         ]
 
+    @override
     def _generate_action(self):
         """
         Args:
@@ -297,6 +300,7 @@ class HiddenSingles(_TechniqueFinder):
     ):
         super().__init__(candidates, clues, guesses)
 
+    @override
     def _find(self):
         """
         Search for Hidden Singles based on candidates.
@@ -347,6 +351,7 @@ class _NakedPairsInstance(_TechniqueInstance):
         self._candidates = candidates
         self._remove_from = self._get_remove_from()
 
+    @override
     def _generate_message(self):
         remove_adjacencies = self._remove_from
         adjacencies = ""
@@ -369,6 +374,7 @@ class _NakedPairsInstance(_TechniqueInstance):
             MessageText("removed as candidates."),
         ]
 
+    @override
     def _generate_action(self):
         remove_adjacencies = self._remove_from
         removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
@@ -392,6 +398,7 @@ class NakedPairs(_TechniqueFinder):
     ):
         super().__init__(candidates, clues, guesses)
 
+    @override
     def _find(self):
         """
         Search for Naked Pairs based on candidates.
@@ -440,6 +447,7 @@ class _HiddenPairsInstance(_TechniqueInstance):
         self._num_pair = num_pair
         self._adjacent_by = adjacent_by
 
+    @override
     def _generate_message(self):
         return [
             MessageCoords(self._cells, highlight=1),
@@ -452,6 +460,7 @@ class _HiddenPairsInstance(_TechniqueInstance):
             ),
         ]
 
+    @override
     def _generate_action(self):
         removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
 
@@ -476,6 +485,7 @@ class HiddenPairs(_TechniqueFinder):
     ):
         super().__init__(candidates, clues, guesses)
 
+    @override
     def _find(self):
         """
         Search for Hidden Pairs based on candidates
@@ -552,6 +562,7 @@ class _LockedCandidatesInstance(_TechniqueInstance):
         self._adjacency_occurences = adjacency_occurences
         self._adjacency_box_occurences = adjacency_box_occurences
 
+    @override
     def _generate_message(self):
         return [
             MessageCoords(self._coords, highlight=1),
@@ -571,6 +582,7 @@ class _LockedCandidatesInstance(_TechniqueInstance):
             ),
         ]
 
+    @override
     def _generate_action(self):
         removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
         removed_candidates[self._num] = (
@@ -589,6 +601,7 @@ class LockedCandidates(_TechniqueFinder):
     ):
         super().__init__(candidates, clues, guesses)
 
+    @override
     def _find(self):
         """
         Search for Locked Candidates based on candidates
@@ -685,6 +698,7 @@ class _PointingTuplesInstance(_TechniqueInstance):
         self.num = num
         self.direction = direction
 
+    @override
     def _generate_message(self):
         return [
             MessageCoords(self.coords, highlight=1),
@@ -695,6 +709,7 @@ class _PointingTuplesInstance(_TechniqueInstance):
             ),
         ]
 
+    @override
     def _generate_action(self):
         removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
         func = npc.adjacent_row if self.direction == "row" else npc.adjacent_column
@@ -730,6 +745,7 @@ class PointingPairs(_PointingTuples, _TechniqueFinder):
         _TechniqueFinder.__init__(self, candidates, clues, guesses)
         _PointingTuples.__init__(self, candidates, clues, guesses, 2)
 
+    @override
     def _find(self):
         for pair in self.partially_find():
             coords = pair["coords"]
@@ -748,6 +764,7 @@ class PointingTriples(_PointingTuples, _TechniqueFinder):
         _TechniqueFinder.__init__(self, candidates, clues, guesses)
         _PointingTuples.__init__(self, candidates, clues, guesses, 3)
 
+    @override
     def _find(self):
         for pair in self.partially_find():
             coords = pair["coords"]
@@ -788,6 +805,7 @@ class _SkyscraperInstance(_TechniqueInstance):
         self._other_adjacency = other_adjacency
         self._candidates = candidates
 
+    @override
     def _generate_message(self):
         return [
             MessageText("At least one of"),
@@ -813,6 +831,7 @@ class _SkyscraperInstance(_TechniqueInstance):
             MessageText("."),
         ]
 
+    @override
     def _generate_action(self):
         removed_candidates = np.full((9, 9, 9), False, dtype=np.bool)
 
@@ -841,6 +860,7 @@ class Skyscrapers(_TechniqueFinder):
     ):
         super().__init__(candidates, clues, guesses)
 
+    @override
     def _find(self: Self):
         """
         Search for skyscrapers based on candidates
@@ -973,6 +993,7 @@ class _XWingInstance(_TechniqueInstance):
         self.arr = arr
         self.indices = np.array(npc.argwhere(self.arr).flatten(), dtype=np.int8)
 
+    @override
     def _generate_action(self):
 
         remove_candidates = np.full((9, 9, 9), False, dtype=np.bool)
@@ -996,6 +1017,7 @@ class _XWingInstance(_TechniqueInstance):
 
         return Action(remove_candidates=remove_candidates)
 
+    @override
     def _generate_message(self):
         # Coordinates of all 4 cells
 
@@ -1052,6 +1074,7 @@ class XWing(_TechniqueFinder):
     ):
         super().__init__(candidates, clues, guesses)
 
+    @override
     def _find(self):
         """
         Iterator of all X-Wings based on self.candidates.

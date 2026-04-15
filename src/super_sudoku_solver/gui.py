@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Self, Any, SupportsInt
+from typing import Callable, Optional, Self, Any, SupportsInt, override
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -187,9 +187,11 @@ class Cell(QGraphicsItem):
         self._background_colour = new
         self.update()
 
+    @override
     def boundingRect(self):
         return QRectF(0, 0, self._size, self._size)
 
+    @override
     def paint(self, painter, option, widget):
         # Draw background
         painter.fillRect(self.boundingRect(), QBrush(self._background_colour))
@@ -226,6 +228,7 @@ class Cell(QGraphicsItem):
                         QRectF(x, y, width, height), Qt.AlignCenter, str(i + 1)
                     )
 
+    @override
     def mousePressEvent(self, event) -> None:
         scene = self.scene()
         if hasattr(scene, "cell_clicked"):
@@ -321,9 +324,11 @@ class HintBox(QGraphicsItem, QObject):
         for call in self.highlight_cells_calls:
             self.highlight_cells.emit(call)
 
+    @override
     def boundingRect(self):
         return QRectF(0, 0, self._width, self._height)
 
+    @override
     def paint(self, painter: QPainter, option, widget):
         # Draw background
         painter.fillRect(self.boundingRect(), QBrush(settings.colours.hint_background))
@@ -339,6 +344,7 @@ class HintBox(QGraphicsItem, QObject):
         self._text.drawContents(painter)
         painter.restore()
 
+    @override
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent, /) -> None:
         """
         On LMB apply action
@@ -944,6 +950,7 @@ class MainScene(QGraphicsScene):
         self.puzzle.reset()
         self.reload()
 
+    @override
     def keyPressEvent(self, event) -> None:
         if self.data is None:
             return
