@@ -493,7 +493,7 @@ class MainScene(QGraphicsScene):
             paint_button(button["widget"], button["x"], button["y"])
             button["widget"].clicked.connect(button["func"])
 
-        switch = QCheckBox("Toggle Mode")
+        switch = QCheckBox("Candidates Mode")
         switch.setStyleSheet(f"""
                              color: {self.settings.colours.text.name()};
                              background-color: {self.settings.colours.button_background.name()};
@@ -866,6 +866,7 @@ class MainScene(QGraphicsScene):
                 ) from e
         # Add
         else:
+            return
             self.data.add_candidates(delta_candidates)
 
     @_update_candidates
