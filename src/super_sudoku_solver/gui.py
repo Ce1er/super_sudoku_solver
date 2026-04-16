@@ -416,11 +416,15 @@ class MainScene(QGraphicsScene):
                                          background-color: {self.settings.colours.menu_background.name()};
                                        }}
                                        """)
+
         self.menu_proxy = QGraphicsProxyWidget()
         self.menu_proxy.setWidget(self.puzzle_menu)
         self.addItem(self.menu_proxy)
-        # TODO: chose this position based on sizes
-        self.menu_proxy.setPos(-300, -50)
+
+        width = self.menu_proxy.geometry().width()
+        padding = self.settings.sizes.cell
+        self.menu_proxy.setPos(-(width + padding), 0)
+
         self.puzzle_menu.data.connect(self.set_puzzle)
 
     def paint_message_box(self):
@@ -596,6 +600,9 @@ class MainScene(QGraphicsScene):
             self.paint_board()
 
     def paint_board(self):
+        """
+        Paint board from (0, 0) to (self.settings.sizes.cell * 9, self.settings.sizes.cell * 9)
+        """
         if self.data is None:
             raise RuntimeError("Could not paint board as there is no board data.")
 
@@ -783,7 +790,8 @@ class MainScene(QGraphicsScene):
             self.removeItem(self.hint)
 
         hint = HintBox(technique, self.settings)
-        hint.setPos(self.settings.sizes.cell * 9 + 5, 0)
+        padding = 10
+        hint.setPos(self.settings.sizes.cell * 9 + padding, 0)
         self.hint = hint
 
         # Clear any previous hint highlights
@@ -1024,20 +1032,37 @@ class MainScene(QGraphicsScene):
         except RuntimeError:
             pass
 
+    def resizeEvent(self, event):
+        w = self.width()
+        h = self.height()
+
+        self.puzzle_menu.setGeometry()
+
+
+class View(QGraphicsView):
+    """Responsible for window resizes and drawing background"""
+
+    def __init__(self, scene, margin):
+        super().__init__(scene)
+
+        self.setViewportMargins(margin, margin, margin, margin)
+
+    @override
+    def resizeEvent(self, event):
+        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        super().resizeEvent(event)
+
 
 def main():
     app = QApplication()
 
     scene = MainScene(settings)
-    scene.setBackgroundBrush(QBrush(settings.colours.background))
-    view = QGraphicsView(scene)
+    view = View(scene, settings.sizes.margin)
+    view.setStyleSheet(
+        f"QGraphicsView {{ background: {settings.colours.background.name()}; border: none; }}"
+    )
+
     view.setFocusPolicy(Qt.StrongFocus)
 
     view.show()
     sys.exit(app.exec())
-
-
-# TODO: sudoku board needs buttons as alternatives to all key binds
-# Also needs a button to go to main menu
-# Main menu should have a way to select puzzle
-# Hint box should also go away if user does it themselves

@@ -138,8 +138,11 @@ class Sizes:
     big_border: int = field(default=3)
     cell: int = field(default=60)
     text: int = field(default=11)
+    margin: int = field(default=50)
+    # All other sizes are calculated based on cell size
 
     def __post_init__(self):
+        return
         for name, val in self.__dict__.items():
             if not isinstance(val, int):
                 raise ValueError(
