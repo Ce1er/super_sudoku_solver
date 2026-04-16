@@ -91,12 +91,12 @@ class Colours:
     border: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
     big_border: QColor = field(default_factory=lambda: QColor(0, 0, 0, 255))
     background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
-    board_background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
+    board_background: QColor = field(default_factory=lambda: QColor(0, 0, 0, 0))
     menu_background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
     button_background: QColor = field(
-        default_factory=lambda: QColor(255, 255, 255, 255)
+        default_factory=lambda: QColor(255,255, 255, 255)
     )
-    hint_background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
+    hint_background: QColor = field(default_factory=lambda: QColor(0, 0, 0, 0))
     message_background: QColor = field(
         default_factory=lambda: QColor(255, 255, 255, 255)
     )
