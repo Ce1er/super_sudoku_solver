@@ -489,10 +489,7 @@ class MainScene(QGraphicsScene):
                 "x": next(x),
                 "y": next(y),
                 "widget": button("Reset"),
-                # self.reset would delete the button while signal is being executed
-                # This would cause a seg fault. Timer lets signal finish before running
-                # reset method on the next event loop cycle.
-                "func": lambda: QTimer.singleShot(0, wrap(self.reset)),
+                "func": wrap(self.reset),
             },
         ]
 
