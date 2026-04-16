@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Self, Any, SupportsInt, override
+from typing import Callable, Optional, Self, Any, SupportsInt, assert_never, override
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -8,11 +8,13 @@ from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsItem,
     QGraphicsSceneMouseEvent,
+    QHBoxLayout,
     QLabel,
     QListWidget,
     QPushButton,
     QCheckBox,
     QStyle,
+    QVBoxLayout,
 )
 from PySide6.QtGui import (
     QKeySequence,
@@ -440,14 +442,10 @@ class MainScene(QGraphicsScene):
         # self.message_proxy.setPos(-300, 150)
 
     def paint_buttons(self):
-        def paint_button(widget, x, y):
-            proxy = QGraphicsProxyWidget()
-            proxy.setWidget(widget)
-            proxy.setPos(x, y)
-            self.addItem(proxy)
-
-        x = count(35, 100)  # Set start x & x spacing
-        y = repeat(-80)
+        # def paint_button(widget):
+        #     proxy = QGraphicsProxyWidget()
+        #     proxy.setWidget(widget)
+        #     self.addItem(proxy)
 
         def wrap(func):
             @wraps(func)
@@ -462,53 +460,72 @@ class MainScene(QGraphicsScene):
 
             return wrapped
 
-        def button(text):
-            x = QPushButton(text)
+        def item(text, item_type):
+            x = item_type(text)
             x.setStyleSheet(f"""
                             color: {self.settings.colours.text.name()}; 
                             background-color: {self.settings.colours.button_background.name()};
                             """)
-            return x
+            proxy = QGraphicsProxyWidget()
+            proxy.setWidget(x)
+            self.addItem(proxy)
+            return proxy
+
+        button = partial(item, item_type=QPushButton)
+        switch = partial(item, item_type=QCheckBox)
 
         buttons = [
             # {
-            #     "x": next(x),
-            #     "y": next(y),
             #     "widget": button("Auto Note"),
             #     "func": wrap(self.auto_note),
             # },
             {
-                "x": next(x),
-                "y": next(y),
+                "type": "button",
                 "widget": button("Hint"),
                 "func": wrap(self.show_hint),
             },
             {
-                "x": next(x),
-                "y": next(y),
+                "type": "button",
                 "widget": button("Solve"),
                 "func": wrap(self.solve),
             },
             {
-                "x": next(x),
-                "y": next(y),
+                "type": "button",
                 "widget": button("Reset"),
+                "func": wrap(self.reset),
+            },
+            {
+                "type": "switch",
+                "widget": switch("Candidates Mode"),
                 "func": wrap(self.reset),
             },
         ]
 
-        for button in buttons:
-            paint_button(button["widget"], button["x"], button["y"])
-            button["widget"].clicked.connect(button["func"])
+        total_width = sum(button["widget"].rect().width() for button in buttons)
+        left = self.cells[0][0].x()
+        right = self.cells[-1][-1].x() + self.settings.sizes.cell
 
-        switch = QCheckBox("Candidates Mode")
-        switch.setStyleSheet(f"""
-                             color: {self.settings.colours.text.name()};
-                             background-color: {self.settings.colours.button_background.name()};
-                             """)
-        paint_button(switch, next(x), next(y))
-        switch.stateChanged.connect(self.set_mode)
-        self.cell_mode_widget = switch
+        total_padding = (right - left) - total_width
+        if total_padding < 0:
+            raise ValueError("Buttons cannot be painted as board is not wide enough.")
+
+        padding = total_padding / (len(buttons) - 1)
+
+        x = left
+        y = -self.settings.sizes.cell * 0.8
+
+        for button in buttons:
+            if button["type"] == "button":
+                button["widget"].widget().clicked.connect(button["func"])
+            elif button["type"] == "switch":
+                button["widget"].widget().stateChanged.connect(self.set_mode)
+                self.cell_mode_widget = button["widget"].widget()
+            else:
+                assert_never(button["widget"])
+
+            print(x, button["widget"].rect().width())
+            button["widget"].setPos(x, y)
+            x += button["widget"].rect().width() + padding
 
         self.buttons_painted = True
 
@@ -790,8 +807,7 @@ class MainScene(QGraphicsScene):
             self.removeItem(self.hint)
 
         hint = HintBox(technique, self.settings)
-        padding = 10
-        hint.setPos(self.settings.sizes.cell * 9 + padding, 0)
+        hint.setPos(self.settings.sizes.cell * 9.3, 0)
         self.hint = hint
 
         # Clear any previous hint highlights

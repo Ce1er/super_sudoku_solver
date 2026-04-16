@@ -136,7 +136,7 @@ class Colours:
 class Sizes:
     border: int = field(default=1)
     big_border: int = field(default=3)
-    cell: int = field(default=60)
+    cell: int = field(default=61)
     text: int = field(default=11)
     margin: int = field(default=50)
     # All other sizes are calculated based on cell size
