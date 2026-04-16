@@ -1064,8 +1064,11 @@ class View(QGraphicsView):
         super().resizeEvent(event)
 
 
-def main():
-    app = QApplication()
+def main(args=None):
+    if args is None:
+        args = []
+
+    app = QApplication(args)
 
     scene = MainScene(settings)
     view = View(scene, settings.sizes.margin)
