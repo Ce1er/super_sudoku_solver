@@ -506,6 +506,8 @@ class MainScene(QGraphicsScene):
         switch.stateChanged.connect(self.set_mode)
         self.cell_mode_widget = switch
 
+        self.buttons_painted = True
+
     def __init__(
         self,
         # data: BoardData,
@@ -592,22 +594,18 @@ class MainScene(QGraphicsScene):
             self.clear_highlight()
         else:
             self.paint_board()
-            self.board_painted = True
 
     def paint_board(self):
+        if self.data is None:
+            raise RuntimeError("Could not paint board as there is no board data.")
+
         self.cells = []
         x = -1
         for row, col in product(range(9), repeat=2):
             if row > x:
                 x = row
                 self.cells.append([])
-            # for coord in self.data.get_cells():
-            for coord in np.argwhere(self.data.cells != -1):
-                if coord[0] == row and coord[1] == col:
-                    value = self.data.cells[row, col]
-                    break
-            else:
-                value = -1
+            value = self.data.cells[row, col]
 
             cell = Cell(
                 np.array([row, col, value]),
@@ -622,7 +620,6 @@ class MainScene(QGraphicsScene):
 
         if not self.buttons_painted:
             self.paint_buttons()
-            self.buttons_painted = True
 
         big_pen = QPen(self.settings.colours.big_border, self.settings.sizes.big_border)
         normal_pen = QPen(self.settings.colours.border, self.settings.sizes.border)
@@ -650,8 +647,7 @@ class MainScene(QGraphicsScene):
                 (big_pen if i % 3 == 0 else normal_pen),
             )
 
-        # TODO: Avoid repainting stuff
-        # This will increase every time a new puzzle is selected
+        self.board_painted = True
 
     def update_candidates(self):
         """
