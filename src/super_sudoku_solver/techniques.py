@@ -705,7 +705,7 @@ class _PointingTuplesInstance(_TechniqueInstance):
             MessageText("are the only cells that can be"),
             MessageNums(self.num),
             MessageText(
-                f"in their box and they share a {self.direction} so we can remove other options from their {self.direction}."
+                f"in their box and they share a {self.direction} so we can remove other"),MessageNums(self.num), MessageText(f"candidates in their {self.direction}."
             ),
         ]
 
@@ -816,7 +816,7 @@ class _SkyscraperInstance(_TechniqueInstance):
             MessageNums(self._num),
             MessageText("because they are the only"),
             MessageNums(self._num),
-            MessageText(f"in their {self._adjacency} except these"),
+            MessageText(f"in their {self._adjacency} except"),
             MessageCoords(
                 np.array([self._shared_cell1, self._shared_cell2]), highlight=2
             ),

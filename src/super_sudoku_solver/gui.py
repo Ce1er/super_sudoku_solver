@@ -650,7 +650,8 @@ class MainScene(QGraphicsScene):
         width = self.settings.sizes.cell * 9
 
         # Draw cell borders
-        for i in range(10):
+        # Sorted so big borders are drawn last so small borders won't overlap over them
+        for i in sorted(range(10), key=lambda x: x % 3 == 0):
             # Vertical
             x = i * self.settings.sizes.cell
             self.addLine(
