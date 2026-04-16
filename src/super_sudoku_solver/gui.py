@@ -1032,12 +1032,6 @@ class MainScene(QGraphicsScene):
         except RuntimeError:
             pass
 
-    def resizeEvent(self, event):
-        w = self.width()
-        h = self.height()
-
-        self.puzzle_menu.setGeometry()
-
 
 class View(QGraphicsView):
     """Responsible for window resizes and drawing background"""
