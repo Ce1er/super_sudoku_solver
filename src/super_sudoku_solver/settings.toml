@@ -14,7 +14,7 @@ adjacent = [140, 170, 238, 50]
 border = [24, 24, 37, 255]
 big_border = [17, 17, 27, 255]
 
-board_background = [48, 52, 70, 255]
+board_background = [65, 69, 89, 255]
 menu_background = [98, 104, 128, 255]
 button_background = [81, 87, 109, 255]
 hint_background = [81, 87, 109, 255]
@@ -22,10 +22,8 @@ message_background = [81, 87, 109, 255]
 background = [48, 52, 70, 255]
 
 text = [198, 208, 245, 255]
-
 [colours.hint-highlights]
-# 1 = [220, 138, 120, 255]
-# 2 = [136, 57, 239, 255]
+# 1 = [0,0,0,0]
 
 [keybindings]
 # Optional but if not set there won't be any way to use those features
