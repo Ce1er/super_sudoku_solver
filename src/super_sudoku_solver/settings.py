@@ -111,7 +111,6 @@ class Colours:
     def hint_highlight(self):
         # Allows user to override some hint highlights without losing defaults
         # for any that weren't overwritten
-        print("foo", self._DEFAULT_HINT_HIGHLIGHT|self._hint_highlight)
         return self._DEFAULT_HINT_HIGHLIGHT | self._hint_highlight
 
     def __post_init__(self):
@@ -244,7 +243,6 @@ def parse_hint_highlight(data: dict[int, list[int]]) -> dict[int, list[QColor]]:
     result = {}
 
     for num, colour in data.items():
-        print(num,colour)
         result[int(num)] = QColor(*colour)
 
     return result
@@ -296,7 +294,6 @@ def load_settings(path: Optional[Path] = None) -> Settings:
                         )
                     }
                 )
-            print(args)
             user_settings["colours"] = Colours(**args)
         if "gameplay" in data:
             user_settings["gameplay"] = Gameplay(**data["gameplay"])

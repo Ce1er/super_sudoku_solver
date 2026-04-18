@@ -523,7 +523,6 @@ class MainScene(QGraphicsScene):
             else:
                 assert_never(button["widget"])
 
-            print(x, button["widget"].rect().width())
             button["widget"].setPos(x, y)
             x += button["widget"].rect().width() + padding
 
