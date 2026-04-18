@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Self, Any, SupportsInt, assert_never, override
+from typing import Callable, Optional, Self, Any,  assert_never, override
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -8,13 +8,9 @@ from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsItem,
     QGraphicsSceneMouseEvent,
-    QHBoxLayout,
-    QLabel,
     QListWidget,
     QPushButton,
     QCheckBox,
-    QStyle,
-    QVBoxLayout,
 )
 from PySide6.QtGui import (
     QKeySequence,

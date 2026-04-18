@@ -1,6 +1,5 @@
-# import line_profiler
 from __future__ import annotations
-from typing import Literal, Optional, SupportsInt, TypeVar
+from typing import Literal, Optional, SupportsInt
 
 import numpy as np
 import numpy.typing as npt
@@ -11,7 +10,6 @@ from functools import reduce
 import super_sudoku_solver.np_candidates as npc
 
 
-# TODO: fix types. Mostly which specific np int type? Also consider non-numpy types being passed in such as int to MessageNum
 class MessagePart(ABC):
     """
     Base class for parts of message used by Technique
@@ -61,38 +59,13 @@ class MessageText(MessagePart):
         self.highlight = highlight
 
 
-# class MessageCoord(MessagePart):
-#     """
-#     For a single coordinate
-#     """
-#
-#     def __init__(
-#         self, coord: npt.NDArray[np.signedinteger], highlight: Optional[int] = None
-#     ) -> None:
-#         """
-#         Args:
-#             coord: 0-based coordinate. size 2 and can be any ndim as long as it can be reshaped to (2,).
-#             highlight: highlight group
-#         """
-#         self._coord = coord
-#         coord = np.copy(coord)
-#         self.highlight = highlight
-#         coord.reshape(2)
-#         coord += 1
-#         self.text = "Cell ({}, {})".format(*coord)
-#
-#     @property
-#     def coord(self):
-#         return self._coord
-
-
 class MessageCoords(MessagePart):
     """
     For cell coordinates
     """
 
     def __init__(
-        self, coords: npt.NDArray[np.signedinteger], highlight: Optional[int] = None
+        self, coords: npt.NDArray[np.integer], highlight: Optional[int] = None
     ) -> None:
         """
         Args:
@@ -147,7 +120,6 @@ class MessageNums(MessagePart):
             self.text = tmp
 
 
-T = TypeVar("T", bound=MessagePart)
 
 
 class Action:
@@ -204,16 +176,7 @@ class Technique:
     Represents a specific instance of a technique being used.
     Holds data about the technique and how to act on it.
     """
-
-    # Needs to contain data about highlighting
-    # For hints and cells several types of highlighting will be available
-    # Advanced example (Finned Jelyfish) to help decide how to implement
-    # "These cells are a Jelyfish, if you don't include this cell that shares a house with part of it. That means that either the Jellyfish is valid, or this cell is 7 so this cell which contradicts both cannot be 7"
-    # Message takes list[str | npt.NDArray] numpy arrays are coordinates and are converted to human readable coords.
-    # Highlighting could be good, cell groups mentioned in the message can have different colours. Maybe {adjacency} can be bold or smth.
-    # Might be better if it is just a string with stuff like %1 for 1st group and give a dictionary {1: some numpy array of coords}
-
-    def __init__(self, technique: str, message: list[T], action: Action):
+    def __init__(self, technique: str, message: list[MessagePart], action: Action):
         """
         Args:
             technique: Name of technique
@@ -236,7 +199,7 @@ class Technique:
         return self._raw_message
 
     @property
-    def message_parts(self) -> list[T]:
+    def message_parts(self) -> list[MessagePart]:
         return self._message
 
     @property
