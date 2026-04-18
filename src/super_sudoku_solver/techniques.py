@@ -1147,6 +1147,7 @@ class XWing(_TechniqueFinder):
                     yield _XWingInstance(adjacency, pairing, num, arr[0].flatten())
 
 
+# Should be in approximate order of difficulty
 TECHNIQUES = [
     NakedSingles,
     HiddenSingles,
