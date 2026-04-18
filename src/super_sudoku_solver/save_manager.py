@@ -156,7 +156,7 @@ class Puzzle:
         self._str_clues = clues
 
         # PERF: lazy load numpy arrays
-        self._clues: str | Cells = clues
+        self._clues: Optional[Cells] = None
         self._guesses: Optional[Cells] = None
         self._candidates: Optional[Candidates] = None
 
@@ -204,11 +204,12 @@ class Puzzle:
 
     @property
     def clues(self) -> Cells:
-        if isinstance(self._clues, str):
-            values = [-1 if clue == "." else int(clue) - 1 for clue in self._clues]
-            self._clues: Cells = np.array(values, dtype=np.int8).reshape((9, 9))
-            self._clues.flags.writeable = False
+        if self._clues is not None:
+            return self._clues.copy()
 
+        values = [-1 if clue == "." else int(clue) - 1 for clue in self._str_clues]
+        self._clues: Cells = np.array(values, dtype=np.int8).reshape((9, 9))
+        self._clues.flags.writeable = False
         return self._clues.copy()
 
     @property
