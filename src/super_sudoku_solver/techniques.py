@@ -316,7 +316,7 @@ class HiddenSingles(_TechniqueFinder):
             npc.adjacent_row: "row",
             npc.adjacent_column: "column",
             npc.adjacent_box: "box",
-        } 
+        }
         for coord in npc.argwhere(self._candidates):
             num, row, column = coord
             for func, adjacency in types.items():

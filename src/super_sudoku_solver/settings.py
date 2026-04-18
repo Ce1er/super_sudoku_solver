@@ -94,7 +94,7 @@ class Colours:
     board_background: QColor = field(default_factory=lambda: QColor(0, 0, 0, 0))
     menu_background: QColor = field(default_factory=lambda: QColor(255, 255, 255, 255))
     button_background: QColor = field(
-        default_factory=lambda: QColor(255,255, 255, 255)
+        default_factory=lambda: QColor(255, 255, 255, 255)
     )
     hint_background: QColor = field(default_factory=lambda: QColor(0, 0, 0, 0))
     message_background: QColor = field(
@@ -235,6 +235,7 @@ def parse_number_input(data: dict[int, list[str]]) -> dict[int, list[QKeySequenc
         result[int(num)] = parse_sequences(seqs)
 
     return result
+
 
 def parse_hint_highlight(data: dict[int, list[int]]) -> dict[int, list[QColor]]:
     result = {}

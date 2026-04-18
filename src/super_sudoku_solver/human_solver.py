@@ -120,8 +120,6 @@ class MessageNums(MessagePart):
             self.text = tmp
 
 
-
-
 class Action:
     """
     Represents the action that should be taken as a result of a Technique method
@@ -176,6 +174,7 @@ class Technique:
     Represents a specific instance of a technique being used.
     Holds data about the technique and how to act on it.
     """
+
     def __init__(self, technique: str, message: list[MessagePart], action: Action):
         """
         Args:

@@ -18,4 +18,6 @@ type Cells = np.ndarray[tuple[Literal[9], Literal[9]], np.dtype[np.int8]]
 type CellCandidates = np.ndarray[tuple[Literal[9]], np.dtype[np.bool]]
 
 # Indexes: [value, row, column]
-type Candidates = np.ndarray[tuple[Literal[9], Literal[9], Literal[9]], np.dtype[np.bool]]
+type Candidates = np.ndarray[
+    tuple[Literal[9], Literal[9], Literal[9]], np.dtype[np.bool]
+]

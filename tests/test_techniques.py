@@ -67,9 +67,9 @@ class TestTechnique:
     def num_techniques(self, add_cells):
         return len(add_cells)
 
-    def test_input_data_lengths(self, add_cells, removed_candidates,  null):
-        assert (
-            len(add_cells) == len(removed_candidates) 
+    def test_input_data_lengths(self, add_cells, removed_candidates, null):
+        assert len(add_cells) == len(
+            removed_candidates
         ), "Test data has parts with different lengths"
 
     def test_add_cells(self, add_cells, action_fixt, null):

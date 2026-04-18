@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Self, Any,  assert_never, override
+from typing import Callable, Optional, Self, Any, assert_never, override
 
 from PySide6.QtWidgets import (
     QApplication,
