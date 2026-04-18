@@ -277,7 +277,7 @@ class Matrix:
             # When search() ends a generator function with all solutions will be given.
             yield from self._search(solution=solution + [x])
 
-            # If a solution wasn't found then uncover all nodes that we just covered.
+            # Uncover all nodes that we just covered.
             # Direction is arbritrary but must be the opposite of the one used when covering columns
             for j in column_node.left_sweep():
                 self._uncover(j.column)
