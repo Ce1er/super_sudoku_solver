@@ -184,9 +184,6 @@ class Technique:
         """
         self._technique: str = technique
         self._message = message
-        self._raw_message: str = reduce(
-            lambda prev, next: prev + next._text, message, ""
-        )
         self._action: Action = action
 
     @property
@@ -194,8 +191,10 @@ class Technique:
         return self._action
 
     @property
-    def message(self) -> str:
-        return self._raw_message
+    def raw_message(self) -> str:
+        return reduce(
+            lambda prev, next: prev + " " + next._text, self._message, ""
+        )
 
     @property
     def message_parts(self) -> list[MessagePart]:
