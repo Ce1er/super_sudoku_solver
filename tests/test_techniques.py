@@ -91,8 +91,8 @@ class TestTechnique:
                 ), "Invalid removed_candidates"
 
     def test_num_found(self, technique_fixt, num_techniques, null):
-        count = 0
+        found = set()
         for technique in technique_fixt:
-            count += 1
+            found.add(hash(technique.action))
 
-        assert count == num_techniques
+        assert len(found) == num_techniques

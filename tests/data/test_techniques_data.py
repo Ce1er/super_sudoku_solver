@@ -1,34 +1,9 @@
 # vim: foldmethod=marker
 from _pytest.mark import ParameterSet
 
-# from human_solver import Technique, HumanSolver
 import super_sudoku_solver.techniques as techniques
-from collections.abc import Generator, Callable
-from typing import Optional
 import pytest
-from super_sudoku_solver.sudoku import Board
 import numpy as np
-import super_sudoku_solver.human_solver as human_solver
-
-# board_1 = human_solver.HumanSolver(
-#     Board(
-#         ".18....7..7...19...6.85.12.6..7..3..7..51..8.8.4..97.5.47.98.5...26.5.3...6...24."
-#     )
-# )
-# board_1.auto_normal()
-#
-# board_2 = human_solver.HumanSolver(
-#     Board(
-#         ".....2...71.95.....86.34..997542.......573.9..3..91574...2476383...15927.273.9..."
-#     )
-# )
-# board_2.auto_normal()
-#
-# remove_candidates = np.full((9, 9, 9), False, dtype=np.bool)
-#
-# remove_candidates[5, 0, 3] = True
-#
-# board_2.remove_candidates(remove_candidates)
 
 # Board 1 {{{
 board_1 = {
@@ -3224,10 +3199,351 @@ skyscrapers_board_2 = {
     ],
 }
 
-# TODO:
-# Pointing pairs
-# Pointing triples
-# XWing
+pointing_pairs_board_1 = {
+    "name": "Pointing Pairs::Board 1",
+    "technique": techniques.PointingPairs,
+    "board": boards[1],
+    "cases": [
+        # Cases {{{
+        {
+            "add_cells": None,
+            # r8c9, r9c9 are pointing pair with number 9 so remove all 9 in column except those 2
+            "removed_candidates": [
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+            ],
+        }
+        # }}}
+    ],
+}
+
+pointing_triples_board_1 = {
+    "name": "Pointing Triples::Board 1",
+    "technique": techniques.PointingTriples,
+    "board": boards[1],
+    "cases": [
+        # Cases {{{
+        {
+            "add_cells": None,
+            # r7c9, r8c9, r9c9 number 1
+            "removed_candidates": [
+                [
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, True],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+            ],
+        }
+        # }}}
+    ],
+}
+
+
+xwing_board_1 = {
+    "name": "X-Wing::Board 1",
+    "technique": techniques.XWing,
+    "board": boards[1],
+    "cases": [
+        # Cases {{{
+        {
+            "add_cells": None,
+            # Remove 7 from r8, r9 except in c5, c9
+            "removed_candidates": [
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [True, True, True, True, False, True, True, True, False],
+                    [True, True, True, True, False, True, True, True, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+                [
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                    [False, False, False, False, False, False, False, False, False],
+                ],
+            ],
+        }
+        # }}}
+    ],
+}
 
 tests = [
     naked_singles_board_1,
@@ -3235,8 +3551,10 @@ tests = [
     naked_pairs_board_1,
     hidden_pairs_board_1,
     locked_candidates_board_1,
-    # pointing_tuples_board_1,
     skyscrapers_board_2,
+    pointing_pairs_board_1,
+    pointing_triples_board_1,
+    xwing_board_1,
 ]
 
 for test in tests:
