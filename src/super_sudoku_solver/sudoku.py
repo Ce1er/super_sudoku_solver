@@ -14,8 +14,6 @@ from super_sudoku_solver.human_solver import Action
 from super_sudoku_solver.save_manager import Puzzle
 import super_sudoku_solver.np_candidates as npc
 
-from super_sudoku_solver.utils import text_hints
-
 
 class InvalidBoard(Exception):
     pass
