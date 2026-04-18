@@ -224,8 +224,6 @@ class NakedSingles(_TechniqueFinder):
         Yields:
             Technique
         """
-        # TODO: attrs should probably be public from _TechniqueFinder as properties maybe
-
         # Naked singles have exactly one candidate in a cell
         naked_singles: Cells = (
             np.add.reduce(self._candidates, axis=0, dtype=np.int8) == 1
@@ -318,7 +316,7 @@ class HiddenSingles(_TechniqueFinder):
             npc.adjacent_row: "row",
             npc.adjacent_column: "column",
             npc.adjacent_box: "box",
-        }  # TODO: make this a class constant, and probably worth switching keys and values
+        } 
         for coord in npc.argwhere(self._candidates):
             num, row, column = coord
             for func, adjacency in types.items():

@@ -215,9 +215,6 @@ class Settings:
             raise ValueError("developer must be of type Developer")
 
 
-# TODO: set some default values
-
-
 def parse_sequences(seq_list: list[str]) -> list[QKeySequence]:
     return [QKeySequence(x) for x in seq_list]
 
@@ -311,5 +308,3 @@ if SETTINGS.is_file():
     settings = load_settings(SETTINGS)
 else:
     settings = load_settings()
-
-# TODO: Don't let anyone import anything besides this

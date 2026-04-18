@@ -267,12 +267,6 @@ class HintBox(QGraphicsItem, QObject):
 
         self.highlight_cells_calls: list[tuple[Coords, QColor]] = []
 
-        # TODO: move to settings
-        # colours: dict[int, QColor] = {
-        #     1: QColor("#dc8a78"),
-        #     2: QColor("#8839ef"),
-        #     3: QColor("#d20f39"),
-        # }
         colours = self.settings.colours.hint_highlight
 
         # Title / technique name
@@ -351,8 +345,6 @@ class HintBox(QGraphicsItem, QObject):
         """
         On LMB apply action
         """
-        # TODO: somehow this action needs to be passed back up to Board
-        # and it should handle it by applying the action
         scene = self.scene()
         if hasattr(scene, "apply_action"):
             scene.apply_action(self.technique.action)
@@ -381,7 +373,6 @@ class PuzzleSelector(QListWidget):
 
     def puzzle_selected(self, item):
         self.data.emit((self._puzzles[item.text()]))
-        # TODO: use signals in the other classes
 
 
 class MainScene(QGraphicsScene):
@@ -434,12 +425,6 @@ class MainScene(QGraphicsScene):
         self.message_box.setPos(-300, -100)
         self.message_box.hide()
         self.addItem(self.message_box)
-        # self.puzzle_message_box = ErrorBox(self.settings)
-        # self.message_proxy = QGraphicsProxyWidget()
-        # self.message_proxy.setWidget(self.puzzle_message_box)
-        # self.addItem(self.message_proxy)
-        # # TODO: chose this position based on sizes
-        # self.message_proxy.setPos(-300, 150)
 
     def paint_buttons(self):
         # def paint_button(widget):
@@ -541,14 +526,6 @@ class MainScene(QGraphicsScene):
 
         self.paint_message_box()
         self.paint_menu()
-        # TODO: hint should be tracked so it can be handled better
-        # hint should be printed in paint_board instead. I think?
-        # There should be a button somewhere that appears only when a hint is active
-        # This button will apply the hint
-        # The hint should be cleared when it is applied or when the user applies it themselves
-        # Also needs proper highlighting
-        # I can either keep a hintbox at all times and toggle its visibility based on if there is a hint
-        # Or I can delete it when there isn't and make a new one.
 
         self.buttons_painted = False
 
@@ -564,7 +541,6 @@ class MainScene(QGraphicsScene):
     def set_mode(self):
         # self.cell_mode = not self.cell_mode
         self.cell_mode = not self.cell_mode_widget.isChecked()
-        # TODO: display this somewhere
 
     def send_message(self, text: str, timeout: Optional[int] = None):
         """
@@ -638,7 +614,6 @@ class MainScene(QGraphicsScene):
             )
             cell.setPos(col * self.settings.sizes.cell, row * self.settings.sizes.cell)
             self.addItem(cell)
-            # TODO: Use QGraphicsItemGroup instead?
             self.cells[-1].append(cell)
 
         if not self.buttons_painted:
