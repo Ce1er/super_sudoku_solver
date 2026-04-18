@@ -290,8 +290,7 @@ class HintBox(QGraphicsItem, QObject):
         html += r"<br><b>Click to apply<\b>"
         html += r"<\span>"
 
-        # FIXME: hardcoded
-        self._width = 200
+        self._width = settings.sizes.cell * 4
         self._text = QTextDocument()
         self._text.setHtml(html)
         self._text.setTextWidth(self._width)
