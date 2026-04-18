@@ -1,13 +1,11 @@
-from __future__ import annotations
-from typing import Literal, Optional, SupportsInt
-
 import numpy as np
 import numpy.typing as npt
+import super_sudoku_solver.np_candidates as npc
 
 from abc import ABC
 from functools import reduce
 
-import super_sudoku_solver.np_candidates as npc
+from typing import Literal, Optional, SupportsInt
 
 
 class MessagePart(ABC):
@@ -192,9 +190,7 @@ class Technique:
 
     @property
     def raw_message(self) -> str:
-        return reduce(
-            lambda prev, next: prev + " " + next._text, self._message, ""
-        )
+        return reduce(lambda prev, next: prev + " " + next._text, self._message, "")
 
     @property
     def message_parts(self) -> list[MessagePart]:

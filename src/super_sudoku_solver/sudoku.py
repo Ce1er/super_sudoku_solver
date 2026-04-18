@@ -2,13 +2,13 @@ import numpy as np
 import numpy.typing as npt
 import super_sudoku_solver.np_candidates as npc
 
-from super_sudoku_solver.custom_types import Candidates, CellCandidates, Cells, Coord
-from typing import Literal, Generator
-
 from super_sudoku_solver.human_solver import Action
 from super_sudoku_solver.save_manager import Puzzle
 import super_sudoku_solver.dlx_solver as dlx
 import super_sudoku_solver.techniques as techniques
+
+from super_sudoku_solver.custom_types import Candidates, CellCandidates, Cells, Coord
+from typing import Literal, Generator
 
 
 class InvalidBoard(Exception):

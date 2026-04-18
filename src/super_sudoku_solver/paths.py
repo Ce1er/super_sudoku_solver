@@ -2,8 +2,8 @@
 Module defining file and directory locations based on operating system's conventions
 """
 
-from pathlib import Path
 from appdirs import user_data_dir, user_config_dir, user_log_dir, user_cache_dir
+from pathlib import Path
 import shutil
 
 APP_NAME = "super-sudoku-solver"

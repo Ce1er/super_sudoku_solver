@@ -1,10 +1,11 @@
-from typing import Optional
 from PySide6.QtGui import QColor, QKeySequence
-
+from dataclasses import dataclass, field
 from pathlib import Path
 import tomllib
+
 from super_sudoku_solver.paths import SETTINGS
-from dataclasses import dataclass, field
+
+from typing import Optional
 
 
 # These should be immutable because hot config reloading is not supported

@@ -1,5 +1,3 @@
-from typing import Callable, Optional, Self, Any, assert_never, override
-
 from PySide6.QtWidgets import (
     QApplication,
     QGraphicsProxyWidget,
@@ -23,27 +21,20 @@ from PySide6.QtGui import (
 )
 from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer, QObject
 
-import sys
-import logging
-
-from functools import wraps, partial
-from itertools import product, count, repeat
-from random import choice
-from html import escape
-
-import super_sudoku_solver.np_candidates as npc
 import numpy as np
 import numpy.typing as npt
+import super_sudoku_solver.np_candidates as npc
 
-from super_sudoku_solver.sudoku import Board
-from super_sudoku_solver.sudoku import InvalidBoard
+from functools import wraps, partial
+from html import escape
+from itertools import product
+from random import choice
+import logging
+import sys
+
+from super_sudoku_solver.sudoku import Board, InvalidBoard
 from super_sudoku_solver.save_manager import Puzzles
-
-from super_sudoku_solver.techniques import TECHNIQUES
-import super_sudoku_solver.human_solver as human_solver
-
 from super_sudoku_solver.settings import settings, Settings
-
 from super_sudoku_solver.human_solver import (
     MessageCoords,
     MessageText,
@@ -51,6 +42,8 @@ from super_sudoku_solver.human_solver import (
     Technique,
     Action,
 )
+
+from typing import Callable, Optional, Self, Any, assert_never, override
 from super_sudoku_solver.custom_types import Candidates, CellCandidates, Cells, Coords
 from super_sudoku_solver.custom_types import Cell as CellT
 
@@ -275,7 +268,7 @@ class HintBox(QGraphicsItem, QObject):
                 html += f'<span style="background-color: {colours[message_part.highlight].name()}"><b>{escape(message_part.text)}</b></span>'
 
                 # Save data about cells which should be highlighted
-                if isinstance(message_part, human_solver.MessageCoords):
+                if isinstance(message_part, MessageCoords):
                     self.highlight_cells_calls.append(
                         (message_part.coords, colours[message_part.highlight])
                     )
@@ -544,6 +537,7 @@ class MainScene(QGraphicsScene):
             text: text to show
             timeout: time to display (in ms)
         """
+        logging.info(text)
         if timeout is None:
             timeout = self.message_time
         self.message_box.setHtml(

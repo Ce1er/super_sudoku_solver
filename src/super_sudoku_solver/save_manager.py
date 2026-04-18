@@ -1,6 +1,16 @@
+from functools import total_ordering
+from jsonschema import ValidationError, validate
 from pathlib import Path
-from typing import Any, Literal, NoReturn, Optional
-from collections.abc import Callable
+from uuid import uuid7, UUID
+import json
+import logging
+import numpy as np
+import os
+import re
+import shutil
+import socket
+import sys
+
 from super_sudoku_solver.paths import (
     PUZZLE_DATA_DIR,
     PUZZLE_JSON,
@@ -11,20 +21,12 @@ from super_sudoku_solver.paths import (
     SETTINGS,
     CACHE_DIR,
 )
-import json
-from jsonschema import ValidationError, validate
-import numpy as np
-from uuid import uuid7, UUID
-import re
-from super_sudoku_solver.custom_types import Candidates, Cells
-from functools import total_ordering
-import socket
 from super_sudoku_solver.settings import settings
-import sys
-import os
+
+from collections.abc import Callable
 from io import BufferedWriter
-import logging
-import shutil
+from super_sudoku_solver.custom_types import Candidates, Cells
+from typing import Any, Literal, NoReturn, Optional
 
 DIFFICULTIES = ["easy", "medium", "hard"]
 DIFFICULTIES_T = Literal["easy", "medium", "hard"]

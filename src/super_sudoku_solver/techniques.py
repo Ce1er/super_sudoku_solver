@@ -1,12 +1,11 @@
 import numpy as np
 import numpy.typing as npt
+import super_sudoku_solver.np_candidates as npc
 
 from functools import wraps
-import itertools
 from itertools import combinations
 import abc
-from typing import Literal, SupportsInt, Self, Callable, assert_never, override
-from collections.abc import Generator
+import itertools
 
 from super_sudoku_solver.custom_types import (
     Adjacency,
@@ -15,7 +14,6 @@ from super_sudoku_solver.custom_types import (
     CellCandidates,
     Candidates,
 )
-import super_sudoku_solver.np_candidates as npc
 from super_sudoku_solver.human_solver import (
     MessagePart,
     Technique,
@@ -24,6 +22,9 @@ from super_sudoku_solver.human_solver import (
     MessageNums,
     MessageText,
 )
+
+from collections.abc import Generator
+from typing import Literal, SupportsInt, Self, Callable, assert_never, override
 
 
 class _TechniqueInstance(abc.ABC):
