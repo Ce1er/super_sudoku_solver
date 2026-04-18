@@ -1,3 +1,4 @@
+"""Solve exact cover problems using Knuth's algorithm DLX"""
 from typing import Generator, Optional
 
 

@@ -1,3 +1,4 @@
+"""Classes that are used to represent an instance of a human technique."""
 import numpy as np
 import numpy.typing as npt
 import super_sudoku_solver.np_candidates as npc

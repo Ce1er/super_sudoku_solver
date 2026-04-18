@@ -1,10 +1,9 @@
+"""Common type aliases"""
 import numpy as np
 
 from typing import Literal
 
 type Adjacency = Literal["row", "column", "box"]
-
-# Common array types with shape and dtype.
 
 # Values: [row, column]
 type Coord = np.ndarray[tuple[Literal[2]], np.dtype[np.int8]]
