@@ -204,12 +204,11 @@ class Puzzle:
 
     @property
     def clues(self) -> Cells:
-        if self._clues is not None:
-            return self._clues.copy()
+        if self._clues is None:
+            values = [-1 if clue == "." else int(clue) - 1 for clue in self._str_clues]
+            self._clues: Cells = np.array(values, dtype=np.int8).reshape((9, 9))
+            self._clues.flags.writeable = False
 
-        values = [-1 if clue == "." else int(clue) - 1 for clue in self._str_clues]
-        self._clues: Cells = np.array(values, dtype=np.int8).reshape((9, 9))
-        self._clues.flags.writeable = False
         return self._clues.copy()
 
     @property
