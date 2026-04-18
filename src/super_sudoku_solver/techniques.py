@@ -32,11 +32,9 @@ class _TechniqueInstance(abc.ABC):
     about how the technique can be used on board.
     """
 
-    NAME: str
-
     @property
-    def name(self) -> str:
-        return self.NAME
+    @abc.abstractmethod
+    def name(self) -> str: ...
 
     @abc.abstractmethod
     def _generate_action(self) -> Action: ...
@@ -46,7 +44,7 @@ class _TechniqueInstance(abc.ABC):
 
     @property
     def technique(self) -> Technique:
-        return Technique(self.NAME, self._generate_message(), self._generate_action())
+        return Technique(self.name, self._generate_message(), self._generate_action())
 
 
 class _TechniqueFinder(abc.ABC):
@@ -180,8 +178,6 @@ class _TechniqueFinder(abc.ABC):
 
 
 class _NakedSinglesInstance(_TechniqueInstance):
-    NAME = "Naked Single"
-
     def __init__(self, coord: Coord, num: SupportsInt):
         """
         Args:
@@ -191,11 +187,18 @@ class _NakedSinglesInstance(_TechniqueInstance):
         self._coord = coord
         self._num = num
 
+    @property
+    @override
+    def name(self):
+        return "Naked Single"
+
+    @override
     def _generate_action(self):
         new_cells = np.full((9, 9), -1, dtype=np.int8)
         new_cells[*self._coord] = self._num
         return Action(new_cells)
 
+    @override
     def _generate_message(self):
         return [
             MessageCoords(self._coord, highlight=1),
@@ -235,7 +238,6 @@ class NakedSingles(_TechniqueFinder):
 
 
 class _HiddenSinglesInstance(_TechniqueInstance):
-    NAME = "Hidden Single"
 
     def __init__(self, coord: Cell, adjacency: Adjacency):
         """
@@ -245,6 +247,11 @@ class _HiddenSinglesInstance(_TechniqueInstance):
         """
         self._coord = coord
         self._adjacency = adjacency
+
+    @property
+    @override
+    def name(self):
+        return "Hidden Single"
 
     @override
     def _generate_message(self):
@@ -329,8 +336,6 @@ class HiddenSingles(_TechniqueFinder):
 
 
 class _NakedPairsInstance(_TechniqueInstance):
-    NAME = "Naked Pair"
-
     def _get_remove_from(self):
         """
         Returns:
@@ -350,6 +355,11 @@ class _NakedPairsInstance(_TechniqueInstance):
         self._types = types
         self._candidates = candidates
         self._remove_from = self._get_remove_from()
+
+    @property
+    @override
+    def name(self):
+        return "Naked Pair"
 
     @override
     def _generate_message(self):
@@ -440,12 +450,15 @@ class NakedPairs(_TechniqueFinder):
 
 
 class _HiddenPairsInstance(_TechniqueInstance):
-    NAME = "Hidden Pair"
-
     def __init__(self, cells, num_pair, adjacent_by):
         self._cells = cells
         self._num_pair = num_pair
         self._adjacent_by = adjacent_by
+
+    @property
+    @override
+    def name(self):
+        return "Hidden Pair"
 
     @override
     def _generate_message(self):
@@ -551,8 +564,6 @@ class HiddenPairs(_TechniqueFinder):
 
 
 class _LockedCandidatesInstance(_TechniqueInstance):
-    NAME = "Locked Candidates"
-
     def __init__(
         self, coords, num, adjacency, adjacency_occurences, adjacency_box_occurences
     ):
@@ -561,6 +572,11 @@ class _LockedCandidatesInstance(_TechniqueInstance):
         self._adjacency = adjacency
         self._adjacency_occurences = adjacency_occurences
         self._adjacency_box_occurences = adjacency_box_occurences
+
+    @property
+    @override
+    def name(self):
+        return "Locked Candidates"
 
     @override
     def _generate_message(self):
@@ -647,6 +663,7 @@ class LockedCandidates(_TechniqueFinder):
 
 class _PointingTuples(_TechniqueFinder):
     """Helper class. Not usable directly."""
+
     def __init__(
         self,
         candidates: npt.NDArray[np.bool],
@@ -705,8 +722,10 @@ class _PointingTuplesInstance(_TechniqueInstance):
             MessageText("are the only cells that can be"),
             MessageNums(self.num),
             MessageText(
-                f"in their box and they share a {self.direction} so we can remove other"),MessageNums(self.num), MessageText(f"candidates in their {self.direction}."
+                f"in their box and they share a {self.direction} so we can remove other"
             ),
+            MessageNums(self.num),
+            MessageText(f"candidates in their {self.direction}."),
         ]
 
     @override
@@ -722,17 +741,23 @@ class _PointingTuplesInstance(_TechniqueInstance):
 
 
 class _PointingPairsInstance(_PointingTuplesInstance):
-    NAME = "Pointing Pair"
-
     def __init__(self, coords, num, direction) -> None:
         super().__init__(coords, num, direction)
+
+    @property
+    @override
+    def name(self):
+        return "Pointing Pair"
 
 
 class _PointingTriplesInstance(_PointingTuplesInstance):
-    NAME = "Pointing Triple"
-
     def __init__(self, coords, num, direction) -> None:
         super().__init__(coords, num, direction)
+
+    @property
+    @override
+    def name(self):
+        return "Pointing Triple"
 
 
 class PointingPairs(_PointingTuples, _TechniqueFinder):
@@ -774,8 +799,6 @@ class PointingTriples(_PointingTuples, _TechniqueFinder):
 
 
 class _SkyscraperInstance(_TechniqueInstance):
-    NAME = "Skyscraper"
-
     def __init__(
         self,
         non_shared_cell1,
@@ -804,6 +827,11 @@ class _SkyscraperInstance(_TechniqueInstance):
         self._adjacency = adjacency
         self._other_adjacency = other_adjacency
         self._candidates = candidates
+
+    @property
+    @override
+    def name(self):
+        return "Skyscraper"
 
     @override
     def _generate_message(self):
@@ -984,14 +1012,17 @@ class Skyscrapers(_TechniqueFinder):
 
 
 class _XWingInstance(_TechniqueInstance):
-    NAME = "X-Wing"
-
     def __init__(self, adjacency, pairing, num, arr) -> None:
         self.adjacency = adjacency
         self.pairing = np.array(pairing).flatten()
         self.num = num
         self.arr = arr
         self.indices = np.array(npc.argwhere(self.arr).flatten(), dtype=np.int8)
+
+    @property
+    @override
+    def name(self):
+        return "X-Wing"
 
     @override
     def _generate_action(self):
@@ -1119,11 +1150,11 @@ class XWing(_TechniqueFinder):
 
 
 TECHNIQUES = [
-    NakedSingles, 
-    HiddenSingles, 
-    NakedPairs, 
-    HiddenPairs, 
-    LockedCandidates, 
+    NakedSingles,
+    HiddenSingles,
+    NakedPairs,
+    HiddenPairs,
+    LockedCandidates,
     PointingPairs,
     PointingTriples,
     XWing,
