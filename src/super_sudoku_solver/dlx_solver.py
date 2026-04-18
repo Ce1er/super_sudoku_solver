@@ -12,6 +12,9 @@ class Node:
         column: reference to the HeaderNode for the column the node is in.
            Should be set soon after instantiation unless node is root.
     """
+    # PERF: this will improve attribute access speed and memory efficiency.
+    # It MUST list every attribute an instance of this class will ever have.
+    __slots__ = ("left", "right", "up", "down", "column")
 
     column: HeaderNode
 
@@ -82,6 +85,7 @@ class HeaderNode(Node):
         label: The name of the node.
         size: The number of nodes in the column
     """
+    __slots__ = ("label", "size")
 
     label: int
     size: int
@@ -263,7 +267,7 @@ class Matrix:
 
         self._cover(smallest.column)
 
-        # Iterate over nodes in column
+        # Iterate over rows in column
         for column_node in smallest.down_sweep():
             # This will be added to solution later
             x = column_node
