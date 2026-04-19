@@ -11,7 +11,7 @@ dependencies = [
   "numpy==2.4.4",
   "jsonschema==4.26.0",
   "PySide6==6.10.2",
-  "appdirs==1.4.4",
+  "platformdirs==4.9.6",
 ]
 
 [project.optional-dependencies]

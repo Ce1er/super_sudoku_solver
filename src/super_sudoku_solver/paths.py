@@ -2,7 +2,7 @@
 Module defining file and directory locations based on operating system's conventions
 """
 
-from appdirs import user_data_dir, user_config_dir, user_log_dir, user_cache_dir
+from platformdirs import user_data_path, user_config_path, user_log_path, user_cache_path
 from pathlib import Path
 import shutil
 
@@ -12,23 +12,24 @@ _SETTINGS_NAME = "settings.toml"
 _PUZZLES_NAME = "puzzles.json"
 
 # For any temporary files that need to be written
-CACHE_DIR = Path(user_cache_dir(APP_NAME))
+CACHE_DIR = user_cache_path(APP_NAME)
 
 SRC_DIR = Path(__file__).resolve().parent
 DEFAULT_PUZZLES = SRC_DIR / _PUZZLES_NAME
 DEFAULT_CONFIG = SRC_DIR / _SETTINGS_NAME
 
-PUZZLE_DIR = Path(user_data_dir(APP_NAME))
+PUZZLE_DIR = user_data_path(APP_NAME,  ensure_exists=True)
 PUZZLE_JSON = PUZZLE_DIR / _PUZZLES_NAME
 PUZZLE_DATA_DIR = PUZZLE_DIR / ".data"
 GUESSES_SUFFIX = "_guesses.npy"
 CANDIDATES_SUFFIX = "_candidates.npy"
 
 
-CONFIG_DIR = Path(user_config_dir(APP_NAME))
+CONFIG_DIR = user_config_path(APP_NAME, ensure_exists=True)
 SETTINGS = CONFIG_DIR / _SETTINGS_NAME
 
-LOG_DIR = Path(user_log_dir(APP_NAME))
+# FIXME: use this or remove it
+LOG_DIR = user_log_path(APP_NAME)
 
 # TODO: this will mess with permissions
 for dir in (PUZZLE_DATA_DIR, CACHE_DIR, CONFIG_DIR):  # , LOG_DIR):
