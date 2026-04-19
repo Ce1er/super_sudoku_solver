@@ -19,7 +19,7 @@ from super_sudoku_solver.paths import (
     DEFAULT_PUZZLES,
     DEFAULT_CONFIG,
     SETTINGS,
-    CACHE_DIR,
+    RUNTIME_DIR,
 )
 from super_sudoku_solver.settings import settings
 
@@ -485,7 +485,7 @@ def main(args):
     if args.restore_default_puzzles:
         # Puzzle data dir is not used but has to be set
         # It shouldn't be written to but if it is it will be cleared on next app launch anyway
-        default_puzzles = Puzzles(DEFAULT_PUZZLES, CACHE_DIR)
+        default_puzzles = Puzzles(DEFAULT_PUZZLES, RUNTIME_DIR)
 
         # Add all the default puzzles unless they are already saved
         for uuid, puzzle in default_puzzles.puzzles.items():

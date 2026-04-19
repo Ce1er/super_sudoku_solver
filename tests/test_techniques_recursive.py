@@ -6,7 +6,7 @@ import sys
 
 from super_sudoku_solver.save_manager import Puzzle
 from super_sudoku_solver.sudoku import Board
-from super_sudoku_solver.paths import CACHE_DIR
+from super_sudoku_solver.paths import RUNTIME_DIR
 
 
 # Fixture represents all of these boards
@@ -23,7 +23,7 @@ def board(request):
             str(uuid7()),
             request.param,
             "easy",
-            CACHE_DIR,
+            RUNTIME_DIR,
         )
     )
 
