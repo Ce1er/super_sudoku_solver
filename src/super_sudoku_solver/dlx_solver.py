@@ -285,7 +285,7 @@ class Matrix:
             for j in column_node.left_sweep():
                 self._uncover(j.column)
 
-        # Terminal non-solution, backtrack
+        # Backtrack
         self._uncover(smallest.column)
 
     def _get_row_labels(self, node: Node) -> list[int]:
