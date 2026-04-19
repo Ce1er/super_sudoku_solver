@@ -276,15 +276,16 @@ class Matrix:
             for node in column_node.right_sweep():
                 self._cover(node.column)
 
-            # Recursive call to search(), extending the partial solution with x.
-            # yield from passes up all valid solutions found before.
-            # When search() ends a generator function with all solutions will be given.
+            # Recursive call to search, extending the partial solution with x.
+            # `yield from` will yield all solutions this recursive call yields.
             yield from self._search(solution=solution + [x])
 
             # Uncover all nodes that we just covered.
             # Direction is arbritrary but must be the opposite of the one used when covering columns
             for j in column_node.left_sweep():
                 self._uncover(j.column)
+
+        # Terminal non-solution, backtrack
         self._uncover(smallest.column)
 
     def _get_row_labels(self, node: Node) -> list[int]:
