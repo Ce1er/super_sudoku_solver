@@ -18,9 +18,9 @@ SRC_DIR = Path(__file__).resolve().parent
 DEFAULT_PUZZLES = SRC_DIR / _PUZZLES_NAME
 DEFAULT_CONFIG = SRC_DIR / _SETTINGS_NAME
 
-PUZZLE_DIR = user_data_path(APP_NAME,  ensure_exists=True)
-PUZZLE_JSON = PUZZLE_DIR / _PUZZLES_NAME
-PUZZLE_DATA_DIR = PUZZLE_DIR / ".data"
+DATA_DIR = user_data_path(APP_NAME,  ensure_exists=True)
+PUZZLE_JSON = DATA_DIR / _PUZZLES_NAME
+PUZZLE_DATA_DIR = DATA_DIR / ".data"
 GUESSES_SUFFIX = "_guesses.npy"
 CANDIDATES_SUFFIX = "_candidates.npy"
 
