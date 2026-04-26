@@ -250,8 +250,6 @@ class Puzzle:
         return f"Puzzle(uuid: {self._uuid}, clues: {self._str_clues}, difficulty: {self._difficulty})"
 
     # To allow sorting
-    # Maybe a sorting function is better than operator overloading?
-    # Consider https://docs.python.org/3/howto/sorting.html#sortinghowto
     def __lt__(self, other) -> bool:
         if not isinstance(other, Puzzle):
             raise NotImplementedError
