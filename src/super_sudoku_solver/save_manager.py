@@ -89,7 +89,7 @@ def atomic_write(
     # Avoid writing to file directly to avoid corruption
     # https://lwn.net/Articles/457667/
 
-    # dst.parent is used instead of CACHE_DIR here because CACHE_DIR may be on a different filesystem to dst.
+    # dst.parent is used instead of RUNTIME_DIR here because RUNTIME_DIR may be on a different filesystem to dst.
     # Which could cause os.replace to fail https://docs.python.org/3/library/os.html#os.replace
 
     # Deterministic name is used so that if program crashes and temp file is left on disk it will be overwritten

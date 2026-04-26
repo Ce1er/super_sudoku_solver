@@ -35,7 +35,7 @@ LOG_DIR = user_log_path(APP_NAME)
 for dir in (PUZZLE_DATA_DIR, RUNTIME_DIR, CONFIG_DIR):  # , LOG_DIR):
     dir.mkdir(parents=True, exist_ok=True)
 
-# rm -rf ${CACHE_DIR}/*
+# rm -rf ${RUNTIME_DIR}/*
 for item in RUNTIME_DIR.iterdir():
     if item.is_dir():
         shutil.rmtree(item)
