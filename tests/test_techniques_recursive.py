@@ -3,6 +3,7 @@ from uuid import uuid7
 import copy
 from collections import defaultdict
 import sys
+from pprint import pprint
 
 from super_sudoku_solver.save_manager import Puzzle
 from super_sudoku_solver.sudoku import Board
@@ -42,13 +43,16 @@ def test_apply_all_techniques(board):
         max_depth=sys.getrecursionlimit(),
         depth=0,
         seen=None,
-        max_technique_applications=100,
+        max_technique_applications=250,
     ):
         """
         Args:
             max_technique_applications: maximum number of times to test a specific technique.
                 There is no guarantee any technique ever gets ran, it will depend on the board. This is just a maximum.
                 Higher will test techniques in more situations but it will also take longer to run.
+        Raises:
+            RecursionError: if recursion goes beyond maximum depth. This can be prevented
+                by lowing max_depth argument.
         """
         if depth > max_depth:
             return
@@ -95,4 +99,4 @@ def test_apply_all_techniques(board):
 
     helper(board)
 
-    print(technique_applications)
+    pprint(dict(technique_applications))
