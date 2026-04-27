@@ -1,4 +1,5 @@
 """Numpy functions mostly for interacting with (9,9) np.int8 arrays."""
+
 import numpy as np
 import numpy.typing as npt
 

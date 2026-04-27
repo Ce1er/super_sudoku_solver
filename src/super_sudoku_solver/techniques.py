@@ -1,4 +1,5 @@
 """Module to find human techniques."""
+
 import numpy as np
 import numpy.typing as npt
 import super_sudoku_solver.np_candidates as npc

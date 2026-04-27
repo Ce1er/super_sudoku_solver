@@ -1,4 +1,5 @@
 """Solve exact cover problems using Knuth's algorithm DLX"""
+
 from typing import Generator, Optional
 
 
@@ -12,6 +13,7 @@ class Node:
         column: reference to the HeaderNode for the column the node is in.
            Should be set soon after instantiation unless node is root.
     """
+
     # PERF: this will improve attribute access speed and memory efficiency.
     # It MUST list every attribute an instance of this class will ever have.
     __slots__ = ("left", "right", "up", "down", "column")
@@ -85,6 +87,7 @@ class HeaderNode(Node):
         label: The name of the node.
         size: The number of nodes in the column
     """
+
     __slots__ = ("label", "size")
 
     label: int

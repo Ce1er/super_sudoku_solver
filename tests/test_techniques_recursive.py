@@ -64,7 +64,7 @@ def test_apply_all_techniques(board):
 
         if i in seen:
             # Don't try to find techniques on a board state that's already been searched
-            return 
+            return
         seen.add(i)
 
         for technique in board.hint():
@@ -79,14 +79,14 @@ def test_apply_all_techniques(board):
 
             # Create copy to avoid mutating board
             new = Puzzle(
-            str(uuid7()),
-            board._puzzle.str_clues,
-            "easy",
-            RUNTIME_DIR,
-        )
+                str(uuid7()),
+                board._puzzle.str_clues,
+                "easy",
+                RUNTIME_DIR,
+            )
             new.set_candidates(board.candidates)
             new.set_guesses(board.guesses)
-            
+
             new_board = Board(new)
 
             new_board.apply_action(technique.action)

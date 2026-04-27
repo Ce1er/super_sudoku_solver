@@ -1,4 +1,5 @@
 """Common type aliases"""
+
 import numpy as np
 
 from typing import Literal

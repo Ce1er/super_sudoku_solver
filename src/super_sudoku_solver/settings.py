@@ -1,4 +1,5 @@
 """Module to load user settings and provide defaults."""
+
 from PySide6.QtGui import QColor, QKeySequence
 from dataclasses import dataclass, field
 from pathlib import Path
