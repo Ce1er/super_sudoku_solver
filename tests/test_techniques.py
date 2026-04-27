@@ -1,4 +1,3 @@
-# vim: set foldmethod=marker:
 from collections.abc import Generator, Callable
 import pytest
 from super_sudoku_solver.human_solver import Technique
