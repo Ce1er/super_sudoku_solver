@@ -2,7 +2,7 @@
 Module defining file and directory locations based on operating system's conventions
 """
 
-from platformdirs import user_data_path, user_config_path, user_log_path, user_runtime_path
+from platformdirs import user_data_path, user_config_path, user_runtime_path
 from pathlib import Path
 import shutil
 
@@ -28,21 +28,12 @@ CANDIDATES_SUFFIX = "_candidates.npy"
 CONFIG_DIR = user_config_path(APP_NAME, ensure_exists=True)
 SETTINGS = CONFIG_DIR / _SETTINGS_NAME
 
-# FIXME: use this or remove it
-LOG_DIR = user_log_path(APP_NAME)
-
-# TODO: this will mess with permissions
-for dir in (PUZZLE_DATA_DIR, RUNTIME_DIR, CONFIG_DIR):  # , LOG_DIR):
+for dir in (PUZZLE_DATA_DIR, RUNTIME_DIR, CONFIG_DIR):
     dir.mkdir(parents=True, exist_ok=True)
 
-# rm -rf ${CACHE_DIR}/*
+# rm -rf ${RUNTIME_DIR}/*
 for item in RUNTIME_DIR.iterdir():
     if item.is_dir():
         shutil.rmtree(item)
     else:
         item.unlink()
-
-
-# # A missing settings file isn't an issue but it would be easier for a user to edit from a skeleton
-# if not SETTINGS.is_file() and DEFAULT_SETTINGS.is_file():
-#     shutil.copyfile(_SETTINGS_FILE, SETTINGS)
