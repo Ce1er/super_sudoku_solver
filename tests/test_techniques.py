@@ -1,5 +1,4 @@
 # vim: set foldmethod=marker:
-# TODO: think about how is actually best to hide the long techniques arrays, maybe importing from a different file.
 from collections.abc import Generator, Callable
 import pytest
 from super_sudoku_solver.human_solver import Technique
