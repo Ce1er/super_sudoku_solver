@@ -33,6 +33,8 @@ def test_apply_all_techniques(board):
     Apply all available techniques then apply all available techniques on each new board recursively.
     If any technique applied creates an invalid board this will fail.
     """
+
+    # Not part of the test but useful to see how many times each technique is applied
     technique_applications = defaultdict(int)
 
     def helper(
@@ -54,17 +56,19 @@ def test_apply_all_techniques(board):
         board.auto_normal()
         if seen is None:
             seen = set()
+
         key = board.candidates.flatten().tolist()
         i = 0
         for index, value in enumerate(key):
             i |= int(value) << index
 
         if i in seen:
-            return board
+            # Don't try to find techniques on a board state that's already been searched
+            return 
         seen.add(i)
 
         for technique in board.hint():
-            print(technique.technique)
+            # print(technique.technique)
             nonlocal technique_applications
             if (
                 technique_applications[technique.technique]
@@ -73,10 +77,22 @@ def test_apply_all_techniques(board):
                 continue
             technique_applications[technique.technique] += 1
 
-            new = copy.deepcopy(board)
-            new.apply_action(technique.action)
-            new.auto_normal()
-            helper(new, max_depth, depth + 1, seen)
+            # Create copy to avoid mutating board
+            new = Puzzle(
+            str(uuid7()),
+            board._puzzle.str_clues,
+            "easy",
+            RUNTIME_DIR,
+        )
+            new.set_candidates(board.candidates)
+            new.set_guesses(board.guesses)
+            
+            new_board = Board(new)
+
+            new_board.apply_action(technique.action)
+            new_board.auto_normal()
+            helper(new_board, max_depth, depth + 1, seen)
 
     helper(board)
+
     print(technique_applications)

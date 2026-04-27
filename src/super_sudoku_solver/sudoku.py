@@ -55,9 +55,6 @@ class Board:
         Args:
             candidates: candidates to remove (True means remove)
         """
-        # HACK:
-        self._puzzle.set_candidates(self._puzzle.candidates)
-
         # Remove candidates
         new = (~candidates) & self._puzzle.candidates
 
