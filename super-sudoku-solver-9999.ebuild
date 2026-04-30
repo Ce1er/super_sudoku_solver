@@ -4,6 +4,9 @@ EAPI=8
 # python3.14 is the only compatible version
 PYTHON_COMPAT=( python3_14 )
 
+# No plugins are needed so don't load them
+EPYTEST_PLUGINS=()
+
 # Tell distutils project is PEP517 complient
 DISTUTILS_USE_PEP517=setuptools
 inherit distutils-r1
@@ -18,12 +21,6 @@ HOMEPAGE="https://github.com/Ce1er/super_sudoku_solver"
 # instead of a specific release.
 inherit git-r3
 EGIT_REPO_URI="https://github.com/Ce1er/super_sudoku_solver.git"
-
-# Unstable on amd64 (AKA x86_64) (all unofficial gentoo packages are typically marked unstable)
-# At the time of writing this Gentoo officially supports 10 other CPU architectures
-# https://wiki.gentoo.org/wiki/Handbook:Main_Page#Architectures
-# Since I haven't tested my program on any other architectures it is bad practice to list them as supported.
-KEYWORDS="~amd64"
 
 LICENSE="BSD-4"
 
@@ -40,7 +37,6 @@ IUSE="test"
 # for each of those simultaneously. There isn't a good reason to do this besides testing
 # but since it is possible it shouldn't be restricted.
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
-
 
 # Runtime dependencies
 RDEPEND="
@@ -70,17 +66,16 @@ BDEPEND="
 # If "test" FEATURE is enabled run tests and only install program if they all pass
 distutils_enable_tests pytest
 
-
 src_install() {
-  # This would usually be ran by default but since I'm overwriting src_install it must be called directly
-  # It will install super_sudoku_solver as a module in /usr/lib/python3.14/site-packages/super_sudoku_solver/
-  # and byte compile it to improve performance.
-  # It will also install /usr/bin/super-sudoku-solver which is defined as a gui-script in pyproject.toml.
-  # As this is in $PATH and is executable it can be ran directly with the command `super-sudoku-solver`.
+	# This would usually be ran by default but since I'm overwriting src_install it must be called directly
+	# It will install super_sudoku_solver as a module in /usr/lib/python3.14/site-packages/super_sudoku_solver/
+	# and byte compile it to improve performance.
+	# It will also install /usr/bin/super-sudoku-solver which is defined as a gui-script in pyproject.toml.
+	# As this is in $PATH and is executable it can be ran directly with the command `super-sudoku-solver`.
 	distutils-r1_src_install
 
-  # Install desktop file to /usr/share/applications/
-  # S is the path to the directory Portage unpacks sources
+	# Install desktop file to /usr/share/applications/
+	# S is the path to the directory Portage unpacks sources
 	domenu "${S}/super-sudoku-solver.desktop"
 }
 
