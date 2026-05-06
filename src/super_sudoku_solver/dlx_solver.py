@@ -105,8 +105,6 @@ class Matrix:
     Attributes:
         root: Root node. Not a real node in the matrix but allows header nodes to be linked from it
             and regular nodes linked to those header nodes.
-
-        column_header: Maps labels to their root nodes for faster access.
     """
 
     def __init__(self, labels: list[int], rows: list[list[int]]) -> None:
@@ -117,7 +115,9 @@ class Matrix:
                 Each int in that list refers to a column.
         """
         self.root: Node = Node()
-        self.column_header: dict[int, HeaderNode] = {}
+
+        # Maps labels to their root nodes for faster and easier access
+        column_header: dict[int, HeaderNode] = {}
 
         # Root will be the first node in the structure
         prev = self.root
@@ -128,7 +128,7 @@ class Matrix:
             # Create header for column
             column = HeaderNode(label)
 
-            self.column_header[label] = column
+            column_header[label] = column
 
             # Will start by linking first column to the root node
             # In subsequent iterations it will link to previous column
@@ -156,7 +156,7 @@ class Matrix:
             for row_label in row:
                 node = Node()
 
-                node.column = self.column_header[row_label]
+                node.column = column_header[row_label]
 
                 # A new node is being added to the column
                 # So the size is increased by 1
