@@ -45,8 +45,8 @@ RDEPEND="
 	dev-python/iniconfig[${PYTHON_USEDEP}]
 	>=dev-python/numpy-2.4.4[${PYTHON_USEDEP}]
 	dev-python/jsonschema[${PYTHON_USEDEP}]
-	>=dev-python/pyside-6[${PYTHON_USEDEP}]
-	dev-python/appdirs[${PYTHON_USEDEP}]
+	>=dev-python/pyside-6[${PYTHON_USEDEP},core,widgets,gui]
+	dev-python/platformdirs[${PYTHON_USEDEP}]
 	')
 "
 
@@ -84,8 +84,8 @@ src_install() {
 # These commands are user specific so are not Portage's responsibility to run
 pkg_postinst() {
 	elog "Default puzzles can be generated with the following command:"
-	elog "$ super-sudoku-solver --restore-default-puzzles"
+	elog "$ super-sudoku-solver save_manager --restore-default-puzzles"
 	elog " "
 	elog "A skeleton configuration file can be written using the following command"
-	elog "$ super-sudoku-solver --restore-default-config"
+	elog "$ super-sudoku-solver save_manager --restore-default-config"
 }
