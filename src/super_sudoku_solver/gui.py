@@ -19,16 +19,27 @@ from PySide6.QtGui import (
     QTextDocument,
     QPainter,
 )
-from PySide6.QtCore import QKeyCombination, QRectF, Qt, Signal, QTimer, QObject
+from PySide6.QtCore import (
+    QAbstractAnimation,
+    QEasingCurve,
+    QKeyCombination,
+    QRectF,
+    QVariantAnimation,
+    Qt,
+    Signal,
+    QTimer,
+    QObject,
+)
 
 import numpy as np
 import numpy.typing as npt
 import super_sudoku_solver.np_candidates as npc
 
 from functools import wraps, partial
+from time import sleep, time
 from html import escape
 from itertools import product
-from random import choice
+from random import Random, choice, random, shuffle
 import logging
 import sys
 
@@ -77,14 +88,57 @@ class Cell(QGraphicsItem):
         self._border_colour = settings.colours.border
         self._background_colour = settings.colours.board_background
 
-        self._candidate_pen = QPen(settings.colours.candidate)
-        self._clue_pen = QPen(settings.colours.clue)
-        self._guess_pen = QPen(settings.colours.guess)
+        self.reset_candidates_pen()
+        self.reset_clue_pen()
+        self.reset_guess_pen()
 
         self._is_highlighted = False
         self._highlight_locked = False
 
         self.setAcceptedMouseButtons(Qt.LeftButton)
+
+    def set_clue_pen(self, pen: QPen):
+        self._clue_pen = pen
+
+    def set_guess_pen(self, pen: QPen):
+        self._guess_pen = pen
+
+    def set_candidates_pen(self, pen: QPen):
+        self._candidate_pen = pen
+
+    def get_clue_pen(self):
+        return self._clue_pen
+
+    def get_guess_pen(self):
+        return self._guess_pen
+
+    def get_candidates_pen(self):
+        return self._candidate_pen
+
+    def reset_clue_pen(self):
+        self._clue_pen = QPen(settings.colours.clue)
+
+    def reset_guess_pen(self):
+        self._guess_pen = QPen(settings.colours.guess)
+
+    def reset_candidates_pen(self):
+        self._candidate_pen = QPen(settings.colours.candidate)
+
+    def set_text_pen(self, pen: QPen):
+        for pen_type in (
+            self.set_clue_pen,
+            self.set_guess_pen,
+            self.set_candidates_pen,
+        ):
+            pen_type(pen)
+
+    def reset_text_pen(self):
+        for pen_type in (
+            self.reset_clue_pen,
+            self.reset_guess_pen,
+            self.reset_candidates_pen,
+        ):
+            pen_type()
 
     @property
     def highlight_locked(self):
@@ -363,6 +417,30 @@ class PuzzleSelector(QListWidget):
         self.data.emit((self._puzzles[item.text()]))
 
 
+# class Perlin2D:
+#     def __init__(self, rows, columns) -> None:
+#         self.noise = np.random.uniform(-1.0, 1.0, (rows, columns))
+#
+#     def get(self, row, column) -> float:
+#         pass
+#
+#     def fade(self, t) -> float:
+#         return t*t*t*(t*(t*6.-15.)+10.)
+#
+#     def grad(self,p) -> float:
+#
+#
+#
+# def perlin(x, y) -> float:
+#     """
+#     2D perlin noise function
+#     """
+#
+#
+#     return 1
+#
+
+
 class MainScene(QGraphicsScene):
     def _auto_note(func: Callable[[Self], None]) -> Callable[[Self], None]:
         """
@@ -526,6 +604,8 @@ class MainScene(QGraphicsScene):
 
         self.message_time = 2500
 
+        self.disco_animation = None
+
     def set_mode(self):
         # self.cell_mode = not self.cell_mode
         self.cell_mode = not self.cell_mode_widget.isChecked()
@@ -637,6 +717,41 @@ class MainScene(QGraphicsScene):
 
         self.board_painted = True
 
+    # FIXME: do smth like this but make work properly
+    # May need to use colour for start, end value instead of qpen
+    # and handle that in cell class accordingly
+    def disco_mode(self):
+        for row, col in product(range(9), repeat=2):
+            cell = self.cells[row][col]
+
+            # Disco mode is only ran when board is completed so candidates pen doesn't matter
+            if cell.is_clue:
+                old_colour = cell.get_clue_pen().color()
+            else:
+                old_colour = cell.get_guess_pen().color()
+
+            # Disco colour must have high saturation, medium lightness and random hue
+            new_colour = QColor()
+            new_colour.setHslF(random(), 1.0, 0.5)
+
+            self.disco_animation = QVariantAnimation(self)
+            self.disco_animation.setDuration(self.settings.colours.disco_intensity)
+            self.disco_animation.setStartValue(old_colour)
+            self.disco_animation.setEndValue(new_colour)
+
+            curve = QEasingCurve(QEasingCurve.Type.Linear)
+            self.disco_animation.setEasingCurve(curve)
+
+            def change_colour(cell: Cell, colour: QColor):
+                if cell.is_clue:
+                    cell.set_clue_pen(QPen(colour))
+                else:
+                    cell.set_guess_pen(QPen(colour))
+                cell.update()
+
+            self.disco_animation.valueChanged.connect(partial(change_colour, cell))
+            self.disco_animation.start()
+
     def update_candidates(self):
         """
         Updates candidates and cells
@@ -654,6 +769,31 @@ class MainScene(QGraphicsScene):
             self.cells[row][col].set_candidates((self.data.candidates[:, row, col]))
             self.cells[row][col].set_value(self.data.cells[row, col])
             self.cells[row][col].is_clue = self.data.is_clue(np.array([row, col]))
+
+        if self.data.is_solved:
+
+            def disco_tick(timer):
+                assert self.data is not None
+
+                if self.disco_animation is not None:
+                    # Wait for animation to stop naturally before starting a new one or trying to stop it.
+                    if self.disco_animation.state() == QAbstractAnimation.State.Running:
+                        return
+
+                if self.data.is_solved:
+                    self.disco_mode()
+                else:
+                    # Reset all pens to default
+                    # Done after animation stops naturally because when it is stopped forcefully
+
+                    for row, col in product(range(9), repeat=2):
+                        self.cells[row][col].reset_text_pen()
+                        self.cells[row][col].update()
+                    timer.stop()
+
+            timer = QTimer(self)
+            timer.timeout.connect(partial(disco_tick, timer))
+            timer.start()
 
     def cell_clicked(self, cell: Cell):
         self.clear_highlight(hint_highlight=False)

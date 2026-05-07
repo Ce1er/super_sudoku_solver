@@ -110,6 +110,8 @@ class Colours:
 
     _hint_highlight: dict[int, list[QColor]] = field(default_factory=dict)
 
+    disco_intensity: int = field(default=500)
+
     @property
     def hint_highlight(self):
         # Allows user to override some hint highlights without losing defaults
@@ -123,6 +125,16 @@ class Colours:
                     raise ValueError(
                         "Hint highlights must be under [colours.hint-highlights]"
                     )
+            elif name == "disco_intensity":
+                if not isinstance(val, int):
+                    raise ValueError(
+                        f"Value for key {name} under [colours] is invalid. Failed to convert to int."
+                    )
+
+                if not val >= 0:
+                    raise ValueError(
+                        f"Value for key {name} under [colours] is invalid. Intensity must be >= 0."
+                            )
             else:
                 if not isinstance(val, QColor):
                     raise ValueError(
@@ -144,7 +156,6 @@ class Sizes:
     # All other sizes are calculated based on cell size
 
     def __post_init__(self):
-        return
         for name, val in self.__dict__.items():
             if not isinstance(val, int):
                 raise ValueError(
@@ -284,7 +295,7 @@ def load_settings(path: Optional[Path] = None) -> Settings:
         if "colours" in data:
             args = parse_colours(
                 dict(
-                    filter(lambda x: x[0] != "hint-highlights", data["colours"].items())
+                    filter(lambda x: x[0] not in  ("hint-highlights", "disco_intensity"), data["colours"].items())
                 )
             )
             if "hint-highlights" in data["colours"]:
@@ -295,6 +306,11 @@ def load_settings(path: Optional[Path] = None) -> Settings:
                         )
                     }
                 )
+            if "disco_intensity" in data["colours"
+                                         ]:
+                args.update(
+                        {"disco_intensity": data["colours"]["disco_intensity"]}
+                        )
             user_settings["colours"] = Colours(**args)
         if "gameplay" in data:
             user_settings["gameplay"] = Gameplay(**data["gameplay"])
