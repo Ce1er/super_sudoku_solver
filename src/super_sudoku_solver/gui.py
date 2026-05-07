@@ -731,6 +731,10 @@ class MainScene(QGraphicsScene):
             new_colour = QColor()
             new_colour.setHslF(random(), 1.0, 0.5)
 
+            # This will be overriden for every cell
+            # so after this function exits only one cell's animation will be accessible.
+            # This will be the last cell to have its animation started so can be used
+            # to check if they have all finished.
             self.disco_animation = QVariantAnimation(self)
             self.disco_animation.setDuration(self.settings.colours.disco_intensity)
             self.disco_animation.setStartValue(old_colour)
