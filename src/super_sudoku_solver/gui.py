@@ -556,6 +556,10 @@ class MainScene(QGraphicsScene):
         self.buttons_painted = True
 
     def disco_tick(self):
+        """
+        Run next iteration of disco animation when previous has finished.
+        If board isn't solved then stop self.disco_timer.
+        """
         assert self.data is not None
 
         if self.disco_animation is not None:
@@ -718,6 +722,9 @@ class MainScene(QGraphicsScene):
         self.board_painted = True
 
     def disco_mode(self):
+        """
+        Randomise the colour of the value of every cell and linearly fade to it.
+        """
         for row, col in product(range(9), repeat=2):
             cell = self.cells[row][col]
 
@@ -771,6 +778,9 @@ class MainScene(QGraphicsScene):
             self.cells[row][col].set_value(self.data.cells[row, col])
             self.cells[row][col].is_clue = self.data.is_clue(np.array([row, col]))
 
+        # Disco timer could be ran constantly but this would be a waste of resources 
+        # so only run it when data is solved. The timer is responsible for stopping itself
+        # if data becomes unsolved which it does in disco_tick method.
         if self.data.is_solved:
             self.disco_timer.start()
 
