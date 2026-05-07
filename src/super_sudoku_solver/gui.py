@@ -417,30 +417,6 @@ class PuzzleSelector(QListWidget):
         self.data.emit((self._puzzles[item.text()]))
 
 
-# class Perlin2D:
-#     def __init__(self, rows, columns) -> None:
-#         self.noise = np.random.uniform(-1.0, 1.0, (rows, columns))
-#
-#     def get(self, row, column) -> float:
-#         pass
-#
-#     def fade(self, t) -> float:
-#         return t*t*t*(t*(t*6.-15.)+10.)
-#
-#     def grad(self,p) -> float:
-#
-#
-#
-# def perlin(x, y) -> float:
-#     """
-#     2D perlin noise function
-#     """
-#
-#
-#     return 1
-#
-
-
 class MainScene(QGraphicsScene):
     def _auto_note(func: Callable[[Self], None]) -> Callable[[Self], None]:
         """
@@ -579,9 +555,28 @@ class MainScene(QGraphicsScene):
 
         self.buttons_painted = True
 
+    def disco_tick(self):
+        assert self.data is not None
+
+        if self.disco_animation is not None:
+            # Wait for animation to stop naturally before starting a new one 
+            if self.disco_animation.state() == QAbstractAnimation.State.Running:
+                return
+
+        if self.data.is_solved:
+            self.disco_mode()
+        else:
+            # Reset all pens to default
+            # Done after animation stops naturally because stopping it forcefully
+            # here isn't consistent and sometimes results in disco colours
+            # being set after colours have been reset.
+            for row, col in product(range(9), repeat=2):
+                self.cells[row][col].reset_text_pen()
+                self.cells[row][col].update()
+            self.disco_timer.stop()
+
     def __init__(
         self,
-        # data: BoardData,
         settings: Settings,
     ):
         super().__init__()
@@ -605,6 +600,11 @@ class MainScene(QGraphicsScene):
         self.message_time = 2500
 
         self.disco_animation = None
+
+        self.disco_timer = QTimer()
+
+        self.disco_timer = QTimer(self)
+        self.disco_timer.timeout.connect(self.disco_tick)
 
     def set_mode(self):
         # self.cell_mode = not self.cell_mode
@@ -717,9 +717,6 @@ class MainScene(QGraphicsScene):
 
         self.board_painted = True
 
-    # FIXME: do smth like this but make work properly
-    # May need to use colour for start, end value instead of qpen
-    # and handle that in cell class accordingly
     def disco_mode(self):
         for row, col in product(range(9), repeat=2):
             cell = self.cells[row][col]
@@ -771,29 +768,7 @@ class MainScene(QGraphicsScene):
             self.cells[row][col].is_clue = self.data.is_clue(np.array([row, col]))
 
         if self.data.is_solved:
-
-            def disco_tick(timer):
-                assert self.data is not None
-
-                if self.disco_animation is not None:
-                    # Wait for animation to stop naturally before starting a new one or trying to stop it.
-                    if self.disco_animation.state() == QAbstractAnimation.State.Running:
-                        return
-
-                if self.data.is_solved:
-                    self.disco_mode()
-                else:
-                    # Reset all pens to default
-                    # Done after animation stops naturally because when it is stopped forcefully
-
-                    for row, col in product(range(9), repeat=2):
-                        self.cells[row][col].reset_text_pen()
-                        self.cells[row][col].update()
-                    timer.stop()
-
-            timer = QTimer(self)
-            timer.timeout.connect(partial(disco_tick, timer))
-            timer.start()
+            self.disco_timer.start()
 
     def cell_clicked(self, cell: Cell):
         self.clear_highlight(hint_highlight=False)
