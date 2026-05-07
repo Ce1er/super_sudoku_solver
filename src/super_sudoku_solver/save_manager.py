@@ -28,8 +28,8 @@ from io import BufferedWriter
 from super_sudoku_solver.custom_types import Candidates, Cells
 from typing import Any, Literal, NoReturn, Optional
 
-DIFFICULTIES = ["Trivial", "Easy", "Medium", "Hard", "Extreme", "Impossible"]
-DIFFICULTIES_T = Literal["Trivial", "Easy", "Medium", "Hard", "Extreme", "Impossible"]
+DIFFICULTIES = ["Trivial", "Easy", "Medium", "Hard", "Extreme", "Insane"]
+DIFFICULTIES_T = Literal["Trivial", "Easy", "Medium", "Hard", "Extreme", "Insane"]
 
 
 def ensure_single_instance():
