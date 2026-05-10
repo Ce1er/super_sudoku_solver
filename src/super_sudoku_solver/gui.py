@@ -1161,6 +1161,7 @@ def main(args=None):
         args = []
 
     app = QApplication(args)
+    app.setApplicationDisplayName("Super Sudoku Solver")
 
     scene = MainScene(settings)
     view = View(scene, settings.sizes.margin)
